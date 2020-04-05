@@ -47,9 +47,7 @@ class DistributedThymio2(pyenki.Thymio2):
 
         correction = x_m - delta_x_m
 
-        back += correction
-
-        return front - back
+        return front - correction - back
 
     def controlStep(self, dt: float) -> None:
         """
