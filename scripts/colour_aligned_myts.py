@@ -8,7 +8,7 @@ from pid import PID
 # Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
 class DistributedThymio2(pyenki.Thymio2):
     INITIAL = 0
-    DISTRIBUTING = 1
+    COLOURING = 1
 
     def __init__(self, myt_quantity, name, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -60,14 +60,9 @@ class DistributedThymio2(pyenki.Thymio2):
         using communication.
         :param dt: control step duration
         """
+        back, front = self.neighbors_distance()
 
         if self.state == self.INITIAL:
-            back, front = self.neighbors_distance()
-
-            # Check which are the first and last robots in the line and don't move them
-            if front == 0 or back == 0:
-                self.distribute = False
-
             if back == 0:
                 self.index = 0
                 self.prox_comm_tx = self.index
@@ -76,10 +71,9 @@ class DistributedThymio2(pyenki.Thymio2):
             elif front == 0:
                 self.set_led_top(green=1.0)
 
-            self.state = self.DISTRIBUTING
+            self.state = self.COLOURING
 
-        elif self.state == self.DISTRIBUTING:
-            # if self.index is None and len(self.prox_comm_events) > 0:
+        elif self.state == self.COLOURING:
             if len(self.prox_comm_events) > 0:
                 if self.prox_comm_events[0].intensities[5] != 0:
                     received_idx = self.prox_comm_events[0].rx
@@ -91,12 +85,6 @@ class DistributedThymio2(pyenki.Thymio2):
             set_point = 0
             abs_tollerance = 15
 
-            if self.distribute:
-                speed = self.distributed_controller.step(self.compute_difference(), dt)
-
-                self.motor_left_target = speed
-                self.motor_right_target = speed
-
             if np.isclose(self.compute_difference(), set_point, atol=abs_tollerance):
                 # Color the robot half and half they should understand on which side they are compared to the medium
                 if self.index is not None:
@@ -104,6 +92,13 @@ class DistributedThymio2(pyenki.Thymio2):
                         self.set_led_top(green=1.0)
                     else:
                         self.set_led_top(blue=1.0)
+
+            # Check which are the first and last robots in the line and don't move them
+            if not (front == 0 or back == 0):
+                speed = self.distributed_controller.step(self.compute_difference(), dt)
+
+                self.motor_left_target = speed
+                self.motor_right_target = speed
 
 
 def setup(aseba: bool = False) -> pyenki.World:
@@ -150,7 +145,8 @@ def run(world: pyenki.World, gui: bool = False, T: float = 10, dt: float = 0.1) 
 
     if gui:
         # We can either run a simulation [in real-time] inside a Qt application
-        world.run_in_viewer(cam_position=(60, 0), cam_altitude=110.0, cam_yaw=0.0, cam_pitch=-pi / 2)
+        world.run_in_viewer(cam_position=(60, 0), cam_altitude=110.0, cam_yaw=0.0, cam_pitch=-pi / 2,
+                            walls_height=10.0, orthographic=True)
     else:
         # or we can write our own loop that run the simulation as fast as possible.
         steps = int(T // dt)
