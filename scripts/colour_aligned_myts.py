@@ -20,7 +20,7 @@ class DistributedThymio2(pyenki.Thymio2):
         self.state = self.INITIAL
         self.distribute = True
 
-        # communication
+        # Position index
         self.index = None
 
     def neighbors_distance(self):
@@ -79,12 +79,14 @@ class DistributedThymio2(pyenki.Thymio2):
             self.state = self.DISTRIBUTING
 
         elif self.state == self.DISTRIBUTING:
-            if self.index is None and len(self.prox_comm_events) > 0:
-                received_idx = self.prox_comm_events[0].rx
-                self.index = received_idx + 1
+            # if self.index is None and len(self.prox_comm_events) > 0:
+            if len(self.prox_comm_events) > 0:
+                if self.prox_comm_events[0].intensities[5] != 0:
+                    received_idx = self.prox_comm_events[0].rx
+                    self.index = received_idx + 1
 
-                self.prox_comm_tx = self.index
-                self.prox_comm_enable = True
+                    self.prox_comm_tx = self.index
+                    self.prox_comm_enable = True
 
             set_point = 0
             abs_tollerance = 15
@@ -92,16 +94,16 @@ class DistributedThymio2(pyenki.Thymio2):
             if self.distribute:
                 speed = self.distributed_controller.step(self.compute_difference(), dt)
 
-                if np.isclose(self.compute_difference(), set_point, atol=abs_tollerance):
-                    # Color the robot half and half they should understand on which side they are compared to the medium
-                    if self.index is not None:
-                        if self.index > (self.myt_quantity / 2) - 1:
-                            self.set_led_top(green=1.0)
-                        else:
-                            self.set_led_top(blue=1.0)
-
                 self.motor_left_target = speed
                 self.motor_right_target = speed
+
+            if np.isclose(self.compute_difference(), set_point, atol=abs_tollerance):
+                # Color the robot half and half they should understand on which side they are compared to the medium
+                if self.index is not None:
+                    if self.index > (self.myt_quantity / 2) - 1:
+                        self.set_led_top(green=1.0)
+                    else:
+                        self.set_led_top(blue=1.0)
 
 
 def setup(aseba: bool = False) -> pyenki.World:
