@@ -75,23 +75,25 @@ class DistributedThymio2(pyenki.Thymio2):
 
         elif self.state == self.COLOURING:
             if len(self.prox_comm_events) > 0:
-                if self.prox_comm_events[0].intensities[5] != 0:
-                    received_idx = self.prox_comm_events[0].rx
-                    self.index = received_idx + 1
+                if back == 0:
+                    if self.index != 0:
+                        self.index = 0
+                        self.prox_comm_tx = self.index
+                        self.prox_comm_enable = True
+                else:
+                    if self.prox_comm_events[0].intensities[5] != 0 or self.prox_comm_events[0].intensities[6] != 0:
+                        received_idx = self.prox_comm_events[0].rx
+                        self.index = received_idx + 1
 
-                    self.prox_comm_tx = self.index
-                    self.prox_comm_enable = True
+                        self.prox_comm_tx = self.index
+                        self.prox_comm_enable = True
 
-            set_point = 0
-            abs_tollerance = 15
-
-            if np.isclose(self.compute_difference(), set_point, atol=abs_tollerance):
-                # Color the robot half and half they should understand on which side they are compared to the medium
-                if self.index is not None:
-                    if self.index > (self.myt_quantity / 2) - 1:
-                        self.set_led_top(green=1.0)
-                    else:
-                        self.set_led_top(blue=1.0)
+            # Color the robot half and half they should understand on which side they are compared to the medium
+            if self.index is not None:
+                if self.index > (self.myt_quantity / 2) - 1:
+                    self.set_led_top(green=1.0)
+                else:
+                    self.set_led_top(blue=1.0)
 
             # Check which are the first and last robots in the line and don't move them
             if not (front == 0 or back == 0):
