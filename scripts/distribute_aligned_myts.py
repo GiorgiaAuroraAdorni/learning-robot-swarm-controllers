@@ -56,33 +56,28 @@ class DistributedThymio2(pyenki.Thymio2):
         :param dt: control step duration
         """
 
-        if self.state == self.INITIAL:
-            back, front = self.neighbors_distance()
+        back, front = self.neighbors_distance()
 
-            # Check which are the first and last robots in the line and don't move them
-            if front == 0 or back == 0:
-                self.distribute = False
-                self.set_led_top(red=1.0)
-            else:
+        # Check which are the first and last robots in the line and don't move them
+        if front == 0 or back == 0:
+            self.distribute = False
+            self.set_led_top(red=1.0)
+        else:
+            self.set_led_top(green=1.0)
+
+        set_point = 0
+        abs_tollerance = 15
+
+        if self.distribute:
+            speed = self.distributed_controller.step(self.compute_difference(), dt)
+
+            if not np.isclose(self.compute_difference(), set_point, atol=abs_tollerance):
                 self.set_led_top(green=1.0)
+            else:
+                self.set_led_top(red=1.0)
 
-            self.state = self.DISTRIBUTING
-
-        elif self.state == self.DISTRIBUTING:
-
-            set_point = 0
-            abs_tollerance = 15
-
-            if self.distribute:
-                speed = self.distributed_controller.step(self.compute_difference(), dt)
-
-                if not np.isclose(self.compute_difference(), set_point, atol=abs_tollerance):
-                    self.set_led_top(green=1.0)
-                else:
-                    self.set_led_top(red=1.0)
-
-                self.motor_left_target = speed
-                self.motor_right_target = speed
+            self.motor_left_target = speed
+            self.motor_right_target = speed
 
 
 def setup(aseba: bool = False) -> pyenki.World:
@@ -128,7 +123,8 @@ def run(world: pyenki.World, gui: bool = False, T: float = 10, dt: float = 0.1) 
 
     if gui:
         # We can either run a simulation [in real-time] inside a Qt application
-        world.run_in_viewer(cam_position=(60, 0), cam_altitude=110.0, cam_yaw=0.0, cam_pitch=-pi / 2)
+        world.run_in_viewer(cam_position=(60, 0), cam_altitude=110.0, cam_yaw=0.0, cam_pitch=-pi / 2,
+                            walls_height=10.0, orthographic=True)
     else:
         # or we can write our own loop that run the simulation as fast as possible.
         steps = int(T // dt)
