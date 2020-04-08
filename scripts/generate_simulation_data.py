@@ -56,20 +56,25 @@ class DistributedThymio2(pyenki.Thymio2):
         using communication.
         :param dt: control step duration
         """
-        # FIXME
-        #  sensing prox_comm_events (da cui tiro fuori i mittenti del messaggio e la rispettiva intensità)
-        #   self.prox_comm_tx = self.index
-        #   self.prox_comm_enable = True
-        #   if len(self.prox_comm_events) > 0:
-        #       print()
+
+        self.prox_comm_enable = True
+        self.prox_comm_tx = self.index
+
+        prox_comm_events_intensities = ''
+        prox_comm_events_payloads = ''
+        prox_comm_events_message = ''
+
+        if len(self.prox_comm_events) > 0:
+            prox_comm_events_intensities = self.prox_comm_events[0].intensities
+            prox_comm_events_payloads = self.prox_comm_events[0].payloads
+            prox_comm_events_message = self.prox_comm_events[0].rx
 
         speed = self.move_to_goal()
-
-        print(self.name, self.index, self.prox_values, self.position, self.goal_position, speed)
         self.motor_left_target = speed
         self.motor_right_target = speed
 
-        line = [self.name, self.index, self.prox_values, self.position, self.goal_position, speed]
+        line = [self.name, self.index, self.prox_values, prox_comm_events_intensities, prox_comm_events_payloads,
+                prox_comm_events_message, self.position, self.goal_position, speed]
 
         with open(file, 'a+', newline='') as write_obj:
             csv_writer = writer(write_obj)
@@ -92,7 +97,7 @@ def setup(aseba: bool = False) -> pyenki.World:
 
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
     # ~ 14 cm is the proximity sensors maximal range
-    distances = np.random.randint(1, 12, 8)
+    distances = np.random.randint(1, 14, 8)
 
     # Distance between the origin and the front of the robot along x-axis
     constant = 7.95
@@ -125,7 +130,8 @@ def run(file, world: pyenki.World, gui: bool = False, T: float = 10, dt: float =
     :param T
     :param dt: update timestep in seconds, should be below 1 (typically .02-.1)
     """
-    header = ['name', 'index', 'prox_values', 'position', 'goal_position', 'speed']
+    header = ['name', 'index', 'prox_values', 'prox_comm_events_intensities', 'prox_comm_events_payloads',
+                'prox_comm_events_message', 'position', 'goal_position', 'speed']
 
     with open(file, 'w', newline='') as write_obj:
         csv_writer = writer(write_obj)
@@ -147,7 +153,7 @@ if __name__ == '__main__':
 
     out_dir = 'out/'
     check_dir(out_dir)
-    s = 4
+    s = 6
 
     file = os.path.join(out_dir, 'simulation-%d.csv' % s)
 
