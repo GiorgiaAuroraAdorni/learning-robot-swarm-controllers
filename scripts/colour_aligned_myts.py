@@ -56,8 +56,9 @@ class DistributedThymio2(pyenki.Thymio2):
 
     def controlStep(self, dt: float) -> None:
         """
-        Perform one control step: Move the robots in such a way they stand at equal distances from each other without
-        using communication.
+        Perform one control step:
+        Move the robots in such a way they stand at equal distances from each other without using communication.
+        Then, using communication, colour the robot half and half.
         :param dt: control step duration
         """
         back, front = self.neighbors_distance()

@@ -2,7 +2,7 @@ import json
 import os
 import pickle
 import sys
-from math import pi, sqrt, sin, cos
+from math import pi, sin, cos
 
 import numpy as np
 import pyenki
@@ -20,13 +20,6 @@ class DistributedThymio2(pyenki.Thymio2):
         self.goal_angle = goal_angle
         self.dictionary = dict()
 
-    def euclidean_distance(self):
-        """
-        :return: Euclidean distance between current and the goal position
-        """
-        return sqrt(pow((self.goal_position[0] - self.position[0]), 2) +
-                    pow((self.goal_position[1] - self.position[1]), 2))
-
     def signed_distance(self):
         """
         :return: Signed distance between current and the goal position, along the current theta of the robot
@@ -42,7 +35,6 @@ class DistributedThymio2(pyenki.Thymio2):
         :param constant
         :return: clipped linear velocity
         """
-        # velocity = constant * self.euclidean_distance()
         velocity = constant * self.signed_distance()
         return min(max(-500, velocity), 500)
 
@@ -55,9 +47,11 @@ class DistributedThymio2(pyenki.Thymio2):
 
     def generate_dict(self):
         """
+        Save data in a dictionary
         """
         prox_comm = {}
 
+        # Extract sender and intensities
         if len(self.prox_comm_events) > 0:
             for idx, _ in enumerate(self.prox_comm_events):
                 sender = self.prox_comm_events[idx].rx + 1
@@ -70,7 +64,6 @@ class DistributedThymio2(pyenki.Thymio2):
             'index': self.index,
             'prox_values': self.prox_values,
             'prox_comm': prox_comm,
-
             'position': self.position,
             'angle': self.angle,
             'goal_position': self.goal_position,
@@ -81,8 +74,9 @@ class DistributedThymio2(pyenki.Thymio2):
 
     def controlStep(self, dt: float) -> None:
         """
-        Perform one control step: Move the robots in such a way they stand at equal distances from each other without
-        using communication.
+        Perform one control step:
+        Move the robots in such a way they stand at equal distances from each other using the omniscient controller.
+        Save data in a dictionary.
         :param dt: control step duration
         """
         self.prox_comm_enable = True
@@ -98,8 +92,9 @@ class DistributedThymio2(pyenki.Thymio2):
 def setup(myt_quantity, aseba: bool = False):
     """
     Set up the world and create the thymios
+    :param myt_quantity: number of robot in the simulation
     :param aseba
-    :return world
+    :return world, myts
     """
     # Create an unbounded world
     world = pyenki.World()
