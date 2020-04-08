@@ -12,11 +12,12 @@ from utils import check_dir
 # Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
 class DistributedThymio2(pyenki.Thymio2):
 
-    def __init__(self, name, index, goal_position, **kwargs) -> None:
+    def __init__(self, name, index, goal_position, goal_angle, **kwargs) -> None:
         super().__init__(**kwargs)
         self.name = name
         self.index = index
         self.goal_position = goal_position
+        self.goal_angle = goal_angle
         self.dictionary = dict()
 
     def euclidean_distance(self):
@@ -52,30 +53,30 @@ class DistributedThymio2(pyenki.Thymio2):
         """
         return self.linear_vel()
 
-    def generate_dict(self, speed):
+    def generate_dict(self):
         """
-
-        :param speed:
         """
-        prox_comm_events_intensities = ''
-        prox_comm_events_payloads = ''
-        prox_comm_events_message = ''
+        prox_comm = {}
 
         if len(self.prox_comm_events) > 0:
-            prox_comm_events_intensities = self.prox_comm_events[0].intensities
-            prox_comm_events_payloads = self.prox_comm_events[0].payloads
-            prox_comm_events_message = self.prox_comm_events[0].rx
+            for idx, _ in enumerate(self.prox_comm_events):
+                sender = self.prox_comm_events[idx].rx + 1
+                intensities = self.prox_comm_events[idx].intensities
+
+                prox_comm['myt%d' % sender] = {'intensities': intensities}
 
         self.dictionary = {
             'name': self.name,
             'index': self.index,
             'prox_values': self.prox_values,
-            'prox_comm_events_intensities': prox_comm_events_intensities,
-            'prox_comm_events_payloads': prox_comm_events_payloads,
-            'prox_comm_events_message': prox_comm_events_message,
+            'prox_comm': prox_comm,
+
             'position': self.position,
+            'angle': self.angle,
             'goal_position': self.goal_position,
-            'speed': speed
+            'goal_angle': self.goal_angle,
+            'motor_left_target': self.motor_left_target,
+            'motor_right_target': self.motor_right_target
         }
 
     def controlStep(self, dt: float) -> None:
@@ -91,7 +92,7 @@ class DistributedThymio2(pyenki.Thymio2):
         self.motor_left_target = speed
         self.motor_right_target = speed
 
-        self.generate_dict(speed)
+        self.generate_dict()
 
 
 def setup(myt_quantity, aseba: bool = False):
@@ -104,7 +105,7 @@ def setup(myt_quantity, aseba: bool = False):
     world = pyenki.World()
 
     # Create multiple Thymios and position them such as all x-axes are aligned
-    myts = [DistributedThymio2(name='myt%d' % (i + 1), index=i, goal_position=None, use_aseba_units=aseba)
+    myts = [DistributedThymio2(name='myt%d' % (i + 1), index=i, goal_position=None, goal_angle=0, use_aseba_units=aseba)
             for i in range(myt_quantity)]
 
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
@@ -176,13 +177,18 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 10,
         with open(json_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
+        # with open(pkl_file, 'rb') as f:
+        #     mynewlist = pickle.load(f)
+        #
+        # with open(json_file, 'rb') as f:
+        #     mynewlist = json.load(f)
 
 
 if __name__ == '__main__':
     myt_quantity = 8
     world, myts = setup(myt_quantity)
 
-    simulation = 1
+    simulation = 2
 
     try:
         run(simulation, myts, world, '--gui' in sys.argv)
