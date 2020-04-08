@@ -1,6 +1,7 @@
+import json
 import os
+import pickle
 import sys
-from csv import writer
 from math import pi, sqrt, sin, cos
 
 import numpy as np
@@ -16,6 +17,7 @@ class DistributedThymio2(pyenki.Thymio2):
         self.name = name
         self.index = index
         self.goal_position = goal_position
+        self.dictionary = dict()
 
     def euclidean_distance(self):
         """
@@ -50,16 +52,11 @@ class DistributedThymio2(pyenki.Thymio2):
         """
         return self.linear_vel()
 
-    def controlStep(self, dt: float) -> None:
-        """
-        Perform one control step: Move the robots in such a way they stand at equal distances from each other without
-        using communication.
-        :param dt: control step duration
+    def generate_dict(self, speed):
         """
 
-        self.prox_comm_enable = True
-        self.prox_comm_tx = self.index
-
+        :param speed:
+        """
         prox_comm_events_intensities = ''
         prox_comm_events_payloads = ''
         prox_comm_events_message = ''
@@ -69,19 +66,35 @@ class DistributedThymio2(pyenki.Thymio2):
             prox_comm_events_payloads = self.prox_comm_events[0].payloads
             prox_comm_events_message = self.prox_comm_events[0].rx
 
+        self.dictionary = {
+            'name': self.name,
+            'index': self.index,
+            'prox_values': self.prox_values,
+            'prox_comm_events_intensities': prox_comm_events_intensities,
+            'prox_comm_events_payloads': prox_comm_events_payloads,
+            'prox_comm_events_message': prox_comm_events_message,
+            'position': self.position,
+            'goal_position': self.goal_position,
+            'speed': speed
+        }
+
+    def controlStep(self, dt: float) -> None:
+        """
+        Perform one control step: Move the robots in such a way they stand at equal distances from each other without
+        using communication.
+        :param dt: control step duration
+        """
+        self.prox_comm_enable = True
+        self.prox_comm_tx = self.index
+
         speed = self.move_to_goal()
         self.motor_left_target = speed
         self.motor_right_target = speed
 
-        line = [self.name, self.index, self.prox_values, prox_comm_events_intensities, prox_comm_events_payloads,
-                prox_comm_events_message, self.position, self.goal_position, speed]
-
-        with open(file, 'a+', newline='') as write_obj:
-            csv_writer = writer(write_obj)
-            csv_writer.writerow(line)
+        self.generate_dict(speed)
 
 
-def setup(aseba: bool = False) -> pyenki.World:
+def setup(myt_quantity, aseba: bool = False):
     """
     Set up the world and create the thymios
     :param aseba
@@ -91,13 +104,12 @@ def setup(aseba: bool = False) -> pyenki.World:
     world = pyenki.World()
 
     # Create multiple Thymios and position them such as all x-axes are aligned
-    myt_quantity = 8
     myts = [DistributedThymio2(name='myt%d' % (i + 1), index=i, goal_position=None, use_aseba_units=aseba)
             for i in range(myt_quantity)]
 
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
     # ~ 14 cm is the proximity sensors maximal range
-    distances = np.random.randint(1, 14, 8)
+    distances = np.random.randint(5, 10, 8)
 
     # Distance between the origin and the front of the robot along x-axis
     constant = 7.95
@@ -119,10 +131,10 @@ def setup(aseba: bool = False) -> pyenki.World:
         myt.goal_position = (goal_positions[i], 0)
         world.add_object(myt)
 
-    return world
+    return world, myts
 
 
-def run(file, world: pyenki.World, gui: bool = False, T: float = 10, dt: float = 0.1) -> None:
+def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 10, dt: float = 0.1) -> None:
     """
     :param file
     :param world
@@ -130,34 +142,49 @@ def run(file, world: pyenki.World, gui: bool = False, T: float = 10, dt: float =
     :param T
     :param dt: update timestep in seconds, should be below 1 (typically .02-.1)
     """
-    header = ['name', 'index', 'prox_values', 'prox_comm_events_intensities', 'prox_comm_events_payloads',
-                'prox_comm_events_message', 'position', 'goal_position', 'speed']
-
-    with open(file, 'w', newline='') as write_obj:
-        csv_writer = writer(write_obj)
-        csv_writer.writerow(header)
 
     if gui:
         # We can either run a simulation [in real-time] inside a Qt application
         world.run_in_viewer(cam_position=(60, 0), cam_altitude=110.0, cam_yaw=0.0, cam_pitch=-pi / 2,
-                            walls_height=10.0, orthographic=True)
+                            walls_height=10.0, orthographic=True, period=0.1)
     else:
-        # or we can write our own loop that run the simulation as fast as possible.
+        # Run the simulation as fast as possible
         steps = int(T // dt)
-        for _ in range(steps):
+
+        data = []
+        iteration = []
+
+        for s in range(steps):
+            if s > 0:
+                for el in myts:
+                    iteration.append(el.dictionary)
+
+                    if len(iteration) == myt_quantity:
+                        data.append(iteration)
+                        iteration = []
+
             world.step(dt)
+
+        out_dir = 'out/'
+        check_dir(out_dir)
+        pkl_file = os.path.join(out_dir, 'simulation-%d.pkl' % simulation)
+        json_file = os.path.join(out_dir, 'simulation-%d.json' % simulation)
+
+        with open(pkl_file, 'wb') as f:
+            pickle.dump(data, f)
+
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
 
 
 if __name__ == '__main__':
-    world = setup('--aseba' in sys.argv)
+    myt_quantity = 8
+    world, myts = setup(myt_quantity)
 
-    out_dir = 'out/'
-    check_dir(out_dir)
-    s = 6
-
-    file = os.path.join(out_dir, 'simulation-%d.csv' % s)
+    simulation = 1
 
     try:
-        run(file, world, '--gui' in sys.argv)
+        run(simulation, myts, world, '--gui' in sys.argv)
     except:
         raise
