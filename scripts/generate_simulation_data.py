@@ -24,7 +24,6 @@ class DistributedThymio2(pyenki.Thymio2):
         """
         :return: Signed distance between current and the goal position, along the current theta of the robot
         """
-
         a = self.position[0] * cos(self.angle) + self.position[1] * sin(self.angle)
         b = self.goal_position[0] * cos(self.angle) + self.goal_position[1] * sin(self.angle)
 
@@ -150,14 +149,29 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 10,
         data = []
         iteration = []
 
+        stop_iteration = False
+
         for s in range(steps):
+
+            if stop_iteration:
+                break
+
             if s > 0:
-                for el in myts:
-                    iteration.append(el.dictionary)
+                for myt in myts:
+                    iteration.append(myt.dictionary)
 
                     if len(iteration) == myt_quantity:
+                        # Stop the simulation if all the robots have reached the goal
+                        counter = 0
+                        for i, _ in enumerate(iteration):
+                            if np.isclose(iteration[i]['position'][0], iteration[i]['goal_position'][0]):
+                                counter += 1
                         data.append(iteration)
                         iteration = []
+
+                        if counter == 7:
+                            stop_iteration = True
+                            print(s)
 
             world.step(dt)
 
@@ -183,7 +197,7 @@ if __name__ == '__main__':
     myt_quantity = 8
     world, myts = setup(myt_quantity)
 
-    simulation = 2
+    simulation = 3
 
     try:
         run(simulation, myts, world, '--gui' in sys.argv)
