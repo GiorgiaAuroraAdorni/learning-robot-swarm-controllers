@@ -102,21 +102,32 @@ def setup(myt_quantity, aseba: bool = False):
     myts = [DistributedThymio2(name='myt%d' % (i + 1), index=i, goal_position=None, goal_angle=0, use_aseba_units=aseba)
             for i in range(myt_quantity)]
 
+    # The minimum distance between two Thymio [wheel - wheel] is 12 cm
+    min_distance = 10.9  # in the previous version it was set at 7.95
+    medium_gap = 12      # can vary in the range [6, 14]
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
     # ~ 14 cm is the proximity sensors maximal range
-    distances = np.random.randint(5, 10, 8)
+    maximum_gap = 14
 
-    # Distance between the origin and the front of the robot along x-axis
-    constant = 7.95
+    first_x = 0
+    last_x = (min_distance + medium_gap) * (myt_quantity - 1)
+
+    distances = min_distance + np.clip(np.random.normal(medium_gap, 7, myt_quantity - 1), 1, maximum_gap)
+    distances = distances / np.sum(distances) * last_x
+    # distances = np.random.randint(5, 10, 8)  # in the previous version
 
     for i, myt in enumerate(myts):
+        # Position the first and last robot at a fixed distance
         if i == 0:
-            prev_pos = 0
+            myt.position = (first_x, 0)
+        elif i == myt_quantity:
+            myt.position = (last_x, 0)
         else:
             prev_pos = myts[i - 1].position[0]
+            # current_pos = prev_pos + float(distances[i]) + constant  # in the previous version
+            current_pos = prev_pos + distances[i - 1]
+            myt.position = (current_pos, 0)
 
-        current_pos = prev_pos + float(distances[i]) + constant
-        myt.position = (current_pos, 0)
         myt.angle = 0
 
     # Decide the goal pose for each robot
@@ -140,7 +151,7 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 10,
 
     if gui:
         # We can either run a simulation [in real-time] inside a Qt application
-        world.run_in_viewer(cam_position=(60, 0), cam_altitude=110.0, cam_yaw=0.0, cam_pitch=-pi / 2,
+        world.run_in_viewer(cam_position=(60, 0), cam_altitude=150.0, cam_yaw=0.0, cam_pitch=-pi / 2,
                             walls_height=10.0, orthographic=True, period=0.1)
     else:
         # Run the simulation as fast as possible
@@ -197,7 +208,7 @@ if __name__ == '__main__':
     myt_quantity = 8
     world, myts = setup(myt_quantity)
 
-    simulation = 3
+    simulation = 5
 
     try:
         run(simulation, myts, world, '--gui' in sys.argv)
