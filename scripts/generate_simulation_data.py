@@ -1,4 +1,3 @@
-import json
 import os
 import pickle
 import sys
@@ -6,7 +5,9 @@ from math import pi, sin, cos
 
 import numpy as np
 import pyenki
-from utils import check_dir
+from tqdm import tqdm
+
+# from utils import check_dir
 
 
 # Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
@@ -114,23 +115,17 @@ class DistributedThymio2(pyenki.Thymio2):
             self.update_dict()
 
 
-def setup(myt_quantity, aseba: bool = False):
+def init_positions(myts):
     """
-    Set up the world and create the thymios
-    :param myt_quantity: number of robot in the simulation
-    :param aseba
-    :return world, myts
+
+    :param myts:
     """
-    # Create an unbounded world
-    world = pyenki.World()
-
-    # Create multiple Thymios and position them such as all x-axes are aligned
-    myts = [DistributedThymio2(name='myt%d' % (i + 1), index=i, goal_position=None, goal_angle=0, use_aseba_units=aseba)
-            for i in range(myt_quantity)]
-
+    myt_quantity = len(myts)
+    
     # The minimum distance between two Thymio [wheel - wheel] is 12 cm
     min_distance = 10.9  # in the previous version it was set at 7.95
-    medium_gap = 12      # can vary in the range [6, 14]
+    medium_gap = 12  # can vary in the range [6, 14]
+
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
     # ~ 14 cm is the proximity sensors maximal range
     maximum_gap = 14
@@ -162,12 +157,29 @@ def setup(myt_quantity, aseba: bool = False):
 
     for i, myt in enumerate(myts):
         myt.goal_position = (goal_positions[i], 0)
+
+
+def setup(myt_quantity, aseba: bool = False):
+    """
+    Set up the world and create the thymios
+    :param myt_quantity: number of robot in the simulation
+    :param aseba
+    :return world, myts
+    """
+    # Create an unbounded world
+    world = pyenki.World()
+
+    # Create multiple Thymios and position them such as all x-axes are aligned
+    myts = [DistributedThymio2(name='myt%d' % (i + 1), index=i, goal_position=None, goal_angle=0, use_aseba_units=aseba)
+            for i in range(myt_quantity)]
+
+    for myt in myts:
         world.add_object(myt)
 
     return world, myts
 
 
-def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100, dt: float = 0.1) -> None:
+def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100, dt: float = 0.1,  tol: float = 0.1) -> None:
     """
     :param file
     :param world
@@ -175,6 +187,8 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
     :param T
     :param dt: update timestep in seconds, should be below 1 (typically .02-.1)
     """
+
+    myt_quantity = len(myts)
 
     if gui:
         # We can either run a simulation [in real-time] inside a Qt application
@@ -202,19 +216,21 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
                         # Stop the simulation if all the robots have reached the goal
                         counter = 0
                         for i, _ in enumerate(iteration):
-                            if np.isclose(iteration[i]['position'][0], iteration[i]['goal_position'][0]):
+                            diff = abs(iteration[i]['position'][0] - iteration[i]['goal_position'][0])
+                            if diff < tol:
                                 counter += 1
                         data.append(iteration)
                         iteration = []
 
                         if counter == myt_quantity:
                             stop_iteration = True
-                            print('Finished simulation after %d steps.' % s)
+                            # print('Finished simulation after %d steps.' % s)
 
             world.step(dt)
 
         out_dir = 'out/'
-        check_dir(out_dir)
+        os.makedirs(out_dir, exist_ok=True)
+        # check_dir(out_dir)
         pkl_file = os.path.join(out_dir, 'simulation-%d.pkl' % simulation)
         json_file = os.path.join(out_dir, 'simulation-%d.json' % simulation)
 
@@ -233,13 +249,12 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
 
 if __name__ == '__main__':
     simulations = 1000
+    myt_quantity = 5
+    world, myts = setup(myt_quantity)
 
     for simulation in range(simulations):
         try:
-            myt_quantity = 5
-            world, myts = setup(myt_quantity)
-
-            print('Simulation n° %d' % simulation)
+            init_positions(myts)
             run(simulation, myts, world, '--gui' in sys.argv)
         except:
             raise
