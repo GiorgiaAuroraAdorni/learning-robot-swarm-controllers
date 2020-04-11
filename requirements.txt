@@ -1,7 +1,5 @@
-os
 numpy
 pandas
 torch
 torchvision
-pickle
 tqdm

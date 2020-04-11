@@ -121,7 +121,7 @@ def init_positions(myts):
     :param myts:
     """
     myt_quantity = len(myts)
-    
+
     # The minimum distance between two Thymio [wheel - wheel] is 12 cm
     min_distance = 10.9  # in the previous version it was set at 7.95
     medium_gap = 12  # can vary in the range [6, 14]
@@ -228,7 +228,7 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
 
             world.step(dt)
 
-        out_dir = 'out/'
+        out_dir = 'out-8myts/'
         os.makedirs(out_dir, exist_ok=True)
         # check_dir(out_dir)
         pkl_file = os.path.join(out_dir, 'simulation-%d.pkl' % simulation)
@@ -240,19 +240,13 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
         # with open(json_file, 'w', encoding='utf-8') as f:
         #     json.dump(data, f, ensure_ascii=False, indent=4)
 
-        # with open(pkl_file, 'rb') as f:
-        #     mynewlist = pickle.load(f)
-        #
-        # with open(json_file, 'rb') as f:
-        #     mynewlist = json.load(f)
-
 
 if __name__ == '__main__':
     simulations = 1000
-    myt_quantity = 5
+    myt_quantity = 8
     world, myts = setup(myt_quantity)
 
-    for simulation in range(simulations):
+    for simulation in tqdm(range(simulations)):
         try:
             init_positions(myts)
             run(simulation, myts, world, '--gui' in sys.argv)
