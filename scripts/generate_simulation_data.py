@@ -108,11 +108,12 @@ def setup(myt_quantity, aseba: bool = False):
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
     # ~ 14 cm is the proximity sensors maximal range
     maximum_gap = 14
+    std = 8
 
     first_x = 0
     last_x = (min_distance + medium_gap) * (myt_quantity - 1)
 
-    distances = min_distance + np.clip(np.random.normal(medium_gap, 7, myt_quantity - 1), 1, maximum_gap)
+    distances = min_distance + np.clip(np.random.normal(medium_gap, std, myt_quantity - 1), 1, maximum_gap)
     distances = distances / np.sum(distances) * last_x
     # distances = np.random.randint(5, 10, 8)  # in the previous version
 
@@ -131,7 +132,7 @@ def setup(myt_quantity, aseba: bool = False):
         myt.angle = 0
 
     # Decide the goal pose for each robot
-    goal_positions = np.linspace(myts[0].position[0], myts[myt_quantity - 1].position[0], num=8)
+    goal_positions = np.linspace(myts[0].position[0], myts[myt_quantity - 1].position[0], num=myt_quantity)
 
     for i, myt in enumerate(myts):
         myt.goal_position = (goal_positions[i], 0)
@@ -140,7 +141,7 @@ def setup(myt_quantity, aseba: bool = False):
     return world, myts
 
 
-def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 10, dt: float = 0.1) -> None:
+def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100, dt: float = 0.1) -> None:
     """
     :param file
     :param world
@@ -180,9 +181,9 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 10,
                         data.append(iteration)
                         iteration = []
 
-                        if counter == 7:
+                        if counter == myt_quantity:
                             stop_iteration = True
-                            print(s)
+                            print('Finished simulation after %d steps.' % s)
 
             world.step(dt)
 
@@ -205,12 +206,14 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 10,
 
 
 if __name__ == '__main__':
-    myt_quantity = 8
-    world, myts = setup(myt_quantity)
+    simulations = 1000
 
-    simulation = 5
+    for simulation in range(simulations):
+        try:
+            myt_quantity = 5
+            world, myts = setup(myt_quantity)
 
-    try:
-        run(simulation, myts, world, '--gui' in sys.argv)
-    except:
-        raise
+            print('Simulation n° %d' % simulation)
+            run(simulation, myts, world, '--gui' in sys.argv)
+        except:
+            raise
