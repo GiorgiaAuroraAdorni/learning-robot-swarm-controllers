@@ -51,10 +51,11 @@ class DistributedThymio2(pyenki.Thymio2):
         prox_comm = {}
 
         # Extract sender and intensities
-        if len(self.prox_comm_events) > 0:
-            for idx, _ in enumerate(self.prox_comm_events):
-                sender = self.prox_comm_events[idx].rx + 1
-                intensities = self.prox_comm_events[idx].intensities
+        prox_comm_events = self.prox_comm_events
+        if len(prox_comm_events) > 0:
+            for idx, _ in enumerate(prox_comm_events):
+                sender = prox_comm_events[idx].rx + 1
+                intensities = prox_comm_events[idx].intensities
 
                 prox_comm['myt%d' % sender] = {'intensities': intensities}
 
@@ -71,6 +72,28 @@ class DistributedThymio2(pyenki.Thymio2):
             'motor_right_target': self.motor_right_target
         }
 
+    def update_dict(self):
+        """
+        Save data in a dictionary
+        """
+        prox_comm = {}
+
+        # Extract sender and intensities
+        prox_comm_events = self.prox_comm_events
+        if len(prox_comm_events) > 0:
+            for idx, _ in enumerate(prox_comm_events):
+                sender = prox_comm_events[idx].rx + 1
+                intensities = prox_comm_events[idx].intensities
+
+                prox_comm['myt%d' % sender] = {'intensities': intensities}
+
+        self.dictionary['prox_values'] = self.prox_values
+        self.dictionary['prox_comm'] = prox_comm
+        self.dictionary['position'] = self.position
+        self.dictionary['angle'] = self.angle
+        self.dictionary['motor_left_target'] = self.motor_left_target
+        self.dictionary['motor_right_target'] = self.motor_right_target
+
     def controlStep(self, dt: float) -> None:
         """
         Perform one control step:
@@ -85,7 +108,10 @@ class DistributedThymio2(pyenki.Thymio2):
         self.motor_left_target = speed
         self.motor_right_target = speed
 
-        self.generate_dict()
+        if len(self.dictionary) == 0:
+            self.generate_dict()
+        else:
+            self.update_dict()
 
 
 def setup(myt_quantity, aseba: bool = False):
@@ -195,8 +221,8 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
         with open(pkl_file, 'wb') as f:
             pickle.dump(data, f)
 
-        with open(json_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        # with open(json_file, 'w', encoding='utf-8') as f:
+        #     json.dump(data, f, ensure_ascii=False, indent=4)
 
         # with open(pkl_file, 'rb') as f:
         #     mynewlist = pickle.load(f)
