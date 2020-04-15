@@ -6,11 +6,12 @@ from typing import List, Tuple, Optional
 import numpy as np
 import pandas as pd
 import torch
-from networks.distributed_network import DistributedNet
 from torch.utils import data
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
-from utils import check_dir, plot_setting
+
+from networks.distributed_network import DistributedNet
+from utils import check_dir, plot_train_test_losses, scatter_plot, plot_prediction_histogram
 
 
 def from_dataset_to_tensors(runs_dir, train_indices, test_indices):
@@ -26,6 +27,9 @@ def from_dataset_to_tensors(runs_dir, train_indices, test_indices):
     test_target = []
 
     for file_name in os.listdir(runs_dir):
+        if not file_name.endswith('.pkl'):
+            continue
+
         pickle_file = os.path.join(runs_dir, file_name)
         run = pd.read_pickle(pickle_file)
 
@@ -47,6 +51,17 @@ def from_dataset_to_tensors(runs_dir, train_indices, test_indices):
                 # The output is the speed of the wheels (which we assume equals left and right) [array of 1 float]
                 speed = myt['motor_left_target']
                 output.append([speed])
+
+    #  Generate a scatter plot to check the conformity of the dataset
+    title = 'Dataset 5myts'
+    file_name = 'scatterplot-5myts.png'
+
+    x = np.array(input)[:, 2] - np.mean(np.array(input)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
+    y = np.array(output).flatten()                                       # y: speed
+    x_label = 'sensing'
+    y_label = 'control'
+
+    scatter_plot(x, y, x_label, y_label, 'models/distributed/images/', title, file_name)
 
     # Generate the tensors
     train_sample_tensor = torch.tensor(train_sample)
@@ -110,8 +125,14 @@ def train_net(epochs: int,
     if testing_loss is None:
         testing_loss = []
 
+    # FIXME
+    outputs = []
+    n_train = len(train_dataset)
+    n_test = len(test_dataset)
+
     for _ in tqdm(range(epochs)):
-        epoch_loss = 0.0
+        avg_loss = 0.0
+        epoch_outputs = []
 
         for n, (inputs, labels) in enumerate(train_minibatch):
             output = net(inputs)
@@ -128,11 +149,12 @@ def train_net(epochs: int,
                 loss = criterion(output, labels)
 
             loss.backward()
-            epoch_loss += float(loss)
+            # FIXME
+            avg_loss += float(loss) * batch_size
             optimizer.step()
             optimizer.zero_grad()
 
-        training_loss.append(epoch_loss)
+        training_loss.append(avg_loss / n_train)
 
         with torch.no_grad():
             # padded is used when in the simulations are different number of thymio
@@ -147,13 +169,26 @@ def train_net(epochs: int,
                         losses.append(loss)
                     loss = torch.mean(torch.stack(losses))
                     test_losses.append(float(loss))
-                testing_loss.append(sum(test_losses))
+
+                testing_loss.append(sum(test_losses) / n_test)
             else:
-                testing_loss.append(sum([float(criterion(net(inputs), labels)) for inputs, labels in test_minibatch]))
+                test_losses = []
+                outputs = []
+                for inputs, labels in test_minibatch:
+                    t_output = net(inputs)
+                    loss = float(criterion(t_output, labels))
+                    test_losses.append(loss)
+                    outputs.append(t_output)
 
-        print(epoch_loss)
+                testing_loss.append(sum(test_losses) / n_test)
 
-    return training_loss, testing_loss
+                # testing_loss.append(sum([float(criterion(net(inputs), labels)) for inputs, labels in test_minibatch]))
+                # FIXME
+                epoch_outputs.append(outputs)
+
+        print(avg_loss / n_train)
+
+    return training_loss, testing_loss, outputs
 
 
 def main(file, runs_dir, out_dir, model):
@@ -180,7 +215,6 @@ def main(file, runs_dir, out_dir, model):
     command_dis = True
     save_cmd = True
     # save_cmd = False
-    model = 'net1'
 
     if len(sys.argv) > 1:
         if sys.argv[2] == 'load':
@@ -192,12 +226,50 @@ def main(file, runs_dir, out_dir, model):
         d_net = DistributedNet(x_train.shape[1])
         d_training_loss, d_testing_loss = [], []
 
-        training_loss, testing_loss = train_net(epochs=2, net=d_net, train_dataset=d_training_set,
-                                                test_dataset=d_test_set, batch_size=100, learning_rate=0.001,
-                                                training_loss=d_training_loss, testing_loss=d_testing_loss)
+        training_loss, testing_loss, outputs = train_net(epochs=20, net=d_net, train_dataset=d_training_set,
+                                                         test_dataset=d_test_set, batch_size=100, learning_rate=0.001,
+                                                         training_loss=d_training_loss, testing_loss=d_testing_loss)
 
         print('training_loss %s, testing_loss %s.' % (training_loss, testing_loss))
-        plot_setting(training_loss, testing_loss, out_dir, model)
+
+        img_dir = out_dir + 'images/'
+        check_dir(img_dir)
+
+        # Plot train and test losses
+        title = 'Loss %s' % model
+        file_name = 'loss-%s.png' % model
+        plot_train_test_losses(training_loss, testing_loss, img_dir, title, file_name)
+
+        file_name = 'loss-rescaled%s.png' % model
+        plot_train_test_losses(training_loss, testing_loss, img_dir, title, file_name, scale=min(testing_loss) * 10)
+
+        # Plot scatter-plot that compares the groundtruth to the prediction
+        title = 'groundtruth vs prediction %s' % model
+        file_name = 'gt-prediction-%s.png' % model
+        x = torch.flatten(y_test).tolist()
+        y = torch.flatten(torch.cat(outputs, dim=0)).tolist()
+        x_label = 'groundtruth'
+        y_label = 'prediction'
+        scatter_plot(x, y, x_label, y_label, img_dir, title, file_name)
+
+        # Plot prediction histogram
+        title = 'Histogram Predictions %s' % model
+        file_name = 'histogram-predictions%s.png' % model
+        plot_prediction_histogram(y, 'prediction', img_dir, title, file_name)
+
+        # Plot groundtruth histogram
+        title = 'Histogram Groundtruth %s' % model
+        file_name = 'histogram-groundtruth%s.png' % model
+        plot_prediction_histogram(x, 'groundtruth', img_dir, title, file_name)
+
+        # Plot sensing histogram
+        title = 'Histogram Sensing %s' % model
+        file_name = 'histogram-sensing%s.png' % model
+        sensing = list(map(list, zip(*x_train.tolist())))
+        x = [sensing[0], sensing[1], sensing[2], sensing[3], sensing[4], sensing[5], sensing[6]]
+        label = ['prox_sens_0', 'prox_sens_1', 'prox_sens_2', 'prox_sens_3',
+                 'prox_sens_4', 'prox_sens_5', 'prox_sens_6']
+        plot_prediction_histogram(x, 'sensing', img_dir, title, file_name, label)
 
         if save_cmd:
             torch.save(d_net, '%s/%s' % (out_dir, model))
@@ -212,7 +284,7 @@ if __name__ == '__main__':
     check_dir(out_dir)
     file = os.path.join(out_dir, 'dataset_split.npy')
 
-    runs_dir = 'out-5myts/'
+    runs_dir = 'out/5myts/'
     model = 'net1'
 
     try:
