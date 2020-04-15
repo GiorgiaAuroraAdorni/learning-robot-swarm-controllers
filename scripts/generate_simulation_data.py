@@ -37,7 +37,7 @@ class DistributedThymio2(pyenki.Thymio2):
         :return: clipped linear velocity
         """
         velocity = constant * self.signed_distance()
-        return min(max(-500, velocity), 500)
+        return min(max(-16.6, velocity), 16.6)
 
     def move_to_goal(self):
         """

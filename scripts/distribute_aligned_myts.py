@@ -13,8 +13,8 @@ class DistributedThymio2(pyenki.Thymio2):
     def __init__(self, name, **kwargs) -> None:
         super().__init__(**kwargs)
         self.name = name
-        # Aseba uses integers and encodes speed between -500 and +500
-        self.distributed_controller = PID(-0.01, 0, 0, max_out=500, min_out=-500)
+        #  Encodes speed between -16.6 and +16.6 (aseba units: [-500,500])
+        self.distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
         self.state = self.INITIAL
         self.distribute = True
 
