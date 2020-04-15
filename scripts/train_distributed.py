@@ -125,7 +125,6 @@ def train_net(epochs: int,
     if testing_loss is None:
         testing_loss = []
 
-    # FIXME
     outputs = []
     n_train = len(train_dataset)
     n_test = len(test_dataset)
@@ -136,7 +135,6 @@ def train_net(epochs: int,
 
         for n, (inputs, labels) in enumerate(train_minibatch):
             output = net(inputs)
-
             # padded is used when in the simulations are different number of thymio
             if padded:
                 losses = []
@@ -149,7 +147,7 @@ def train_net(epochs: int,
                 loss = criterion(output, labels)
 
             loss.backward()
-            # FIXME
+
             avg_loss += float(loss) * batch_size
             optimizer.step()
             optimizer.zero_grad()
@@ -157,35 +155,25 @@ def train_net(epochs: int,
         training_loss.append(avg_loss / n_train)
 
         with torch.no_grad():
-            # padded is used when in the simulations are different number of thymio
-            if padded:
-                test_losses = []
-                for t_inputs, t_labels in test_minibatch:
-                    t_output = net(t_inputs)
+            test_losses = []
+            outputs = []
+            for inputs, labels in test_minibatch:
+                t_output = net(inputs)
+                # padded is used when in the simulations are different number of thymio
+                if padded:
                     losses = []
-                    for out, label in zip(t_output, t_labels):
+                    for out, label in zip(inputs, labels):
                         label = unmask(label)
                         loss = criterion(out, label)
                         losses.append(loss)
                     loss = torch.mean(torch.stack(losses))
-                    test_losses.append(float(loss))
+                else:
+                    loss = criterion(t_output, labels)
 
-                testing_loss.append(sum(test_losses) / n_test)
-            else:
-                test_losses = []
-                outputs = []
-                for inputs, labels in test_minibatch:
-                    t_output = net(inputs)
-                    loss = float(criterion(t_output, labels))
-                    test_losses.append(loss)
-                    outputs.append(t_output)
-
-                testing_loss.append(sum(test_losses) / n_test)
-
-                # testing_loss.append(sum([float(criterion(net(inputs), labels)) for inputs, labels in test_minibatch]))
-                # FIXME
-                epoch_outputs.append(outputs)
-
+                test_losses.append(float(loss))
+                outputs.append(t_output)
+            testing_loss.append(sum(test_losses) / n_test)
+            epoch_outputs.append(outputs)
         print(avg_loss / n_train)
 
     return training_loss, testing_loss, outputs
