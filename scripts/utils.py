@@ -65,6 +65,7 @@ def visualise_simulation(runs_dir, img_dir, model):
     myt2_sensing = np.array(myt2_sensing)
     myt2_control = np.array(myt2_control)
 
+    grid = np.linspace(0, x_positions[-1, -1], 5)
     fig, axes = plt.subplots(nrows=3, figsize=(8, 10), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
@@ -74,6 +75,8 @@ def visualise_simulation(runs_dir, img_dir, model):
     for i in range(np.shape(x_positions)[1]):
         axes[0].plot(time_steps, x_positions[:, i], label='myt%d' % (i + 1))  #, color='black')
     axes[0].legend(loc='center right', bbox_to_anchor=(1.25, 0.5))
+    axes[0].set_yticks(grid)
+    axes[0].grid()
 
     # Plot, for a given robot, the evolution of sensing over time
     # axes[1].set_xlabel('timestep', fontsize=11)
@@ -82,12 +85,14 @@ def visualise_simulation(runs_dir, img_dir, model):
     for i in range(np.shape(myt2_sensing)[1]):
         axes[1].plot(time_steps, myt2_sensing[:, i], label='prox sensor %d' % (i + 1))  # , color='black')
     axes[1].legend(loc='center right', bbox_to_anchor=(1.3, 0.5))
+    axes[1].grid()
 
     # Plot, for a given robot, the evolution of control over time
     # axes[2].set_xlabel('timestep', fontsize=11)
     axes[2].set_ylabel('control', fontsize=11)
     axes[2].set_title('Thymio 2 Control', weight='bold', fontsize=12)
     axes[2].plot(time_steps, myt2_control, color='black')
+    axes[2].grid()
 
     plt.tight_layout()
     plt.xlabel('timestep', fontsize=11)
