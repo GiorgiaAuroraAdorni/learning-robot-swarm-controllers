@@ -10,7 +10,7 @@ from torch.utils.data import TensorDataset
 from tqdm import tqdm
 
 from networks.distributed_network import DistributedNet
-from utils import check_dir, plot_losses, my_scatterplot, my_histogram
+from utils import check_dir, plot_losses, my_scatterplot, my_histogram, dataset_split
 
 
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
@@ -226,10 +226,10 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, padded=False, c
     return outputs
 
 
-def network_plots(model, outputs, training_loss, validation_loss, x_train, y_valid, input, output):
+def network_plots(dataset, outputs, training_loss, validation_loss, x_train, y_valid, input, output):
     """
 
-    :param model:
+    :param dataset:
     :param outputs:
     :param training_loss:
     :param validation_loss:
@@ -238,12 +238,12 @@ def network_plots(model, outputs, training_loss, validation_loss, x_train, y_val
     :param input:
     :param output:
     """
-    img_dir = out_dir + 'images/'
+    img_dir = '%s/images/' % out_dir
     check_dir(img_dir)
 
     #  Generate a scatter plot to check the conformity of the dataset
-    title = 'Dataset %s' % model
-    file_name = 'dataset-scatterplot-%s.png' % model
+    title = 'Dataset %s' % dataset
+    file_name = 'dataset-scatterplot-%s.png' % dataset
 
     x = np.array(input)[:, 2] - np.mean(np.array(input)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
     y = np.array(output).flatten()  # y: speed
@@ -253,16 +253,16 @@ def network_plots(model, outputs, training_loss, validation_loss, x_train, y_val
     my_scatterplot(x, y, x_label, y_label, '%s/dataset' % img_dir, title, file_name)
 
     # Plot train and test losses
-    title = 'Loss %s' % model
-    file_name = 'loss-%s.png' % model
+    title = 'Loss %s' % dataset
+    file_name = 'loss-%s.png' % dataset
     plot_losses(training_loss, validation_loss, img_dir, title, file_name)
 
-    file_name = 'loss-rescaled-%s.png' % model
+    file_name = 'loss-rescaled-%s.png' % dataset
     plot_losses(training_loss, validation_loss, img_dir, title, file_name, scale=min(validation_loss) * 10)
 
     # Plot scatter-plot that compares the groundtruth to the prediction
-    title = 'groundtruth vs prediction %s' % model
-    file_name = 'gt-prediction-%s.png' % model
+    title = 'groundtruth vs prediction %s' % dataset
+    file_name = 'gt-prediction-%s.png' % dataset
 
     x = torch.flatten(y_valid).tolist()
     y = torch.flatten(torch.cat(outputs, dim=0)).tolist()
@@ -271,18 +271,18 @@ def network_plots(model, outputs, training_loss, validation_loss, x_train, y_val
     my_scatterplot(x, y, x_label, y_label, img_dir, title, file_name)
 
     # Plot prediction histogram
-    title = 'Histogram Predictions Validation Set %s' % model
-    file_name = 'histogram-predictions-validation-%s.png' % model
+    title = 'Histogram Predictions Validation Set %s' % dataset
+    file_name = 'histogram-predictions-validation-%s.png' % dataset
     my_histogram(y, 'prediction', img_dir, title, file_name)
 
     # Plot groundtruth histogram
-    title = 'Histogram Groundtruth Validation Set %s' % model
-    file_name = 'histogram-groundtruth-validation-%s.png' % model
+    title = 'Histogram Groundtruth Validation Set %s' % dataset
+    file_name = 'histogram-groundtruth-validation-%s.png' % dataset
     my_histogram(x, 'groundtruth', img_dir, title, file_name)
 
     # Plot sensing histogram
-    title = 'Histogram Sensing Validation Set%s' % model
-    file_name = 'histogram-sensing-validation-%s.png' % model
+    title = 'Histogram Sensing Validation Set%s' % dataset
+    file_name = 'histogram-sensing-validation-%s.png' % dataset
 
     sensing = list(map(list, zip(*x_train.tolist())))
     x = [sensing[0], sensing[1], sensing[2], sensing[3], sensing[4], sensing[5], sensing[6]]
@@ -291,7 +291,7 @@ def network_plots(model, outputs, training_loss, validation_loss, x_train, y_val
     my_histogram(x, 'sensing', img_dir, title, file_name, label)
 
 
-def main(file, runs_dir, out_dir, model, train):
+def main(file, runs_dir, out_dir, model, ds, train):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir: directory containing the simulations
@@ -348,19 +348,21 @@ def main(file, runs_dir, out_dir, model, train):
 
         outputs = validate_net(len(d_valid_set), d_net, valid_minibatch, validation_loss.copy())
 
-        network_plots(model, outputs, training_loss, validation_loss, x_train, y_valid, input, output)
+        network_plots(ds, outputs, training_loss, validation_loss, x_train, y_valid, input, output)
 
 
 if __name__ == '__main__':
+    model = 'net1'
+    dataset = '5myts'
 
-    out_dir = 'models/distributed/'
+    runs_dir = 'out/%s/' % dataset
+    out_dir = 'models/distributed/%s' % model
     check_dir(out_dir)
+    check_dir(runs_dir)
+
     file = os.path.join(out_dir, 'dataset_split.npy')
 
-    runs_dir = 'out/5myts/'
-    model = 'net1'
-
     try:
-        main(file, runs_dir, out_dir, model, train=False)
+        main(file, runs_dir, out_dir, model, dataset, train=False)
     except:
         raise
