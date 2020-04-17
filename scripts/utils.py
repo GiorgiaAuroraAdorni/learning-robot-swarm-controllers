@@ -309,7 +309,6 @@ def visualise_simulations_comparison(runs_dir, img_dir, model):
                            'prox sensor 6', 'prox sensor 7'))
     axes[1].grid()
     axes[1].set(ylabel='sensing')
-
     sns.lineplot(x="timestep", y="myt2_control", data=df_control, ax=axes[2])
     axes[2].set_title('Thymio 2 Control', weight='bold', fontsize=12)
     axes[2].grid()
@@ -368,7 +367,8 @@ def my_scatterplot(x, y, x_label, y_label, img_dir, title, filename):
     plt.xlabel(x_label, fontsize=11)
     plt.ylabel(y_label, fontsize=11)
 
-    plt.scatter(x, y)
+
+    plt.scatter(x, y, alpha=0.5, marker='.')
     plt.title(title, weight='bold', fontsize=12)
 
     check_dir(img_dir)
@@ -391,9 +391,10 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
     if label is None:
         plt.hist(prediction, bins=50)
     else:
+        plt.figure(figsize=(8.4, 4.8))
         plt.style.use('seaborn-deep')
-        plt.hist(prediction, bins=50, label=label)
-        plt.legend()
+        plt.hist(prediction, label=label)
+        plt.legend(loc='center right', bbox_to_anchor=(1.5, 0.5))
     plt.yscale('log')
 
     plt.title(title, weight='bold', fontsize=12)

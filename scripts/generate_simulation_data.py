@@ -69,7 +69,7 @@ def init_positions(myts):
 
     # The minimum distance between two Thymio [wheel - wheel] is 12 cm
     min_distance = 10.9  # in the previous version it was set at 7.95
-    avg_gap = 12  # can vary in the range [6, 14]
+    avg_gap = 8  # 12  # can vary in the range [6, 14]
 
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
     # ~ 14 cm is the proximity sensors maximal range
