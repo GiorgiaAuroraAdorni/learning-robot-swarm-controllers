@@ -323,11 +323,11 @@ def visualise_simulations_comparison(runs_dir, img_dir, model):
     plt.show()
 
 
-def plot_train_test_losses(train_loss, test_loss, img_dir, title, filename, scale=None):
+def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
     """
 
     :param train_loss: the training losses
-    :param test_loss: the testing losses
+    :param valid_loss: the testing losses
     :param img_dir: directory for the output image
     :param title:
     :param filename:
@@ -341,8 +341,7 @@ def plot_train_test_losses(train_loss, test_loss, img_dir, title, filename, scal
     plt.xticks(x)
 
     plt.plot(x, train_loss, label='Train ' + title)
-    # plt.plot(x, valid_loss, label='Valid ' + title)
-    plt.plot(x, test_loss, label='Test ' + title)
+    plt.plot(x, valid_loss, label='Validation ' + title)
     if scale is not None:
         plt.ylim(0, scale)
 
@@ -407,7 +406,7 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
 
 runs_dir = 'out/'
 model = '5myts'
-img_dir = 'models/distributed/images/'
+img_dir = 'models/distributed/images/dataset/'
 
 visualise_simulation(runs_dir, img_dir, model)
 visualise_simulations_comparison(runs_dir, img_dir, model)
