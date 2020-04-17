@@ -1,7 +1,6 @@
 import os
 import re
-import sys
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, AnyStr
 
 import numpy as np
 import pandas as pd
@@ -14,13 +13,13 @@ from networks.distributed_network import DistributedNet
 from utils import check_dir, plot_losses, my_scatterplot, my_histogram
 
 
-def from_dataset_to_tensors(runs_dir, train_indices, validation_indices, test_indices):
+def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
     """
     :param runs_dir: directory containing the simulations
     :param train_indices
     :param validation_indices
     :param test_indices
-    :return: tensors with input and output of the network for both train and test set.
+    :return: train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input, output
     """
     train_sample = []
     valid_sample = []
@@ -66,27 +65,33 @@ def from_dataset_to_tensors(runs_dir, train_indices, validation_indices, test_in
                 speed = myt['motor_left_target']
                 output.append([speed])
 
-    #  Generate a scatter plot to check the conformity of the dataset
-    title = 'Dataset 5myts'
-    file_name = 'scatterplot-5myts.png'
+    return train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input, output
 
-    x = np.array(input)[:, 2] - np.mean(np.array(input)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
-    y = np.array(output).flatten()  # y: speed
-    x_label = 'sensing'
-    y_label = 'control'
 
-    my_scatterplot(x, y, x_label, y_label, 'models/distributed/images/dataset', title, file_name)
+def from_dataset_to_tensors(test_sample, test_target, train_sample, train_target, valid_sample, valid_target):
+    """
 
-    # Generate the tensors
-    train_sample_tensor = torch.tensor(train_sample)
-    valid_sample_tensor = torch.tensor(valid_sample)
-    test_sample_tensor = torch.tensor(test_sample)
-    train_target_tensor = torch.tensor(train_target)
-    valid_target_tensor = torch.tensor(valid_target)
-    test_target_tensor = torch.tensor(test_target)
+    :param test_sample:
+    :param test_target:
+    :param train_sample:
+    :param train_target:
+    :param valid_sample:
+    :param valid_target:
+    :return d_test_set, d_train_set, d_valid_set, x_train, y_valid:
+    """
+    x_train = torch.tensor(train_sample)
+    x_valid = torch.tensor(valid_sample)
+    x_test = torch.tensor(test_sample)
 
-    return train_sample_tensor, valid_sample_tensor, test_sample_tensor, train_target_tensor, valid_target_tensor, \
-           test_target_tensor
+    y_train = torch.tensor(train_target)
+    y_valid = torch.tensor(valid_target)
+    y_test = torch.tensor(test_target)
+
+    d_train_set = TensorDataset(x_train, y_train)
+    d_valid_set = TensorDataset(x_valid, y_valid)
+    d_test_set = TensorDataset(x_test, y_test)
+
+    return d_test_set, d_train_set, d_valid_set, x_train, y_valid
 
 
 def unmask(label):
@@ -104,7 +109,8 @@ def unmask(label):
     return torch.stack(new_label)
 
 
-def train_net(epochs: int,
+def train_net(file: AnyStr,
+              epochs: int,
               train_dataset: data.TensorDataset,
               valid_dataset: data.TensorDataset,
               test_dataset: data.TensorDataset,
@@ -115,9 +121,10 @@ def train_net(epochs: int,
               validation_loss: Optional[List[float]] = None,
               testing_loss: Optional[List[float]] = None,
               criterion=torch.nn.MSELoss(),
-              padded=False,
-              ) -> Tuple[List[float], List[float], List[float], Optional[Tuple[torch.Tensor, ...]]]:
+              padded=False
+              ) -> Tuple[List[float], List[float], List[float]]:
     """
+    :param file:
     :param epochs:
     :param train_dataset:
     :param valid_dataset:
@@ -130,15 +137,16 @@ def train_net(epochs: int,
     :param testing_loss:
     :param criterion:
     :param padded:
-    :return:
+    :return training_loss, validation_loss, testing_loss:
 
     """
 
     train_minibatch = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     valid_minibatch = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
     test_minibatch = data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
+    np.save(file, [train_minibatch, valid_minibatch, test_minibatch])
 
+    optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
     optimizer.zero_grad()
 
     if training_loss is None:
@@ -150,14 +158,12 @@ def train_net(epochs: int,
     if testing_loss is None:
         testing_loss = []
 
-    outputs = []
     n_train = len(train_dataset)
     n_valid = len(valid_dataset)
     n_test = len(test_dataset)
 
     for _ in tqdm(range(epochs)):
         avg_loss = 0.0
-        epoch_outputs = []
 
         for n, (inputs, labels) in enumerate(train_minibatch):
             output = net(inputs)
@@ -179,33 +185,48 @@ def train_net(epochs: int,
             optimizer.zero_grad()
 
         training_loss.append(avg_loss / n_train)
-
-        with torch.no_grad():
-            valid_losses = []
-            outputs = []
-            for inputs, labels in valid_minibatch:
-                t_output = net(inputs)
-                # padded is used when in the simulations are different number of thymio
-                if padded:
-                    losses = []
-                    for out, label in zip(inputs, labels):
-                        label = unmask(label)
-                        loss = criterion(out, label)
-                        losses.append(loss)
-                    loss = torch.mean(torch.stack(losses))
-                else:
-                    loss = criterion(t_output, labels)
-
-                valid_losses.append(float(loss))
-                outputs.append(t_output)
-            validation_loss.append(sum(valid_losses) / n_valid)
-            epoch_outputs.append(outputs)
         print(avg_loss / n_train)
 
-    return training_loss, validation_loss, testing_loss, outputs
+        validate_net(n_valid, net, valid_minibatch, validation_loss, padded, criterion)
+
+    return training_loss, validation_loss, testing_loss
 
 
-def network_plots(model, outputs, training_loss, validation_loss, x_train, y_valid):
+def validate_net(n_valid, net, valid_minibatch, validation_loss, padded=False, criterion=torch.nn.MSELoss()):
+    """
+    :param n_valid:
+    :param net:
+    :param valid_minibatch:
+    :param validation_loss:
+    :param padded:
+    :param criterion:
+    :return outputs:
+    """
+    valid_losses = []
+    outputs = []
+
+    with torch.no_grad():
+        for inputs, labels in valid_minibatch:
+            t_output = net(inputs)
+            # padded is used when in the simulations are different number of thymio
+            if padded:
+                losses = []
+                for out, label in zip(inputs, labels):
+                    label = unmask(label)
+                    loss = criterion(out, label)
+                    losses.append(loss)
+                loss = torch.mean(torch.stack(losses))
+            else:
+                loss = criterion(t_output, labels)
+
+            valid_losses.append(float(loss))
+            outputs.append(t_output)
+        validation_loss.append(sum(valid_losses) / n_valid)
+
+    return outputs
+
+
+def network_plots(model, outputs, training_loss, validation_loss, x_train, y_valid, input, output):
     """
 
     :param model:
@@ -214,9 +235,22 @@ def network_plots(model, outputs, training_loss, validation_loss, x_train, y_val
     :param validation_loss:
     :param x_train:
     :param y_valid:
+    :param input:
+    :param output:
     """
     img_dir = out_dir + 'images/'
     check_dir(img_dir)
+
+    #  Generate a scatter plot to check the conformity of the dataset
+    title = 'Dataset %s' % model
+    file_name = 'dataset-scatterplot-%s.png' % model
+
+    x = np.array(input)[:, 2] - np.mean(np.array(input)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
+    y = np.array(output).flatten()  # y: speed
+    x_label = 'sensing'
+    y_label = 'control'
+
+    my_scatterplot(x, y, x_label, y_label, '%s/dataset' % img_dir, title, file_name)
 
     # Plot train and test losses
     title = 'Loss %s' % model
@@ -257,7 +291,7 @@ def network_plots(model, outputs, training_loss, validation_loss, x_train, y_val
     my_histogram(x, 'sensing', img_dir, title, file_name, label)
 
 
-def main(file, runs_dir, out_dir, model):
+def main(file, runs_dir, out_dir, model, train):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir: directory containing the simulations
@@ -276,47 +310,45 @@ def main(file, runs_dir, out_dir, model):
                                                       dataset[n_train + n_validation:]
 
     # Split the dataset also defining input and output, using the indices
-    x_train, x_valid, x_test, y_train, y_valid, y_test = from_dataset_to_tensors(runs_dir,
-                                                                                 train_indices,
-                                                                                 validation_indices,
-                                                                                 test_indices)
+    train_sample, valid_sample, test_sample, \
+    train_target, valid_target, test_target, \
+    input, output = from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices)
 
-    d_train_set = TensorDataset(x_train, y_train)
-    d_valid_set = TensorDataset(x_valid, y_valid)
-    d_test_set = TensorDataset(x_test, y_test)
+    # Generate the tensors
+    d_test_set, d_train_set, d_valid_set, x_train, y_valid = from_dataset_to_tensors(test_sample, test_target,
+                                                                                     train_sample, train_target,
+                                                                                     valid_sample, valid_target)
 
-    command_dis = True
-    save_cmd = True
-    # save_cmd = False
+    file_losses = os.path.join(out_dir, 'losses.npy')
+    file_minibatch = os.path.join(out_dir, 'minibatch.npy')
 
-    if len(sys.argv) > 1:
-        if sys.argv[2] == 'load':
-            command_dis = False
-        if sys.argv[4] == 'save':
-            save_cmd = True
-
-    if command_dis:
+    if train:
         d_net = DistributedNet(x_train.shape[1])
         d_training_loss, d_validation_loss, d_testing_loss = [], [], []
 
-        training_loss, validation_loss, testing_loss, outputs = train_net(epochs=20,
-                                                                          train_dataset=d_train_set,
-                                                                          valid_dataset=d_valid_set,
-                                                                          test_dataset=d_test_set,
-                                                                          net=d_net,
-                                                                          training_loss=d_training_loss,
-                                                                          validation_loss=d_validation_loss,
-                                                                          testing_loss=d_testing_loss)
+        training_loss, validation_loss, testing_loss = train_net(file=file_minibatch,
+                                                                 epochs=20,
+                                                                 train_dataset=d_train_set,
+                                                                 valid_dataset=d_valid_set,
+                                                                 test_dataset=d_test_set,
+                                                                 net=d_net,
+                                                                 training_loss=d_training_loss,
+                                                                 validation_loss=d_validation_loss,
+                                                                 testing_loss=d_testing_loss)
 
-        print('training_loss %s, validation_loss %s.' % (training_loss, validation_loss))
+        np.save(file_losses, [training_loss, validation_loss, testing_loss])
 
-        network_plots(model, outputs, training_loss, validation_loss, x_train, y_valid)
-
-        if save_cmd:
-            torch.save(d_net, '%s/%s' % (out_dir, model))
+        torch.save(d_net, '%s/%s' % (out_dir, model))
     else:
-        u = 1
         d_net = torch.load('%s/%s' % (out_dir, model))
+
+        # Load the metrics
+        training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
+        train_minibatch, valid_minibatch, test_minibatch = np.load(file_minibatch, allow_pickle=True)
+
+        outputs = validate_net(len(d_valid_set), d_net, valid_minibatch, validation_loss.copy())
+
+        network_plots(model, outputs, training_loss, validation_loss, x_train, y_valid, input, output)
 
 
 if __name__ == '__main__':
@@ -329,6 +361,6 @@ if __name__ == '__main__':
     model = 'net1'
 
     try:
-        main(file, runs_dir, out_dir, model)
+        main(file, runs_dir, out_dir, model, train=False)
     except:
         raise

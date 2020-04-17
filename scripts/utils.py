@@ -56,12 +56,12 @@ def visualise_simulation(runs_dir, img_dir, model):
     myt2_sensing = np.array(myt2_sensing[0])
     myt2_control = np.array(myt2_control[0])
 
-    grid = np.linspace(x_positions[0, -1], x_positions[-1, -1], x_positions.shape[1])
+    grid = np.linspace(x_positions[-1, 0], x_positions[-1, -1], x_positions.shape[1])
     fig, axes = plt.subplots(nrows=3, figsize=(8, 10), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
     # axes[0].set_xlabel('timestep', fontsize=11)
-    axes[0].set_ylabel('x position', fontsize=11)
+    # axes[0].set_ylabel('x position', fontsize=11)
     axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
     for i in range(np.shape(x_positions)[1]):
         axes[0].plot(time_steps, x_positions[:, i], label='myt%d' % (i + 1))  # , color='black')
@@ -225,11 +225,11 @@ def visualise_simulations_comparison(runs_dir, img_dir, model):
     std_myt2_control = np.nanstd(myt2_control, axis=0)
     std_myt2_sensing = np.nanstd(myt2_sensing, axis=0)
 
-    grid = np.linspace(mean_x_positions[0, -1], mean_x_positions[-1, -1], mean_x_positions.shape[1])
+    grid = np.linspace(mean_x_positions[-1, 0], mean_x_positions[-1, -1], mean_x_positions.shape[1])
     fig, axes = plt.subplots(nrows=3, figsize=(8, 10), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
-    axes[0].set_ylabel('x position', fontsize=11)
+    # axes[0].set_ylabel('x position', fontsize=11)
     axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
     for i in range(np.shape(mean_x_positions)[1]):
         axes[0].plot(time_steps, mean_x_positions[:, i], label='myt%d' % (i + 1))
@@ -376,15 +376,15 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
     :param filename:
     :param label:
     """
-    plt.xlabel(x_label, fontsize=11)
     if label is None:
         plt.hist(prediction, bins=50)
     else:
-        plt.figure(figsize=(8.4, 4.8))
+        plt.figure(figsize=(9.4, 4.8))
         plt.style.use('seaborn-deep')
         plt.hist(prediction, label=label)
-        plt.legend(loc='center right', bbox_to_anchor=(1.5, 0.5))
+        plt.legend(loc='center right', bbox_to_anchor=(1.3, 0.5))
     plt.yscale('log')
+    plt.xlabel(x_label, fontsize=11)
 
     plt.title(title, weight='bold', fontsize=12)
 

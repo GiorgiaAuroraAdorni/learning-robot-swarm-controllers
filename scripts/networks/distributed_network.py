@@ -19,10 +19,21 @@ class DistributedNet(torch.nn.Module):
         self.l2 = torch.nn.Linear(10, 1)
 
     def forward(self, xs):
-        ys = nn_funct.torch.tanh(self.l1(xs))
+        """
+
+        :param xs:
+        :return:
+        """
+        # ys = nn_funct.torch.tanh(self.l1(xs))
+        ys = nn_funct.torch.sigmoid(self.l1(xs))
+        # ys2 = nn_funct.torch.linear(self.l2(ys))
         return self.l2(ys)
 
     def controller(self) -> Controller:
+        """
+
+        :return:
+        """
         def f(state: Sequence[State], sensing: Sequence[Sensing]) -> Tuple[Sequence[Control]]:
             with torch.no_grad():
                 return self(torch.FloatTensor(sensing)).numpy().flatten(),
