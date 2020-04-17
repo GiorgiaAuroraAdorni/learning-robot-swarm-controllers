@@ -56,10 +56,13 @@ def from_dataset_to_tensors(runs_dir, train_indices, validation_indices, test_in
         for step in run:
             for myt in step:
                 # The input is the prox_values, that are the response values of ​​the sensors [array of 7 floats]
+                # they are normalised so that the average is around 1 or a constant (e.g. for all (dividing by 1000))
                 sample = myt['prox_values'].copy()
-                input.append(sample)
+                normalised_sample = np.divide(np.array(sample), 1000).tolist()
+                input.append(normalised_sample)
 
                 # The output is the speed of the wheels (which we assume equals left and right) [array of 1 float]
+                # There is no need to normalize the outputs.
                 speed = myt['motor_left_target']
                 output.append([speed])
 
