@@ -7,7 +7,7 @@ from math import pi, sin, cos
 import numpy as np
 import pyenki
 from tqdm import tqdm
-from utils import check_dir
+from utils import check_dir, visualise_simulation, visualise_simulations_comparison
 
 
 # Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
@@ -227,20 +227,23 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
                         dictionary = generate_dict(myt)
                     else:
                         dictionary = update_dict(myt)
-                    iteration.append(dictionary)
 
-                    # Check if the robot has reached the target
-                    diff = abs(iteration[i]['position'][0] - iteration[i]['goal_position'][0])
-                    if diff < tol:
-                        counter += 1
+                    # Do not include the 2 thymio at the ends, but only the ones that have to move.
+                    if i != 0 and i != (myt_quantity - 1):
+                        iteration.append(dictionary)
+
+                        # Check if the robot has reached the target
+                        diff = abs(dictionary['position'][0] - dictionary['goal_position'][0])
+                        if diff < tol:
+                            counter += 1
 
             # Check is the step is finished
-            if len(iteration) == myt_quantity:
+            if len(iteration) == myt_quantity - 2:
                 data.append(iteration)
                 iteration = []
 
             # Stop the simulation if all the robots have reached the goal
-            if counter == myt_quantity:
+            if counter == myt_quantity - 2:
                 stop_iteration = True
             else:
                 world.step(dt)
@@ -269,3 +272,10 @@ if __name__ == '__main__':
             run(simulation, myts, world, '--gui' in sys.argv)
         except Exception as e:
             print('ERROR: ', e)
+
+    runs_dir = 'out/'
+    model = '5myts'
+    img_dir = 'models/distributed/images/dataset/'
+
+    visualise_simulation(runs_dir, img_dir, model)
+    visualise_simulations_comparison(runs_dir, img_dir, model)

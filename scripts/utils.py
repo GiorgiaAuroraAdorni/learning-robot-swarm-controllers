@@ -56,7 +56,7 @@ def visualise_simulation(runs_dir, img_dir, model):
     myt2_sensing = np.array(myt2_sensing[0])
     myt2_control = np.array(myt2_control[0])
 
-    grid = np.linspace(0, x_positions[-1, -1], 5)
+    grid = np.linspace(x_positions[0, -1], x_positions[-1, -1], x_positions.shape[1])
     fig, axes = plt.subplots(nrows=3, figsize=(8, 10), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
@@ -194,23 +194,16 @@ def extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps, x_position
     df_control = pd.DataFrame(data=df_control)
 
     flat_x_positions = x_positions.reshape(-1, x_positions.shape[-1])
-    df_x_positions = {'timestep': np.array([time_steps] * 1000).flatten(),
-                      'myt1_x_positions': flat_x_positions[:, 0],
-                      'myt2_x_positions': flat_x_positions[:, 1],
-                      'myt3_x_positions': flat_x_positions[:, 2],
-                      'myt4_x_positions': flat_x_positions[:, 3],
-                      'myt5_x_positions': flat_x_positions[:, 4]}
+
+    df_x_positions = {'timestep': np.array([time_steps] * 1000).flatten()}
+    for i in range(flat_x_positions.shape[1]):
+        df_x_positions['myt%d_x_positions' % (i + 2)] = flat_x_positions[:, i]
     df_x_positions = pd.DataFrame(data=df_x_positions)
 
     flat_myt2_sensing = myt2_sensing.reshape(-1, myt2_sensing.shape[-1])
-    df_sensing = {'timestep': np.array([time_steps] * 1000).flatten(),
-                  'myt2_sensor_1': flat_myt2_sensing[:, 0],
-                  'myt2_sensor_2': flat_myt2_sensing[:, 1],
-                  'myt2_sensor_3': flat_myt2_sensing[:, 2],
-                  'myt2_sensor_4': flat_myt2_sensing[:, 3],
-                  'myt2_sensor_5': flat_myt2_sensing[:, 4],
-                  'myt2_sensor_6': flat_myt2_sensing[:, 5],
-                  'myt2_sensor_7': flat_myt2_sensing[:, 6]}
+    df_sensing = {'timestep': np.array([time_steps] * 1000).flatten()}
+    for i in range(flat_myt2_sensing.shape[1]):
+        df_sensing['myt2_sensor_%d' % (i + 1)] = flat_myt2_sensing[:, i]
     df_sensing = pd.DataFrame(data=df_sensing)
 
     return df_x_positions, df_sensing, df_control
@@ -232,7 +225,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, model):
     std_myt2_control = np.nanstd(myt2_control, axis=0)
     std_myt2_sensing = np.nanstd(myt2_sensing, axis=0)
 
-    grid = np.linspace(0, mean_x_positions[-1, -1], 5)
+    grid = np.linspace(mean_x_positions[0, -1], mean_x_positions[-1, -1], mean_x_positions.shape[1])
     fig, axes = plt.subplots(nrows=3, figsize=(8, 10), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
@@ -284,31 +277,27 @@ def visualise_simulations_comparison(runs_dir, img_dir, model):
                                                                        x_positions)
 
     fig, axes = plt.subplots(nrows=3, figsize=(8, 10), sharex=True)
-    sns.lineplot(x="timestep", y="myt1_x_positions", data=df_x_positions, ax=axes[0])
-    sns.lineplot(x="timestep", y="myt2_x_positions", data=df_x_positions, ax=axes[0])
-    sns.lineplot(x="timestep", y="myt3_x_positions", data=df_x_positions, ax=axes[0])
-    sns.lineplot(x="timestep", y="myt4_x_positions", data=df_x_positions, ax=axes[0])
-    sns.lineplot(x="timestep", y="myt5_x_positions", data=df_x_positions, ax=axes[0])
+    labels = []
+    for i in range(df_x_positions.shape[1]-1):
+        sns.lineplot(x="timestep", y="myt%d_x_positions" % (i+2), data=df_x_positions, ax=axes[0])
+        labels.append('myt%d' % (i+2))
     axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
     axes[0].legend(loc='center right', bbox_to_anchor=(1.3, 0.5),
-                   labels=('myt1', 'myt2', 'myt3', 'myt4', 'myt5'))
+                   labels=tuple(labels))
     axes[0].set_yticks(grid)
     axes[0].grid()
     axes[0].set(ylabel='x position')
 
-    sns.lineplot(x="timestep", y="myt2_sensor_1", data=df_sensing, ax=axes[1])
-    sns.lineplot(x="timestep", y="myt2_sensor_2", data=df_sensing, ax=axes[1])
-    sns.lineplot(x="timestep", y="myt2_sensor_3", data=df_sensing, ax=axes[1])
-    sns.lineplot(x="timestep", y="myt2_sensor_4", data=df_sensing, ax=axes[1])
-    sns.lineplot(x="timestep", y="myt2_sensor_5", data=df_sensing, ax=axes[1])
-    sns.lineplot(x="timestep", y="myt2_sensor_6", data=df_sensing, ax=axes[1])
-    sns.lineplot(x="timestep", y="myt2_sensor_7", data=df_sensing, ax=axes[1])
+    labels = []
+    for i in range(df_sensing.shape[1]-1):
+        sns.lineplot(x="timestep", y="myt2_sensor_%d" % (i+1), data=df_sensing, ax=axes[1])
+        labels.append('prox sensor %d' % (i+1))
     axes[1].set_title('Thymio 2 Sensing', weight='bold', fontsize=12)
     axes[1].legend(loc='center right', bbox_to_anchor=(1.35, 0.5),
-                   labels=('prox sensor 1', 'prox sensor 2', 'prox sensor 3', 'prox sensor 4', 'prox sensor 5',
-                           'prox sensor 6', 'prox sensor 7'))
+                   labels=tuple(labels))
     axes[1].grid()
     axes[1].set(ylabel='sensing')
+
     sns.lineplot(x="timestep", y="myt2_control", data=df_control, ax=axes[2])
     axes[2].set_title('Thymio 2 Control', weight='bold', fontsize=12)
     axes[2].grid()
@@ -403,11 +392,3 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
     file = os.path.join(img_dir, filename)
     plt.savefig(file)
     plt.show()
-
-
-runs_dir = 'out/'
-model = '5myts'
-img_dir = 'models/distributed/images/dataset/'
-
-visualise_simulation(runs_dir, img_dir, model)
-visualise_simulations_comparison(runs_dir, img_dir, model)
