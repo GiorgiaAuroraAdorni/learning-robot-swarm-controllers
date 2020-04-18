@@ -7,19 +7,39 @@ from math import pi, sin, cos
 import numpy as np
 import pyenki
 from tqdm import tqdm
+from pid import PID
 from utils import check_dir, visualise_simulation, visualise_simulations_comparison
 
 
 # Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
 class DistributedThymio2(pyenki.Thymio2):
 
-    def __init__(self, name, index, initial_position, goal_position, goal_angle, dictionary, **kwargs) -> None:
+    def __init__(self, controller, name, index, initial_position, goal_position, goal_angle, dictionary, **kwargs) -> \
+            None:
+        """
+
+        :param controller:
+        :param name:
+        :param index:
+        :param initial_position:
+        :param goal_position:
+        :param goal_angle:
+        :param dictionary:
+        :param kwargs:
+        """
         super().__init__(**kwargs)
         self.name = name
         self.index = index
         self.initial_position = initial_position
         self.goal_position = goal_position
         self.goal_angle = goal_angle
+        self.distribute = True
+
+        #  Encodes speed between -16.6 and +16.6 (aseba units: [-500,500])
+        self.controller = controller
+        # self.p_distributed_controller = PID(-0.01, 0.001, 0.0002, max_out=16.6, min_out=-16.6)
+        self.p_distributed_controller = PID(-0.1, 0, 0, max_out=16.6, min_out=-16.6)
+
         self.dictionary = dictionary
 
     def signed_distance(self):
@@ -46,6 +66,68 @@ class DistributedThymio2(pyenki.Thymio2):
         """
         return self.linear_vel()
 
+    def neighbors_distance(self):
+        """
+        Check if there is a robot ahead using the infrared sensor 2 (front-front).
+        Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
+        :return back, front: response values of the rear and front sensors
+        """
+        prox_values = self.prox_values
+        front = prox_values[2]
+        back = np.mean(np.array([prox_values[5], prox_values[6]]))
+
+        return back, front
+
+    def compute_difference(self):
+        """
+
+        :return: the difference between the response value of front and the rear sensor
+        """
+        back, front = self.neighbors_distance()
+
+        # Apply a small correction to the distance measured by the rear sensors: the front sensor used is at a
+        # different x coordinate from the point to which the rear sensor of the robot that follows points. this is
+        # because of the curved shape of the face of the Thymio
+        delta_x = 7.41150769
+        x = 7.95
+
+        # Maximum possible response values
+        delta_x_m = 4505 * delta_x / 14
+        x_m = 4505 * x / 14
+
+        correction = x_m - delta_x_m
+
+        if front == 0:
+            out = -16600
+        elif back == 0:
+            out = 16600
+        else:
+            out = front - correction - back
+
+        return out
+
+    def distributed_controller(self, dt):
+        """
+        :param dt:
+
+        """
+        # Don't move the first and last robots in the line
+        if self.initial_position[0] != self.goal_position[0]:
+            if self.distribute:
+                speed = self.p_distributed_controller.step(self.compute_difference(), dt)
+
+                self.motor_left_target = speed
+                self.motor_right_target = speed
+
+    def omniscient_controller(self):
+        """
+
+        """
+        speed = self.move_to_goal()
+
+        self.motor_left_target = speed
+        self.motor_right_target = speed
+
     def controlStep(self, dt: float) -> None:
         """
         Perform one control step:
@@ -55,9 +137,10 @@ class DistributedThymio2(pyenki.Thymio2):
         self.prox_comm_enable = True
         self.prox_comm_tx = self.index
 
-        speed = self.move_to_goal()
-        self.motor_left_target = speed
-        self.motor_right_target = speed
+        if self.controller == 'distributed':
+            self.distributed_controller(dt)
+        elif self.controller == 'omniscient':
+            self.omniscient_controller()
 
 
 def init_positions(myts):
@@ -73,7 +156,7 @@ def init_positions(myts):
 
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
     # ~ 14 cm is the proximity sensors maximal range
-    maximum_gap = 14
+    maximum_gap = 14  # 12
     std = 8
 
     first_x = 0
@@ -97,6 +180,7 @@ def init_positions(myts):
 
         myt.angle = 0
         myt.initial_position = myt.position
+
         #  Reset the dictionary
         myt.dictionary = None
 
@@ -107,7 +191,7 @@ def init_positions(myts):
         myt.goal_position = (goal_positions[i], 0)
 
 
-def setup(myt_quantity, aseba: bool = False):
+def setup(controller, myt_quantity, aseba: bool = False):
     """
     Set up the world and create the thymios
     :param myt_quantity: number of robot in the simulation
@@ -118,8 +202,15 @@ def setup(myt_quantity, aseba: bool = False):
     world = pyenki.World()
 
     # Create multiple Thymios and position them such as all x-axes are aligned
-    myts = [DistributedThymio2(name='myt%d' % (i + 1), index=i, initial_position=None, goal_position=None,
-                               goal_angle=0, dictionary=None, use_aseba_units=aseba) for i in range(myt_quantity)]
+    myts = [DistributedThymio2(controller=controller,
+                               name='myt%d' % (i + 1),
+                               index=i,
+                               initial_position=None,
+                               goal_position=None,
+                               goal_angle=0,
+                               dictionary=None,
+                               use_aseba_units=aseba)
+            for i in range(myt_quantity)]
 
     for myt in myts:
         world.add_object(myt)
@@ -190,11 +281,12 @@ def update_dict(myt):
     return dictionary
 
 
-def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100, dt: float = 0.1,
-        tol: float = 0.1) -> None:
+def run(simulation, myts, runs_dir,
+        world: pyenki.World, gui: bool = False, T: float = 10, dt: float = 0.1, tol: float = 0.1) -> None:
     """
     :param simulation
     :param myts
+    :param runs_dir
     :param world
     :param gui
     :param T
@@ -213,6 +305,7 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
 
         data = []
         iteration = []
+        # differences = []
 
         stop_iteration = False
 
@@ -234,9 +327,12 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
 
                         # Check if the robot has reached the target
                         diff = abs(dictionary['position'][0] - dictionary['goal_position'][0])
+                        # differences.append(diff)
                         if diff < tol:
                             counter += 1
-
+            # print(s, differences, np.sum(np.array(differences)))
+            # differences = []
+            
             # Check is the step is finished
             if len(iteration) == myt_quantity - 2:
                 data.append(iteration)
@@ -248,11 +344,8 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
             else:
                 world.step(dt)
 
-        out_dir = 'out/%dmyts/' % myt_quantity
-        # os.makedirs(out_dir, exist_ok=True)
-        check_dir(out_dir)
-        pkl_file = os.path.join(out_dir, 'simulation-%d.pkl' % simulation)
-        json_file = os.path.join(out_dir, 'simulation-%d.json' % simulation)
+        pkl_file = os.path.join(runs_dir, 'simulation-%d.pkl' % simulation)
+        json_file = os.path.join(runs_dir, 'simulation-%d.json' % simulation)
 
         with open(pkl_file, 'wb') as f:
             pickle.dump(data, f)
@@ -264,18 +357,26 @@ def run(simulation, myts, world: pyenki.World, gui: bool = False, T: float = 100
 if __name__ == '__main__':
     simulations = 1000
     myt_quantity = 5
-    world, myts = setup(myt_quantity)
+
+    controller = 'distributed'
+    # controller = 'omniscient'
+
+    dataset = '%dmyts-%s/' % (myt_quantity, controller)
+
+    out_dir = 'datasets/'
+    runs_dir = os.path.join(out_dir, dataset)
+    check_dir(runs_dir)
+
+    world, myts = setup(controller, myt_quantity)
 
     for simulation in tqdm(range(simulations)):
         try:
             init_positions(myts)
-            run(simulation, myts, world, '--gui' in sys.argv)
+            run(simulation, myts, runs_dir, world, '--gui' in sys.argv)
         except Exception as e:
             print('ERROR: ', e)
 
-    runs_dir = 'out/'
-    model = '5myts'
-    img_dir = 'models/distributed/images/dataset/'
+    img_dir = 'datasets/%s/images/' % dataset
 
-    visualise_simulation(runs_dir, img_dir, model)
-    visualise_simulations_comparison(runs_dir, img_dir, model)
+    visualise_simulation(runs_dir, img_dir)
+    visualise_simulations_comparison(runs_dir, img_dir)
