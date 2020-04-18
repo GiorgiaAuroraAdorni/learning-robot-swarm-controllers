@@ -10,7 +10,7 @@ from torch.utils.data import TensorDataset
 from tqdm import tqdm
 
 from networks.distributed_network import DistributedNet
-from utils import check_dir, plot_losses, my_scatterplot, my_histogram, dataset_split
+from utils import check_dir, dataset_split, plot_losses, my_scatterplot, my_histogram, plot_regressor
 
 
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
@@ -261,14 +261,14 @@ def network_plots(dataset, outputs, training_loss, validation_loss, x_train, y_v
     plot_losses(training_loss, validation_loss, img_dir, title, file_name, scale=min(validation_loss) * 10)
 
     # Plot scatter-plot that compares the groundtruth to the prediction
-    title = 'groundtruth vs prediction %s' % dataset
-    file_name = 'gt-prediction-%s.png' % dataset
-
-    x = torch.flatten(y_valid).tolist()
-    y = torch.flatten(torch.cat(outputs, dim=0)).tolist()
-    x_label = 'groundtruth'
-    y_label = 'prediction'
-    my_scatterplot(x, y, x_label, y_label, img_dir, title, file_name)
+    # title = 'groundtruth vs prediction %s' % dataset
+    # file_name = 'gt-prediction-%s.png' % dataset
+    #
+    # x = torch.flatten(y_valid).tolist()
+    # y = torch.flatten(torch.cat(outputs, dim=0)).tolist()
+    # x_label = 'groundtruth'
+    # y_label = 'prediction'
+    # my_scatterplot(x, y, x_label, y_label, img_dir, title, file_name)
 
     # Plot prediction histogram
     title = 'Histogram Predictions Validation Set %s' % dataset
@@ -289,6 +289,16 @@ def network_plots(dataset, outputs, training_loss, validation_loss, x_train, y_v
     label = ['prox_sens_0', 'prox_sens_1', 'prox_sens_2', 'prox_sens_3',
              'prox_sens_4', 'prox_sens_5', 'prox_sens_6']
     my_histogram(x, 'sensing', img_dir, title, file_name, label)
+
+    # Plot R^2 of the regressor between prediction and ground truth
+    title = 'Regressor groundtruth vs prediction Validation Set %s' % dataset
+    file_name = 'regressor-learned-validation-%s.png' % dataset
+
+    x = torch.flatten(y_valid).tolist()
+    y = torch.flatten(torch.cat(outputs, dim=0)).tolist()
+    x_label = 'groundtruth'
+    y_label = 'prediction'
+    plot_regressor(x, y, x_label, y_label, img_dir, title, file_name)
 
 
 def main(file, runs_dir, out_dir, model, ds, train):

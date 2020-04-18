@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-
+from sklearn.linear_model import LinearRegression
 sns.set(style="white")
 
 
@@ -29,13 +29,11 @@ def dataset_split(file_name, num_run=1000):
     np.save(file_name, x)
 
 
-def visualise_simulation(runs_dir, img_dir, model):
+def visualise_simulation(runs_dir, img_dir):
     """
     :param runs_dir:
     :param img_dir:
-    :param model:
     """
-    runs_dir = os.path.join(runs_dir, model)
     run = None
 
     x_positions = []
@@ -89,7 +87,7 @@ def visualise_simulation(runs_dir, img_dir, model):
     plt.xlabel('timestep', fontsize=11)
 
     check_dir(img_dir)
-    filename = 'plot-simulation-%s.png' % model
+    filename = 'plot-simulation.png'
     file = os.path.join(img_dir, filename)
     plt.savefig(file)
     plt.show()
@@ -132,14 +130,12 @@ def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, r
     myt2_control.append(run_myt2_control)
 
 
-def get_pos_sensing_control(model, runs_dir):
+def get_pos_sensing_control(runs_dir):
     """
 
-    :param model:
     :param runs_dir:
     :return:
     """
-    runs_dir = os.path.join(runs_dir, model)
 
     time_steps = []
     x_positions = []
@@ -209,13 +205,12 @@ def extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps, x_position
     return df_x_positions, df_sensing, df_control
 
 
-def visualise_simulations_comparison(runs_dir, img_dir, model):
+def visualise_simulations_comparison(runs_dir, img_dir):
     """
     :param runs_dir:
     :param img_dir:
-    :param model:
     """
-    time_steps, x_positions, myt2_sensing, myt2_control = get_pos_sensing_control(model, runs_dir)
+    time_steps, x_positions, myt2_sensing, myt2_control = get_pos_sensing_control(runs_dir)
 
     mean_x_positions = np.nanmean(x_positions, axis=0)
     mean_myt2_control = np.nanmean(myt2_control, axis=0)
@@ -267,7 +262,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, model):
     plt.xlabel('timestep', fontsize=11)
 
     check_dir(img_dir)
-    filename = 'compare-simulation-%s.png' % model
+    filename = 'compare-simulation.png'
     file = os.path.join(img_dir, filename)
     plt.savefig(file)
     plt.show()
@@ -305,7 +300,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, model):
 
     plt.tight_layout()
 
-    filename = 'compare-simulation-seaborn-%s.png' % model
+    filename = 'compare-simulation-seaborn.png'
     file = os.path.join(img_dir, filename)
     plt.savefig(file)
     plt.show()
@@ -356,7 +351,6 @@ def my_scatterplot(x, y, x_label, y_label, img_dir, title, filename):
     plt.xlabel(x_label, fontsize=11)
     plt.ylabel(y_label, fontsize=11)
 
-
     plt.scatter(x, y, alpha=0.5, marker='.')
     plt.title(title, weight='bold', fontsize=12)
 
@@ -385,6 +379,35 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
         plt.legend(loc='center right', bbox_to_anchor=(1.3, 0.5))
     plt.yscale('log')
     plt.xlabel(x_label, fontsize=11)
+
+    plt.title(title, weight='bold', fontsize=12)
+
+    check_dir(img_dir)
+    file = os.path.join(img_dir, filename)
+    plt.savefig(file)
+    plt.show()
+
+
+def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
+    """
+
+    :param x:
+    :param y:
+    :param x_label:
+    :param y_label:
+    :param img_dir:
+    :param title:
+    :param filename:
+    """
+    lr = LinearRegression()
+
+    lr.fit(np.reshape(x, [-1, 1]), np.reshape(y, [-1, 1]))
+
+    plt.xlabel(x_label, fontsize=11)
+    plt.ylabel(y_label, fontsize=11)
+
+    plt.scatter(x, y, alpha=0.3, marker='.')
+    plt.plot(x, lr.predict(np.reshape(x, [-1, 1])), color="orange")
 
     plt.title(title, weight='bold', fontsize=12)
 
