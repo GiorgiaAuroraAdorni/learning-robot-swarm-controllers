@@ -7,17 +7,13 @@ from pid import PID
 
 # Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
 class DistributedThymio2(pyenki.Thymio2):
-    INITIAL = 0
-    DISTRIBUTING = 1
-
     def __init__(self, name, **kwargs) -> None:
         super().__init__(**kwargs)
         self.name = name
         #  Encodes speed between -16.6 and +16.6 (aseba units: [-500,500])
-        self.distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
-        self.state = self.INITIAL
         self.distribute = True
 
+        self.distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
     def neighbors_distance(self):
         """
         Check if there is a robot ahead using the infrared sensor 2 (front-front).
@@ -90,12 +86,12 @@ def setup(aseba: bool = False) -> pyenki.World:
     world = pyenki.World()
 
     # Create multiple Thymios and position them such as all x-axes are aligned
-    myt_quantity = 8
+    myt_quantity = 5
     myts = [DistributedThymio2(name='myt%d' % (i + 1), use_aseba_units=aseba) for i in range(myt_quantity)]
 
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
     # ~ 14 cm is the proximity sensors maximal range
-    distances = np.random.randint(5, 8, 8)
+    distances = np.random.randint(8, 12, myt_quantity)
 
     # Distance between the origin and the front of the robot along x-axis
     constant = 7.95
