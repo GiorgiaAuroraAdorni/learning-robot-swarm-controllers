@@ -166,6 +166,9 @@ def init_positions(myts):
     distances = distances / np.sum(distances) * last_x
     # distances = np.random.randint(5, 10, 8)  # in the previous version
 
+    # Decide the goal pose for each robot
+    goal_positions = np.linspace(first_x, last_x, num=myt_quantity)
+
     for i, myt in enumerate(myts):
         # Position the first and last robot at a fixed distance
         if i == 0:
@@ -184,10 +187,6 @@ def init_positions(myts):
         #  Reset the dictionary
         myt.dictionary = None
 
-    # Decide the goal pose for each robot
-    goal_positions = np.linspace(myts[0].position[0], myts[myt_quantity - 1].position[0], num=myt_quantity)
-
-    for i, myt in enumerate(myts):
         myt.goal_position = (goal_positions[i], 0)
 
 
@@ -332,7 +331,7 @@ def run(simulation, myts, runs_dir,
                             counter += 1
             # print(s, differences, np.sum(np.array(differences)))
             # differences = []
-            
+
             # Check is the step is finished
             if len(iteration) == myt_quantity - 2:
                 data.append(iteration)
@@ -354,18 +353,14 @@ def run(simulation, myts, runs_dir,
             json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-if __name__ == '__main__':
-    simulations = 1000
-    myt_quantity = 5
+def generate__simulation(runs_dir, simulations, controller, myt_quantity, ):
+    """
 
-    controller = 'distributed'
-    # controller = 'omniscient'
-
-    dataset = '%dmyts-%s/' % (myt_quantity, controller)
-
-    out_dir = 'datasets/'
-    runs_dir = os.path.join(out_dir, dataset)
-    check_dir(runs_dir)
+    :param runs_dir:
+    :param simulations:
+    :param controller:
+    :param myt_quantity:
+    """
 
     world, myts = setup(controller, myt_quantity)
 
@@ -375,6 +370,19 @@ if __name__ == '__main__':
             run(simulation, myts, runs_dir, world, '--gui' in sys.argv)
         except Exception as e:
             print('ERROR: ', e)
+
+
+if __name__ == '__main__':
+    # controller = 'omniscient'
+    myt_quantity = 5
+    controller = 'distributed'
+    dataset = '%dmyts-%s/' % (myt_quantity, controller)
+
+    out_dir = 'datasets/'
+    runs_dir = os.path.join(out_dir, dataset)
+    check_dir(runs_dir)
+
+    generate__simulation(runs_dir, simulations=1000, controller='distributed', myt_quantity=5)
 
     img_dir = 'datasets/%s/images/' % dataset
 
