@@ -425,7 +425,6 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
                    title="proximity sensor", title_fontsize=11, markerscale=0.2)
         plt.tight_layout()
 
-
     check_dir(img_dir)
     file = os.path.join(img_dir, filename)
     plt.savefig(file)
@@ -455,6 +454,24 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
 
     plt.title(title, weight='bold', fontsize=12)
     plt.legend()
+
+    check_dir(img_dir)
+    file = os.path.join(img_dir, filename)
+    plt.savefig(file)
+    plt.show()
+
+
+def plot_response(x, y, img_dir, title, filename):
+
+    x = np.multiply(x[:, 2], 1000)
+    y = np.array(y.tolist()).flatten()
+
+    plt.xlabel('center proximity sensor', fontsize=11)
+    plt.ylabel('control', fontsize=11)
+
+    plt.plot(x, y)
+
+    plt.title(title, weight='bold', fontsize=12)
 
     check_dir(img_dir)
     file = os.path.join(img_dir, filename)

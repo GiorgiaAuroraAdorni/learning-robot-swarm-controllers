@@ -11,7 +11,7 @@ from pid import PID
 from torch.utils import data
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
-from utils import check_dir, plot_losses, my_scatterplot, my_histogram, plot_regressor
+from utils import check_dir, plot_losses, my_scatterplot, my_histogram, plot_regressor, plot_response
 
 
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
@@ -272,7 +272,7 @@ def network_plots(runs_img, model_dir, dataset, prediction, training_loss, valid
     # Plot prediction histogram
     title = 'Prediction Validation Set %s' % dataset
     file_name = 'histogram-prediction-validation-%s.pdf' % dataset
-    prediction = torch.flatten(torch.cat(prediction, dim=0)).tolist()
+    prediction = torch.flatten(prediction).tolist()
     my_histogram(prediction, 'prediction', model_img, title, file_name)
 
     # Plot sensing histogram
@@ -298,7 +298,8 @@ def controller_plots(model_dir, ds, ds_eval, prediction, groundtruth):
     """
 
     :param model_dir
-    :param dataset:
+    :param ds:
+    :param ds_eval:
     :param prediction:
     :param groundtruth:
     """
@@ -307,7 +308,7 @@ def controller_plots(model_dir, ds, ds_eval, prediction, groundtruth):
 
     # Plot R^2 of the regressor between prediction and ground truth
     title = 'Regression %s vs %s' % (ds_eval, ds)
-    file_name = 'regression-%svs%s' % (ds_eval, ds)
+    file_name = 'regression-%svs%s.pdf' % (ds_eval, ds)
 
     groundtruth = np.array(groundtruth).flatten()
     prediction = np.array(prediction).flatten()
@@ -318,6 +319,7 @@ def controller_plots(model_dir, ds, ds_eval, prediction, groundtruth):
 
 def neighbors_distance(sensing):
     """
+    :param sensing
     Check if there is a robot ahead using the infrared sensor 2 (front-front).
     Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
     :return back, front: response values of the rear and front sensors
@@ -331,7 +333,7 @@ def neighbors_distance(sensing):
 def compute_difference(sensing):
     """
     :param sensing
-    :return: the difference between the response value of front and the rear sensor
+    :return out: the difference between the response value of front and the rear sensor
     """
     back, front = neighbors_distance(sensing)
 
@@ -365,10 +367,15 @@ def distributed_controller(sensing, dt=0.1):
     return speed
 
 
-def evaluate_net(model_dir, ds, ds_eval, sensing, groundtruth):
+def compare_net_to_manual_controller(model_dir, ds, ds_eval, sensing, groundtruth):
     """
 
+    :param model_dir:
+    :param ds:
+    :param ds_eval:
     :param sensing:
+    :param groundtruth:
+    :return:
     """
     controller_predictions = []
 
@@ -379,6 +386,43 @@ def evaluate_net(model_dir, ds, ds_eval, sensing, groundtruth):
         controller_predictions.append(control)
 
     controller_plots(model_dir, ds, ds_eval, controller_predictions, groundtruth)
+
+
+def generate_sensing():
+    """
+
+    :return:
+    """
+    x = np.arange(4500)
+    s = np.zeros(x.shape[0])
+
+    sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
+
+    return sensing
+
+
+def evaluate_net(model_dir, model, d_net):
+    """
+
+    :param model_dir:
+    :param model:
+    :param d_net:
+    :return:
+    """
+    sensing = generate_sensing()
+    d_sensing = torch.FloatTensor(sensing)
+
+    predictions = d_net(d_sensing)
+
+    model_img = '%s/images/' % model_dir
+    check_dir(model_img)
+
+    title = 'Response %s' % model
+    file_name = 'response-%s.pdf' % model
+
+    # FIXME n plot di rete([0, 0, x, 0, 0, 0, 0]) per x in [0, 4500]: prendi il modello addestrato, valuti con quegli
+    # input e fai un plot output vs input
+    plot_response(sensing, predictions, model_img, title, file_name)
 
 
 def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, train):
@@ -437,14 +481,15 @@ def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, train):
 
         # Load the metrics
         training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
-        train_minibatch, valid_minibatch, test_minibatch = np.load(file_minibatch, allow_pickle=True)
 
-        prediction = validate_net(len(d_valid_set), d_net, valid_minibatch, validation_loss.copy())
+        prediction = d_net(torch.FloatTensor(valid_sample))
 
         network_plots(runs_img, model_dir, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
                       sensing, groundtruth)
 
-        evaluate_net(model_dir, ds, ds_eval, sensing, groundtruth)
+        compare_net_to_manual_controller(model_dir, ds, ds_eval, sensing, groundtruth)
+
+        evaluate_net(model_dir, model, d_net)
 
 
 if __name__ == '__main__':
