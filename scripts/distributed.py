@@ -204,7 +204,6 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, padded=False, c
     :return outputs:
     """
     valid_losses = []
-    outputs = []
 
     with torch.no_grad():
         for inputs, labels in valid_minibatch:
@@ -221,10 +220,7 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, padded=False, c
                 loss = criterion(t_output, labels)
 
             valid_losses.append(float(loss))
-            outputs.append(t_output)
         validation_loss.append(sum(valid_losses) / n_valid)
-
-    return outputs
 
 
 def network_plots(runs_img, model_dir, dataset, prediction, training_loss, validation_loss, x_train, y_valid,
@@ -358,7 +354,8 @@ def distributed_controller(sensing, dt=0.1):
     """
 
     :param sensing
-    :param dt:
+    :param dt: timestep
+    :return speed
 
     """
     p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
@@ -375,7 +372,6 @@ def compare_net_to_manual_controller(model_dir, ds, ds_eval, sensing, groundtrut
     :param ds_eval:
     :param sensing:
     :param groundtruth:
-    :return:
     """
     controller_predictions = []
 
@@ -391,7 +387,7 @@ def compare_net_to_manual_controller(model_dir, ds, ds_eval, sensing, groundtrut
 def generate_sensing():
     """
 
-    :return:
+    :return sensing
     """
     x = np.arange(4500)
     s = np.zeros(x.shape[0])
@@ -407,7 +403,6 @@ def evaluate_net(model_dir, model, d_net):
     :param model_dir:
     :param model:
     :param d_net:
-    :return:
     """
     sensing = generate_sensing()
     d_sensing = torch.FloatTensor(sensing)
@@ -420,8 +415,7 @@ def evaluate_net(model_dir, model, d_net):
     title = 'Response %s' % model
     file_name = 'response-%s.pdf' % model
 
-    # FIXME n plot di rete([0, 0, x, 0, 0, 0, 0]) per x in [0, 4500]: prendi il modello addestrato, valuti con quegli
-    # input e fai un plot output vs input
+    # Plot the output of the network given the input ([0, 0, x, 0, 0, 0, 0]) for x in [0, 4500]
     plot_response(sensing, predictions, model_img, title, file_name)
 
 
