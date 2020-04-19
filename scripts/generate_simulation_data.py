@@ -37,8 +37,7 @@ class DistributedThymio2(pyenki.Thymio2):
 
         #  Encodes speed between -16.6 and +16.6 (aseba units: [-500,500])
         self.controller = controller
-        # self.p_distributed_controller = PID(-0.01, 0.001, 0.0002, max_out=16.6, min_out=-16.6)
-        self.p_distributed_controller = PID(-0.1, 0, 0, max_out=16.6, min_out=-16.6)
+        self.p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
 
         self.dictionary = dictionary
 
@@ -97,12 +96,7 @@ class DistributedThymio2(pyenki.Thymio2):
 
         correction = x_m - delta_x_m
 
-        if front == 0:
-            out = -16600
-        elif back == 0:
-            out = 16600
-        else:
-            out = front - correction - back
+        out = front - correction - back
 
         return out
 
@@ -113,11 +107,10 @@ class DistributedThymio2(pyenki.Thymio2):
         """
         # Don't move the first and last robots in the line
         if self.initial_position[0] != self.goal_position[0]:
-            if self.distribute:
-                speed = self.p_distributed_controller.step(self.compute_difference(), dt)
+            speed = self.p_distributed_controller.step(self.compute_difference(), dt)
 
-                self.motor_left_target = speed
-                self.motor_right_target = speed
+            self.motor_left_target = speed
+            self.motor_right_target = speed
 
     def omniscient_controller(self):
         """
@@ -180,6 +173,7 @@ def init_positions(myts):
             # current_pos = prev_pos + float(distances[i]) + constant  # in the previous version
             current_pos = prev_pos + distances[i - 1]
             myt.position = (current_pos, 0)
+            # myt.position = (goal_positions[i], 0)
 
         myt.angle = 0
         myt.initial_position = myt.position
@@ -281,7 +275,7 @@ def update_dict(myt):
 
 
 def run(simulation, myts, runs_dir,
-        world: pyenki.World, gui: bool = False, T: float = 10, dt: float = 0.1, tol: float = 0.1) -> None:
+        world: pyenki.World, gui: bool = False, T: float = 2, dt: float = 0.1, tol: float = 0.1) -> None:
     """
     :param simulation
     :param myts
@@ -376,15 +370,16 @@ if __name__ == '__main__':
     # controller = 'omniscient'
     myt_quantity = 5
     controller = 'distributed'
+
     dataset = '%dmyts-%s/' % (myt_quantity, controller)
 
     out_dir = 'datasets/'
     runs_dir = os.path.join(out_dir, dataset)
     check_dir(runs_dir)
 
-    generate__simulation(runs_dir, simulations=1000, controller='distributed', myt_quantity=5)
+    # generate__simulation(runs_dir, simulations=1000, controller='distributed', myt_quantity=5)
 
     img_dir = 'datasets/%s/images/' % dataset
 
-    visualise_simulation(runs_dir, img_dir)
-    visualise_simulations_comparison(runs_dir, img_dir)
+    visualise_simulation(runs_dir, img_dir, 'Distribution simulation 0 - %s controller' % controller)
+    visualise_simulations_comparison(runs_dir, img_dir, 'Distribution of all simulations - %s controller' % controller)

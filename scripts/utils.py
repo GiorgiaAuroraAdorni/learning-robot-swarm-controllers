@@ -46,7 +46,7 @@ def make_space_above(axes, topmargin=1):
     fig.set_figheight(figh)
 
 
-def visualise_simulation(runs_dir, img_dir):
+def visualise_simulation(runs_dir, img_dir, title):
     """
     :param runs_dir:
     :param img_dir:
@@ -65,14 +65,15 @@ def visualise_simulation(runs_dir, img_dir):
         run = pd.read_pickle(pickle_file)
 
     time_steps = np.arange(len(run))
-    extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions)
+    target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions)
 
     x_positions = np.array(x_positions[0])
     myt2_sensing = np.array(myt2_sensing[0])
     myt2_control = np.array(myt2_control[0])
 
-    grid = np.linspace(x_positions[-1, 0], x_positions[-1, -1], x_positions.shape[1])
-    fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)  # , constrained_layout=True)
+    proximity_sensors = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
+
+    fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
     axes[0].set_ylabel('x position', fontsize=11)
@@ -81,14 +82,14 @@ def visualise_simulation(runs_dir, img_dir):
         axes[0].plot(time_steps, x_positions[:, i], label='myt%d' % (i + 1))  # , color='black')
     axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23),
                    ncol=np.shape(x_positions)[1], title="robot")
-    axes[0].set_yticks(grid)
+    axes[0].set_yticks(target)
     axes[0].grid()
 
     # Plot, for a given robot, the evolution of sensing over time
     axes[1].set_ylabel('sensing', fontsize=11)
     axes[1].set_title('Thymio 2 Sensing', weight='bold', fontsize=12)
     for i in range(np.shape(myt2_sensing)[1]):
-        axes[1].plot(time_steps, myt2_sensing[:, i], label='%d' % (i + 1))  # , color='black')
+        axes[1].plot(time_steps, myt2_sensing[:, i], label=proximity_sensors[i])
     axes[1].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23),
                    ncol=np.shape(myt2_sensing)[1], title="proximity sensor")
     axes[1].grid()
@@ -103,10 +104,10 @@ def visualise_simulation(runs_dir, img_dir):
     fig.subplots_adjust(hspace=0.4)
 
     plt.xlabel('timestep', fontsize=11)
-    fig.suptitle('Simulation 0', fontsize=14, weight='bold')
+    fig.suptitle(title, fontsize=14, weight='bold')
 
     check_dir(img_dir)
-    filename = 'plot-simulation-0.png'
+    filename = 'plot-simulation-0.pdf'
     file = os.path.join(img_dir, filename)
     make_space_above(axes, topmargin=1)
     plt.savefig(file)
@@ -121,18 +122,25 @@ def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, r
     :param run:
     :param time_steps:
     :param x_positions:
+    :param target:
     :param run_time_steps:
     """
     run_x_positions = []
     run_myt2_sensing = []
     run_myt2_control = []
+    target = []
 
+    counter = 0
     for step in run:
         x_pos = []
-
         for myt in step:
             x_position = myt['position'][0]
             x_pos.append(x_position)
+
+            # Append goal_position just one time
+            if counter == 0:
+                x_t = myt['goal_position'][0]
+                target.append(x_t)
 
             if myt['name'] == 'myt2':
                 sensing = myt['prox_values'].copy()
@@ -141,6 +149,7 @@ def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, r
                 run_myt2_sensing.append(sensing)
                 run_myt2_control.append(control)
 
+        counter =+ 1
         run_x_positions.append(x_pos)
 
     if run_time_steps is not None:
@@ -148,6 +157,8 @@ def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, r
     x_positions.append(run_x_positions)
     myt2_sensing.append(run_myt2_sensing)
     myt2_control.append(run_myt2_control)
+    
+    return target
 
 
 def get_pos_sensing_control(runs_dir):
@@ -170,7 +181,7 @@ def get_pos_sensing_control(runs_dir):
         run = pd.read_pickle(pickle_file)
 
         run_time_steps = np.arange(len(run)).tolist()
-        extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, run_time_steps)
+        target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, run_time_steps)
 
     length = max(map(len, time_steps))
     time_steps = np.arange(length)
@@ -193,7 +204,7 @@ def get_pos_sensing_control(runs_dir):
         el1.extend([np.nan] * (length - len(el1)))
     myt2_control = np.array(myt2_control)
 
-    return time_steps, x_positions, myt2_sensing, myt2_control
+    return time_steps, x_positions, myt2_sensing, myt2_control, target
 
 
 def extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps, x_positions):
@@ -225,12 +236,12 @@ def extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps, x_position
     return df_x_positions, df_sensing, df_control
 
 
-def visualise_simulations_comparison(runs_dir, img_dir):
+def visualise_simulations_comparison(runs_dir, img_dir, title):
     """
     :param runs_dir:
     :param img_dir:
     """
-    time_steps, x_positions, myt2_sensing, myt2_control = get_pos_sensing_control(runs_dir)
+    time_steps, x_positions, myt2_sensing, myt2_control, target = get_pos_sensing_control(runs_dir)
 
     mean_x_positions = np.nanmean(x_positions, axis=0)
     mean_myt2_control = np.nanmean(myt2_control, axis=0)
@@ -240,7 +251,7 @@ def visualise_simulations_comparison(runs_dir, img_dir):
     std_myt2_control = np.nanstd(myt2_control, axis=0)
     std_myt2_sensing = np.nanstd(myt2_sensing, axis=0)
 
-    grid = np.linspace(mean_x_positions[-1, 0], mean_x_positions[-1, -1], mean_x_positions.shape[1])
+    proximity_sensors = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
     fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
@@ -254,14 +265,14 @@ def visualise_simulations_comparison(runs_dir, img_dir):
                              alpha=0.2)
     axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23),
                    ncol=np.shape(mean_x_positions)[1], title="robot")
-    axes[0].set_yticks(grid)
+    axes[0].set_yticks(target)
     axes[0].grid()
 
     # Plot, for a given robot, the evolution of sensing over time
     axes[1].set_ylabel('sensing', fontsize=11)
     axes[1].set_title('Thymio 2 Sensing', weight='bold', fontsize=12)
     for i in range(np.shape(mean_myt2_sensing)[1]):
-        axes[1].plot(time_steps, mean_myt2_sensing[:, i], label='%d' % (i + 1))  # , color='black')
+        axes[1].plot(time_steps, mean_myt2_sensing[:, i], label=proximity_sensors[i])  # , color='black')
         axes[1].fill_between(time_steps,
                              mean_myt2_sensing[:, i] - std_myt2_sensing[:, i],
                              mean_myt2_sensing[:, i] + std_myt2_sensing[:, i],
@@ -280,13 +291,16 @@ def visualise_simulations_comparison(runs_dir, img_dir):
                          alpha=0.2)
     axes[2].grid()
 
+    plt.xlabel('timestep', fontsize=11)
+    fig.suptitle(title, fontsize=14, weight='bold')
+
     fig.tight_layout()
     fig.subplots_adjust(hspace=0.4)
-    plt.xlabel('timestep', fontsize=11)
 
     check_dir(img_dir)
-    filename = 'compare-simulation.png'
+    filename = 'compare-simulation.pdf'
     file = os.path.join(img_dir, filename)
+    make_space_above(axes, topmargin=1)
     plt.savefig(file)
     plt.show()
 
@@ -302,16 +316,14 @@ def visualise_simulations_comparison(runs_dir, img_dir):
     axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
     axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23), labels=tuple(labels),
                    ncol=df_x_positions.shape[1] - 1, title="robot")
-    axes[0].set_yticks(grid)
+    axes[0].set_yticks(target)
     axes[0].grid()
     axes[0].set(ylabel='x position')
 
-    labels = []
     for i in range(df_sensing.shape[1] - 1):
         sns.lineplot(x="timestep", y="myt2_sensor_%d" % (i + 1), data=df_sensing, ax=axes[1])
-        labels.append('%d' % (i + 1))
     axes[1].set_title('Thymio 2 Sensing', weight='bold', fontsize=12)
-    axes[1].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23), labels=tuple(labels),
+    axes[1].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23), labels=tuple(proximity_sensors),
                    ncol=(df_sensing.shape[1] - 1), title="proximity sensor")
     axes[1].grid()
     axes[1].set(ylabel='sensing')
@@ -322,10 +334,14 @@ def visualise_simulations_comparison(runs_dir, img_dir):
     axes[2].set(ylabel='control')
 
     fig.tight_layout()
-    fig.subplots_adjust(hspace=0.4)
+    fig.subplots_adjust(hspace=0.5)
 
-    filename = 'compare-simulation-seaborn.png'
+    plt.xlabel('timestep', fontsize=11)
+    fig.suptitle(title, fontsize=14, weight='bold')
+
+    filename = 'compare-simulation-seaborn.pdf'
     file = os.path.join(img_dir, filename)
+    make_space_above(axes, topmargin=1)
     plt.savefig(file)
     plt.show()
 
