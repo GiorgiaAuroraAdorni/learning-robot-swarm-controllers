@@ -373,13 +373,12 @@ if __name__ == '__main__':
 
     dataset = '%dmyts-%s/' % (myt_quantity, controller)
 
-    out_dir = 'datasets/'
-    runs_dir = os.path.join(out_dir, dataset)
+    runs_dir = os.path.join('datasets/', dataset)
     check_dir(runs_dir)
 
     # generate__simulation(runs_dir, simulations=1000, controller='distributed', myt_quantity=5)
 
-    img_dir = 'datasets/%s/images/' % dataset
+    img_dir = '%s/images/' % runs_dir
 
     visualise_simulation(runs_dir, img_dir, 'Distribution simulation 0 - %s controller' % controller)
     visualise_simulations_comparison(runs_dir, img_dir, 'Distribution of all simulations - %s controller' % controller)
