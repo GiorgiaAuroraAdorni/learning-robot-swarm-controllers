@@ -1,16 +1,17 @@
 import os
+import os
 import re
 from typing import List, Tuple, Optional, AnyStr
 
 import numpy as np
 import pandas as pd
 import torch
+from networks.distributed_network import DistributedNet
+from pid import PID
 from torch.utils import data
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
-
-from networks.distributed_network import DistributedNet
-from utils import check_dir, dataset_split, plot_losses, my_scatterplot, my_histogram, plot_regressor
+from utils import check_dir, plot_losses, my_scatterplot, my_histogram, plot_regressor
 
 
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
@@ -226,21 +227,20 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, padded=False, c
     return outputs
 
 
-def network_plots(runs_dir, runs_img, model_dir, dataset, outputs, training_loss, validation_loss, x_train, y_valid,
-                  input, output):
+def network_plots(runs_img, model_dir, dataset, prediction, training_loss, validation_loss, x_train, y_valid,
+                  sensing, groundtruth):
     """
 
-    :param runs_dir
     :param runs_img
     :param model_dir
     :param dataset:
-    :param outputs:
+    :param prediction:
     :param training_loss:
     :param validation_loss:
     :param x_train:
     :param y_valid:
-    :param input:
-    :param output:
+    :param sensing:
+    :param groundtruth:
     """
     model_img = '%s/images/' % model_dir
     check_dir(model_img)
@@ -249,14 +249,14 @@ def network_plots(runs_dir, runs_img, model_dir, dataset, outputs, training_loss
     title = 'Dataset %s' % dataset
     file_name = 'dataset-scatterplot-%s.pdf' % dataset
 
-    x = np.array(input)[:, 2] - np.mean(np.array(input)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
-    y = np.array(output).flatten()  # y: speed
+    x = np.array(sensing)[:, 2] - np.mean(np.array(sensing)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
+    y = np.array(groundtruth).flatten()  # y: speed
     x_label = 'sensing'
     y_label = 'control'
 
     my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)
 
-    # Plot train and test losses
+    # Plot train and validation losses
     title = 'Loss %s' % dataset
     file_name = 'loss-%s.pdf' % dataset
     plot_losses(training_loss, validation_loss, model_img, title, file_name)
@@ -264,48 +264,124 @@ def network_plots(runs_dir, runs_img, model_dir, dataset, outputs, training_loss
     file_name = 'loss-rescaled-%s.pdf' % dataset
     plot_losses(training_loss, validation_loss, model_img, title, file_name, scale=min(validation_loss) * 10)
 
-    # Plot scatter-plot that compares the groundtruth to the prediction
-    # title = 'groundtruth vs prediction %s' % dataset
-    # file_name = 'gt-prediction-%s.pdf' % dataset
-    #
-    # x = torch.flatten(y_valid).tolist()
-    # y = torch.flatten(torch.cat(outputs, dim=0)).tolist()
-    # x_label = 'groundtruth'
-    # y_label = 'prediction'
-    # my_scatterplot(x, y, x_label, y_label, model_img, title, file_name)
+    # Plot groundtruth histogram
+    title = 'Groundtruth Validation Set %s' % dataset
+    file_name = 'histogram-groundtruth-validation-%s.pdf' % dataset
+    my_histogram(y, 'groundtruth', model_img, title, file_name)
 
     # Plot prediction histogram
-    title = 'Histogram Predictions Validation Set %s' % dataset
-    file_name = 'histogram-predictions-validation-%s.pdf' % dataset
-    my_histogram(y, 'prediction', model_img, title, file_name)
-
-    # Plot groundtruth histogram
-    title = 'Histogram Groundtruth Validation Set %s' % dataset
-    file_name = 'histogram-groundtruth-validation-%s.pdf' % dataset
-    my_histogram(x, 'groundtruth', model_img, title, file_name)
+    title = 'Prediction Validation Set %s' % dataset
+    file_name = 'histogram-prediction-validation-%s.pdf' % dataset
+    prediction = torch.flatten(torch.cat(prediction, dim=0)).tolist()
+    my_histogram(prediction, 'prediction', model_img, title, file_name)
 
     # Plot sensing histogram
-    title = 'Histogram Sensing Validation Set%s' % dataset
+    title = 'Sensing Validation Set%s' % dataset
     file_name = 'histogram-sensing-validation-%s.pdf' % dataset
 
-    sensing = list(map(list, zip(*x_train.tolist())))
-    x = [sensing[0], sensing[1], sensing[2], sensing[3], sensing[4], sensing[5], sensing[6]]
-    label = ['prox_sens_0', 'prox_sens_1', 'prox_sens_2', 'prox_sens_3',
-             'prox_sens_4', 'prox_sens_5', 'prox_sens_6']
+    x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
+    label = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
     my_histogram(x, 'sensing', model_img, title, file_name, label)
 
-    # Plot R^2 of the regressor between prediction and ground truth
-    title = 'Regressor groundtruth vs prediction Validation Set %s' % dataset
-    file_name = 'regressor-learned-validation-%s.pdf' % dataset
+    # Plot R^2 of the regressor between prediction and ground truth on the validation set
+    # title = 'Regression learned %s vs %s' % dataset
+    title = 'Regression learned controller vs %s' % dataset
+    file_name = 'regression-learned-vs-%s.pdf' % dataset
 
-    x = torch.flatten(y_valid).tolist()
-    y = torch.flatten(torch.cat(outputs, dim=0)).tolist()
+    y_valid = np.array(y_valid).flatten()
     x_label = 'groundtruth'
     y_label = 'prediction'
-    plot_regressor(x, y, x_label, y_label, model_img, title, file_name)
+    plot_regressor(y_valid, prediction, x_label, y_label, model_img, title, file_name)
 
 
-def main(file, runs_dir, runs_img, model_dir, model, ds, train):
+def controller_plots(model_dir, ds, ds_eval, prediction, groundtruth):
+    """
+
+    :param model_dir
+    :param dataset:
+    :param prediction:
+    :param groundtruth:
+    """
+    model_img = '%s/images/' % model_dir
+    check_dir(model_img)
+
+    # Plot R^2 of the regressor between prediction and ground truth
+    title = 'Regression %s vs %s' % (ds_eval, ds)
+    file_name = 'regression-%svs%s' % (ds_eval, ds)
+
+    groundtruth = np.array(groundtruth).flatten()
+    prediction = np.array(prediction).flatten()
+    x_label = 'groundtruth'
+    y_label = 'prediction'
+    plot_regressor(groundtruth, prediction, x_label, y_label, model_img, title, file_name)
+
+
+def neighbors_distance(sensing):
+    """
+    Check if there is a robot ahead using the infrared sensor 2 (front-front).
+    Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
+    :return back, front: response values of the rear and front sensors
+    """
+    front = sensing[2]
+    back = np.mean(np.array([sensing[5], sensing[6]]))
+
+    return back, front
+
+
+def compute_difference(sensing):
+    """
+    :param sensing
+    :return: the difference between the response value of front and the rear sensor
+    """
+    back, front = neighbors_distance(sensing)
+
+    # Apply a small correction to the distance measured by the rear sensors: the front sensor used is at a
+    # different x coordinate from the point to which the rear sensor of the robot that follows points. this is
+    # because of the curved shape of the face of the Thymio
+    delta_x = 7.41150769
+    x = 7.95
+
+    # Maximum possible response values
+    delta_x_m = 4505 * delta_x / 14
+    x_m = 4505 * x / 14
+
+    correction = x_m - delta_x_m
+
+    out = front - correction - back
+
+    return out
+
+
+def distributed_controller(sensing, dt=0.1):
+    """
+
+    :param sensing
+    :param dt:
+
+    """
+    p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
+    speed = p_distributed_controller.step(compute_difference(sensing), dt)
+
+    return speed
+
+
+def evaluate_net(model_dir, ds, ds_eval, sensing, groundtruth):
+    """
+
+    :param sensing:
+    """
+    controller_predictions = []
+
+    for sample in sensing:
+        # Rescale the values of the sensor
+        sample = np.multiply(np.array(sample), 1000).tolist()
+        control = distributed_controller(sample)
+        controller_predictions.append(control)
+
+    controller_plots(model_dir, ds, ds_eval, controller_predictions, groundtruth)
+
+
+def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, train):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir: directory containing the simulations
@@ -313,6 +389,7 @@ def main(file, runs_dir, runs_img, model_dir, model, ds, train):
     :param model_dir: directory containing the network data
     :param model:
     :param ds
+    :param ds_eval
     :param train
     """
     # Uncomment the following line to generate a new dataset split
@@ -328,7 +405,7 @@ def main(file, runs_dir, runs_img, model_dir, model, ds, train):
     # Split the dataset also defining input and output, using the indices
     train_sample, valid_sample, test_sample, \
     train_target, valid_target, test_target, \
-    input_, output_ = from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices)
+    sensing, groundtruth = from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices)
 
     # Generate the tensors
     d_test_set, d_train_set, d_valid_set, x_train, y_valid = from_dataset_to_tensors(test_sample, test_target,
@@ -362,20 +439,22 @@ def main(file, runs_dir, runs_img, model_dir, model, ds, train):
         training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
         train_minibatch, valid_minibatch, test_minibatch = np.load(file_minibatch, allow_pickle=True)
 
-        outputs = validate_net(len(d_valid_set), d_net, valid_minibatch, validation_loss.copy())
+        prediction = validate_net(len(d_valid_set), d_net, valid_minibatch, validation_loss.copy())
 
-        network_plots(runs_dir, runs_img, model_dir, ds, outputs, training_loss, validation_loss, x_train, y_valid,
-                      input_, output_)
+        network_plots(runs_img, model_dir, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
+                      sensing, groundtruth)
+
+        evaluate_net(model_dir, ds, ds_eval, sensing, groundtruth)
 
 
 if __name__ == '__main__':
     model = 'net1'
     myt_quantity = 5
-    controller = 'omniscient'
 
-    dataset = '%dmyts-%s' % (myt_quantity, controller)
+    dataset_net = '%dmyts-%s' % (myt_quantity, 'omniscient')
+    dataset_eval = '%dmyts-%s' % (myt_quantity, 'distributed')
 
-    runs_dir = os.path.join('datasets/', dataset)
+    runs_dir = os.path.join('datasets/', dataset_net)
     runs_img = '%s/images/' % runs_dir
     model_dir = 'models/distributed/%s' % model
 
@@ -385,4 +464,4 @@ if __name__ == '__main__':
 
     file = os.path.join('models/distributed/', 'dataset_split.npy')
 
-    main(file, runs_dir, runs_img, model_dir, model, dataset, train=False)
+    main(file, runs_dir, runs_img, model_dir, model, dataset_net, dataset_eval, train=False)

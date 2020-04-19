@@ -2,12 +2,13 @@ import os
 from itertools import chain
 
 import numpy as np
+# import matplotlib
+# matplotlib.rcParams['text.usetex'] = True
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from sklearn.linear_model import LinearRegression
-
 sns.set(style="white")
+from sklearn.linear_model import LinearRegression
 
 
 def check_dir(directory):
@@ -363,8 +364,8 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
 
     plt.xticks(x)
 
-    plt.plot(x, train_loss, label='Train ' + title)
-    plt.plot(x, valid_loss, label='Validation ' + title)
+    plt.plot(x, train_loss, label='train')
+    plt.plot(x, valid_loss, label='validation')
     if scale is not None:
         plt.ylim(0, scale)
 
@@ -410,17 +411,20 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
     :param filename:
     :param label:
     """
-    if label is None:
-        plt.hist(prediction, bins=50)
-    else:
-        plt.figure(figsize=(9.4, 4.8))
-        plt.style.use('seaborn-deep')
-        plt.hist(prediction, label=label)
-        plt.legend(loc='center right', bbox_to_anchor=(1.3, 0.5))
     plt.yscale('log')
     plt.xlabel(x_label, fontsize=11)
 
     plt.title(title, weight='bold', fontsize=12)
+
+    if label is None:
+        plt.hist(prediction, bins=50)
+    else:
+        # plt.style.use('seaborn-deep')
+        plt.hist(prediction, label=label)
+        plt.legend(loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=len(label),
+                   title="proximity sensor", title_fontsize=11, markerscale=0.2)
+        plt.tight_layout()
+
 
     check_dir(img_dir)
     file = os.path.join(img_dir, filename)
@@ -440,16 +444,17 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
     :param filename:
     """
     lr = LinearRegression()
-
     lr.fit(np.reshape(x, [-1, 1]), np.reshape(y, [-1, 1]))
+    score = lr.score(np.reshape(x, [-1, 1]), np.reshape(y, [-1, 1]))
 
     plt.xlabel(x_label, fontsize=11)
     plt.ylabel(y_label, fontsize=11)
 
-    plt.scatter(x, y, alpha=0.3, marker='.')
-    plt.plot(x, lr.predict(np.reshape(x, [-1, 1])), color="orange")
+    plt.scatter(x, y, alpha=0.3, marker='.', label='sample')
+    plt.plot(x, lr.predict(np.reshape(x, [-1, 1])), color="orange", label='regression: $R^2=%.3f$' % score)
 
     plt.title(title, weight='bold', fontsize=12)
+    plt.legend()
 
     check_dir(img_dir)
     file = os.path.join(img_dir, filename)
