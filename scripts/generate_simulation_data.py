@@ -6,6 +6,7 @@ from math import pi, sin, cos
 
 import numpy as np
 import pyenki
+import torch
 from tqdm import tqdm
 from pid import PID
 from utils import check_dir, visualise_simulation, visualise_simulations_comparison
@@ -14,8 +15,8 @@ from utils import check_dir, visualise_simulation, visualise_simulations_compari
 # Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
 class DistributedThymio2(pyenki.Thymio2):
 
-    def __init__(self, controller, name, index, initial_position, goal_position, goal_angle, dictionary, **kwargs) -> \
-            None:
+    def __init__(self, controller, name, index, initial_position, goal_position, goal_angle, dictionary, net,
+                 **kwargs) -> None:
         """
 
         :param controller:
@@ -40,6 +41,9 @@ class DistributedThymio2(pyenki.Thymio2):
         self.p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
 
         self.dictionary = dictionary
+        self.net = net
+        if self.net is not None:
+            self.net_controller = net.controller()
 
     def signed_distance(self):
         """
@@ -121,6 +125,15 @@ class DistributedThymio2(pyenki.Thymio2):
         self.motor_left_target = speed
         self.motor_right_target = speed
 
+    def learned_controller(self):
+        """
+
+        """
+        speed = float(self.net_controller(self.prox_values)[0])
+
+        self.motor_left_target = speed
+        self.motor_right_target = speed
+
     def controlStep(self, dt: float) -> None:
         """
         Perform one control step:
@@ -134,6 +147,9 @@ class DistributedThymio2(pyenki.Thymio2):
             self.distributed_controller(dt)
         elif self.controller == 'omniscient':
             self.omniscient_controller()
+        elif self.controller == 'net1':
+            self.learned_controller()
+
 
 
 def init_positions(myts):
@@ -184,15 +200,22 @@ def init_positions(myts):
         myt.goal_position = (goal_positions[i], 0)
 
 
-def setup(controller, myt_quantity, aseba: bool = False):
+def setup(controller, myt_quantity, model_dir=None, aseba: bool = False):
     """
     Set up the world and create the thymios
+    :param controller
     :param myt_quantity: number of robot in the simulation
+    :param model_dir
     :param aseba
     :return world, myts
     """
     # Create an unbounded world
     world = pyenki.World()
+
+    if model_dir is not None:
+        net = torch.load('%s/%s' % (model_dir, controller))
+    else:
+        net = None
 
     # Create multiple Thymios and position them such as all x-axes are aligned
     myts = [DistributedThymio2(controller=controller,
@@ -202,6 +225,7 @@ def setup(controller, myt_quantity, aseba: bool = False):
                                goal_position=None,
                                goal_angle=0,
                                dictionary=None,
+                               net=net,
                                use_aseba_units=aseba)
             for i in range(myt_quantity)]
 
@@ -320,11 +344,8 @@ def run(simulation, myts, runs_dir,
 
                         # Check if the robot has reached the target
                         diff = abs(dictionary['position'][0] - dictionary['goal_position'][0])
-                        # differences.append(diff)
                         if diff < tol:
                             counter += 1
-            # print(s, differences, np.sum(np.array(differences)))
-            # differences = []
 
             # Check is the step is finished
             if len(iteration) == myt_quantity - 2:
@@ -347,16 +368,17 @@ def run(simulation, myts, runs_dir,
             json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-def generate__simulation(runs_dir, simulations, controller, myt_quantity, ):
+def generate__simulation(runs_dir, model_dir, simulations, controller, myt_quantity, ):
     """
 
     :param runs_dir:
+    :param model_dir
     :param simulations:
     :param controller:
     :param myt_quantity:
     """
 
-    world, myts = setup(controller, myt_quantity)
+    world, myts = setup(controller, myt_quantity, model_dir)
 
     for simulation in tqdm(range(simulations)):
         try:
@@ -369,14 +391,20 @@ def generate__simulation(runs_dir, simulations, controller, myt_quantity, ):
 if __name__ == '__main__':
     # controller = 'omniscient'
     myt_quantity = 5
-    controller = 'distributed'
+    # controller = 'distributed'
+
+    model = 'net1'
+    controller = model
 
     dataset = '%dmyts-%s/' % (myt_quantity, controller)
 
     runs_dir = os.path.join('datasets/', dataset)
-    check_dir(runs_dir)
+    model_dir = 'models/distributed/%s' % model
 
-    # generate__simulation(runs_dir, simulations=1000, controller='distributed', myt_quantity=5)
+    check_dir(runs_dir)
+    check_dir(model_dir)
+
+    generate__simulation(runs_dir, model_dir, simulations=1000, controller=model, myt_quantity=5)
 
     img_dir = '%s/images/' % runs_dir
 
