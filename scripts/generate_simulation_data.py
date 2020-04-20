@@ -19,14 +19,15 @@ class DistributedThymio2(pyenki.Thymio2):
                  **kwargs) -> None:
         """
 
-        :param controller:
-        :param name:
-        :param index:
-        :param initial_position:
-        :param goal_position:
-        :param goal_angle:
-        :param dictionary:
-        :param kwargs:
+        :param controller
+        :param name
+        :param index
+        :param initial_position
+        :param goal_position
+        :param goal_angle
+        :param dictionary
+        :param net
+        :param kwargs
         """
         super().__init__(**kwargs)
         self.name = name
@@ -34,7 +35,6 @@ class DistributedThymio2(pyenki.Thymio2):
         self.initial_position = initial_position
         self.goal_position = goal_position
         self.goal_angle = goal_angle
-        self.distribute = True
 
         #  Encodes speed between -16.6 and +16.6 (aseba units: [-500,500])
         self.controller = controller
@@ -83,7 +83,6 @@ class DistributedThymio2(pyenki.Thymio2):
 
     def compute_difference(self):
         """
-
         :return: the difference between the response value of front and the rear sensor
         """
         back, front = self.neighbors_distance()
@@ -106,7 +105,19 @@ class DistributedThymio2(pyenki.Thymio2):
 
     def distributed_controller(self, dt):
         """
-        :param dt:
+        Move the robots not to the end of the line using the distributed controller, setting the target {left,
+        right} wheel speed each at the same value in order to moves the robot straight ahead. This distributed 
+        controller is a simple proportional controller PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6) that takes in 
+        input the difference between the response value of front and the rear sensor. To the distance measured by the 
+        rear sensors is applied a small correction since the front sensor used is at a different x coordinate from 
+        the point to which the rear sensor of the robot that follows points. This is because of the curved shape of 
+        the face of the Thymio.
+
+        The response values are actually intensities: the front correspond to the frontal center sensor and the back
+        to the mean of the response values of the rear sensors.
+        The final difference is computed ad follow: out = front - correction - back
+        The speed are clipped to [min_out=-16.6, max_out=16.6].
+        :param dt: control step duration
 
         """
         # Don't move the first and last robots in the line
@@ -118,7 +129,12 @@ class DistributedThymio2(pyenki.Thymio2):
 
     def omniscient_controller(self):
         """
-
+        Move the robots using the omniscient controller by setting the target {left,right} wheel speed
+        each at the same value in order to moves the robot straight ahead.
+        The speed is computed as follow:
+            velocity = constant * self.signed_distance()
+        where the constant is set to 4 and the signed_distance is the distance between the current and the goal 
+        position of the robot, along the current theta of the robot.
         """
         speed = self.move_to_goal()
 
@@ -127,7 +143,15 @@ class DistributedThymio2(pyenki.Thymio2):
 
     def learned_controller(self):
         """
+        Extract the input sensing from the list of (7) proximity sensor readings, one for each sensors.
+        The first 5 entries are from frontal sensors ordered from left to right.
+        The last two entries are from rear sensors ordered from left to right.
+        Then normalise each value of the list, by dividing it by 1000.
 
+        Generate the output speed using the learned controller.
+
+        Move the robots not to the end of the line using the controller, setting the target {left,right} wheel speed
+        each at the same value in order to moves the robot straight ahead.
         """
         sensing = np.divide(np.array(self.prox_values), 1000).tolist()
         speed = float(self.net_controller(sensing)[0])
@@ -139,7 +163,9 @@ class DistributedThymio2(pyenki.Thymio2):
     def controlStep(self, dt: float) -> None:
         """
         Perform one control step:
-        Move the robots in such a way they stand at equal distances from each other using the omniscient controller.
+        Move the robots in such a way they stand at equal distances from each other.
+        Enable communication and send at each timestep a message containing the index.
+        It is possible to use the distributed, the omniscient or the learned controller.
         :param dt: control step duration
         """
         self.prox_comm_enable = True
@@ -155,18 +181,22 @@ class DistributedThymio2(pyenki.Thymio2):
 
 def init_positions(myts, variate_pose=False, min_distance = 10.9, avg_gap = 8, maximum_gap = 14, x=None):
     """
-    myts, simulation, variate_pose
+    Create multiple Thymios and position them such as all x-axes are aligned.
+    The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range.
+    The distance between the first and the last robot is computed in this way:
+    (min_distance + avg_gap) * (myt_quantity - 1).
+    The distances among the robot are computed by drawing (myt_quantity-1) real random gaps in using a normal
+    distribution with mean equal to the average gap and stdev fixed to 8. This values are clipped between 1 and the
+    maximum_gap. Then, the minimum distance is added to all the distances, in order to move from the ICR to the front of
+    the thymio. The distances obtained are rescaled in such a way their sum corresponds to the total gap that is known.
     :param myts:
+    :param variate_pose
+    :param min_distance: the minimum distance between two Thymio [wheel - wheel] is 10.9 cm.
+    :param avg_gap: can vary in the range [6, 14], the default value is 8cm
+    :param maximum_gap: corresponds to the proximity sensors maximal range and id 14cm
+    :param x
     """
     myt_quantity = len(myts)
-
-    # The minimum distance between two Thymio [wheel - wheel] is 12 cm
-    # min_distance = 10.9  # in the previous version it was set at 7.95
-    # avg_gap = 8  # 12  # can vary in the range [6, 14]
-
-    # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
-    # ~ 14 cm is the proximity sensors maximal range
-    # maximum_gap = 14  # 12
     std = 8
 
     first_x = 0
@@ -188,6 +218,7 @@ def init_positions(myts, variate_pose=False, min_distance = 10.9, avg_gap = 8, m
             myt.position = (first_x, 0)
         elif i == myt_quantity - 1:
             myt.position = (last_x, 0)
+
         else:
             prev_pos = myts[i - 1].position[0]
             # current_pos = prev_pos + float(distances[i]) + constant  # in the previous version
@@ -206,8 +237,8 @@ def init_positions(myts, variate_pose=False, min_distance = 10.9, avg_gap = 8, m
 
 def setup(controller, myt_quantity, model_dir, aseba: bool = False):
     """
-    Set up the world and create the thymios
-    :param controller
+    Set up the world as an unbounded world.
+    :param controller: if the controller is passed, load the learned network
     :param myt_quantity: number of robot in the simulation
     :param model_dir
     :param aseba
@@ -221,7 +252,6 @@ def setup(controller, myt_quantity, model_dir, aseba: bool = False):
     else:
         net = None
 
-    # Create multiple Thymios and position them such as all x-axes are aligned
     myts = [DistributedThymio2(controller=controller,
                                name='myt%d' % (i + 1),
                                index=i,
@@ -241,13 +271,12 @@ def setup(controller, myt_quantity, model_dir, aseba: bool = False):
 
 def get_prox_comm(myt):
     """
+    Create a dictionary containing all the senders as key and the corresponding intensities as value.
     :param myt
-    :return prox_comm: dictionary of dictionaries with the name of the sender as key and the intensities and the
-    message as values
+    :return prox_comm
     """
     prox_comm = {}
 
-    # Extract sender and intensities
     prox_comm_events = myt.prox_comm_events
 
     if len(prox_comm_events) > 0:
@@ -264,7 +293,18 @@ def generate_dict(myt):
     """
     Save data in a dictionary
     :param myt
-    :return dictionary
+    :return dictionary:
+        'name': myt.name,
+        'index': myt.index,
+        'prox_values': myt.prox_values,
+        'prox_comm': get_prox_comm(myt),
+        'initial_position': myt.initial_position,
+        'position': myt.position,
+        'angle': myt.angle,
+        'goal_position': myt.goal_position,
+        'goal_angle': myt.goal_angle,
+        'motor_left_target': myt.motor_left_target,
+        'motor_right_target': myt.motor_right_target
     """
     myt.dictionary = {
         'name': myt.name,
@@ -305,6 +345,11 @@ def update_dict(myt):
 def run(simulation, myts, runs_dir,
         world: pyenki.World, gui: bool = False, T: float = 5, dt: float = 0.1, tol: float = 0.1) -> None:
     """
+    Run the simulation as fast as possible or using the real time GUI.
+    Generate two different type of simulation data, one with all the thymios and the other without including the 2
+    thymios at the ends, but only the ones that have to move.
+    If all the robots have reached their target, stop the simulation.
+
     :param simulation
     :param myts
     :param runs_dir
@@ -321,7 +366,6 @@ def run(simulation, myts, runs_dir,
         world.run_in_viewer(cam_position=(60, 0), cam_altitude=150.0, cam_yaw=0.0, cam_pitch=-pi / 2,
                             walls_height=10.0, orthographic=True, period=0.1)
     else:
-        # Run the simulation as fast as possible
         steps = int(T // dt)
 
         data = []
@@ -426,9 +470,9 @@ if __name__ == '__main__':
     generate__simulation(runs_dir, simulations=1000, controller=controller, myt_quantity=myt_quantity, model_dir=model_dir)
     img_dir = '%s/images/' % runs_dir
 
-    # visualise_simulation(runs_dir, img_dir, 0, 'Distribution simulation %d - %s controller' % (0, controller))
-    # visualise_simulation(runs_dir, img_dir, 1, 'Distribution simulation %d - %s controller' % (1, controller))
-    # visualise_simulation(runs_dir, img_dir, 2, 'Distribution simulation %d - %s controller' % (2, controller))
-    # visualise_simulation(runs_dir, img_dir, 3, 'Distribution simulation %d - %s controller' % (3, controller))
-    # visualise_simulation(runs_dir, img_dir, 4, 'Distribution simulation %d - %s controller' % (4, controller))
-    # visualise_simulations_comparison(runs_dir, img_dir, 'Distribution of all simulations - %s controller' % controller)
+    visualise_simulation(runs_dir, img_dir, 0, 'Distribution simulation %d - %s controller' % (0, controller))
+    visualise_simulation(runs_dir, img_dir, 1, 'Distribution simulation %d - %s controller' % (1, controller))
+    visualise_simulation(runs_dir, img_dir, 2, 'Distribution simulation %d - %s controller' % (2, controller))
+    visualise_simulation(runs_dir, img_dir, 3, 'Distribution simulation %d - %s controller' % (3, controller))
+    visualise_simulation(runs_dir, img_dir, 4, 'Distribution simulation %d - %s controller' % (4, controller))
+    visualise_simulations_comparison(runs_dir, img_dir, 'Distribution of all simulations - %s controller' % controller)

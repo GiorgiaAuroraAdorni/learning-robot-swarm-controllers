@@ -49,6 +49,20 @@ class DistributedThymio2(pyenki.Thymio2):
         """
         Perform one control step: Move the robots in such a way they stand at equal distances from each other without
         using communication.
+
+        Move the robots not to the end of the line using the distributed controller, setting the target {left,
+        right} wheel speed each at the same value in order to moves the robot straight ahead. This distributed
+        controller is a simple proportional controller PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6) that takes in
+        input the difference between the response value of front and the rear sensor. To the distance measured by the
+        rear sensors is applied a small correction since the front sensor used is at a different x coordinate from
+        the point to which the rear sensor of the robot that follows points. This is because of the curved shape of
+        the face of the Thymio.
+        The response values are actually intensities: the front correspond to the frontal center sensor and the back
+        to the mean of the response values of the rear sensors.
+        The final difference is computed ad follow: out = front - correction - back
+        The speed are clipped to [min_out=-16.6, max_out=16.6].
+
+
         :param dt: control step duration
         """
 
@@ -78,7 +92,8 @@ class DistributedThymio2(pyenki.Thymio2):
 
 def setup(aseba: bool = False) -> pyenki.World:
     """
-    Set up the world and create the thymios
+    Set up the world as an unbounded world. Create multiple Thymios and position them such as all x-axes are aligned.
+    The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range.
     :param aseba
     :return world
     """
