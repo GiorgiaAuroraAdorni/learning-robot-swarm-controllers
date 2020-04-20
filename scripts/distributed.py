@@ -393,29 +393,26 @@ def generate_sensing():
     x = np.arange(4500)
     s = np.zeros(x.shape[0])
 
-    sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
-
-    return sensing
+    return x, s
 
 
-def evaluate_net(model_dir, model, controller: Controller):
+def evaluate_net(model_dir, model, net, controller: Controller, sensing, index, x_label):
     """
 
     :param model_dir:
     :param model:
     :param controller:
     """
-    sensing = generate_sensing()
     predictions = controller(sensing)
 
     model_img = '%s/images/' % model_dir
     check_dir(model_img)
 
-    title = 'Response %s' % model
-    file_name = 'response-%s.pdf' % model
+    title = 'Response %s - %s' % (model, net)
+    file_name = 'response-%s-%s.pdf' % (model, net)
 
-    # Plot the output of the network given the input ([0, 0, x, 0, 0, 0, 0]) for x in [0, 4500]
-    plot_response(sensing, predictions, model_img, title, file_name)
+    # Plot the output of the network
+    plot_response(sensing, predictions, index, x_label, model_img, title, file_name)
 
 
 def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, ds_learned, train):
@@ -436,8 +433,8 @@ def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, ds_learned, tr
     dataset = np.load(file)
     n_train = 600
     n_validation = 800
-    train_indices, validation_indices, test_indices = dataset[:n_train], dataset[n_train:n_validation], dataset[
-                                                                                                        n_validation:]
+    train_indices, validation_indices, test_indices = dataset[:n_train], dataset[n_train:n_validation], \
+                                                      dataset[n_validation:]
 
     # Split the dataset also defining input and output, using the indices
     train_sample, valid_sample, test_sample, \
@@ -472,19 +469,29 @@ def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, ds_learned, tr
     else:
         d_net = torch.load('%s/%s' % (model_dir, model))
 
-        # Load the metrics
-        training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
-
-        prediction = d_net(torch.FloatTensor(valid_sample))
-
-        network_plots(runs_img, model_dir, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
-                      sensing, groundtruth)
-
-        # Evaluate prediction of the distributed controller to the omniscient groundtruth
-        evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
+        # # Load the metrics
+        # training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
+        #
+        # prediction = d_net(torch.FloatTensor(valid_sample))
+        #
+        # network_plots(runs_img, model_dir, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
+        #               sensing, groundtruth)
+        #
+        # # Evaluate prediction of the distributed controller to the omniscient groundtruth
+        # evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
 
         controller = d_net.controller()
-        evaluate_net(model_dir, model, controller)
+
+        #
+        x, s = generate_sensing()
+        sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
+        index = 2
+        evaluate_net(model_dir, model, 'net([0, 0, x, 0, 0, 0, 0])', controller, sensing, index, 'center proximity sensor')
+
+        index = -1
+        sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
+        evaluate_net(model_dir, model, 'net([0, 0, 0, 0, 0, x, x])', controller, sensing, index, 'rear proximity '
+                                                                                                 'sensors')
 
 
 if __name__ == '__main__':

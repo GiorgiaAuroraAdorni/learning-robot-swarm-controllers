@@ -129,10 +129,12 @@ class DistributedThymio2(pyenki.Thymio2):
         """
 
         """
-        speed = float(self.net_controller(self.prox_values)[0])
+        sensing = np.divide(np.array(self.prox_values), 1000).tolist()
+        speed = float(self.net_controller(sensing)[0])
 
-        self.motor_left_target = speed
-        self.motor_right_target = speed
+        if self.initial_position[0] != self.goal_position[0]:
+            self.motor_left_target = speed
+            self.motor_right_target = speed
 
     def controlStep(self, dt: float) -> None:
         """
@@ -149,7 +151,6 @@ class DistributedThymio2(pyenki.Thymio2):
             self.omniscient_controller()
         elif self.controller == 'net1':
             self.learned_controller()
-
 
 
 def init_positions(myts):
@@ -322,7 +323,9 @@ def run(simulation, myts, runs_dir,
 
         data = []
         iteration = []
-        # differences = []
+
+        complete_data = []
+        complete_iteration = []
 
         stop_iteration = False
 
@@ -347,10 +350,16 @@ def run(simulation, myts, runs_dir,
                         if diff < tol:
                             counter += 1
 
+                    complete_iteration.append(dictionary)
+
             # Check is the step is finished
             if len(iteration) == myt_quantity - 2:
                 data.append(iteration)
                 iteration = []
+
+            if len(complete_iteration) == myt_quantity:
+                complete_data.append(complete_iteration)
+                complete_iteration = []
 
             # Stop the simulation if all the robots have reached the goal
             if counter == myt_quantity - 2:
@@ -366,6 +375,15 @@ def run(simulation, myts, runs_dir,
 
         with open(json_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
+
+        c_pkl_file = os.path.join(runs_dir, 'complete-simulation-%d.pkl' % simulation)
+        c_json_file = os.path.join(runs_dir, 'complete-simulation-%d.json' % simulation)
+
+        with open(c_pkl_file, 'wb') as f:
+            pickle.dump(complete_data, f)
+
+        with open(c_json_file, 'w', encoding='utf-8') as f:
+            json.dump(complete_data, f, ensure_ascii=False, indent=4)
 
 
 def generate__simulation(runs_dir, model_dir, simulations, controller, myt_quantity, ):
@@ -404,9 +422,13 @@ if __name__ == '__main__':
     check_dir(runs_dir)
     check_dir(model_dir)
 
-    generate__simulation(runs_dir, model_dir, simulations=1000, controller=model, myt_quantity=5)
+    # generate__simulation(runs_dir, model_dir, simulations=1000, controller=model, myt_quantity=5)
 
     img_dir = '%s/images/' % runs_dir
 
-    visualise_simulation(runs_dir, img_dir, 'Distribution simulation 0 - %s controller' % controller)
+    visualise_simulation(runs_dir, img_dir, 0, 'Distribution simulation %d - %s controller' % (0, controller))
+    visualise_simulation(runs_dir, img_dir, 1, 'Distribution simulation %d - %s controller' % (1, controller))
+    visualise_simulation(runs_dir, img_dir, 2, 'Distribution simulation %d - %s controller' % (2, controller))
+    visualise_simulation(runs_dir, img_dir, 3, 'Distribution simulation %d - %s controller' % (3, controller))
+    visualise_simulation(runs_dir, img_dir, 4, 'Distribution simulation %d - %s controller' % (4, controller))
     visualise_simulations_comparison(runs_dir, img_dir, 'Distribution of all simulations - %s controller' % controller)

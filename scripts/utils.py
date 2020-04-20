@@ -47,7 +47,7 @@ def make_space_above(axes, topmargin=1):
     fig.set_figheight(figh)
 
 
-def visualise_simulation(runs_dir, img_dir, title):
+def visualise_simulation(runs_dir, img_dir, simulation, title):
     """
     :param runs_dir:
     :param img_dir:
@@ -59,7 +59,7 @@ def visualise_simulation(runs_dir, img_dir, title):
     myt2_control = []
 
     for file_name in os.listdir(runs_dir):
-        if not file_name.endswith('-0.pkl'):
+        if not file_name.endswith('-%d.pkl' % simulation) or file_name.startswith('complete'):
             continue
 
         pickle_file = os.path.join(runs_dir, file_name)
@@ -108,7 +108,7 @@ def visualise_simulation(runs_dir, img_dir, title):
     fig.suptitle(title, fontsize=14, weight='bold')
 
     check_dir(img_dir)
-    filename = 'plot-simulation-0.pdf'
+    filename = 'plot-simulation-%d.pdf' % simulation
     file = os.path.join(img_dir, filename)
     make_space_above(axes, topmargin=1)
     plt.savefig(file)
@@ -175,7 +175,7 @@ def get_pos_sensing_control(runs_dir):
     myt2_control = []
 
     for file_name in os.listdir(runs_dir):
-        if not file_name.endswith('.pkl'):
+        if not file_name.endswith('.pkl') or file_name.startswith('complete'):
             continue
 
         pickle_file = os.path.join(runs_dir, file_name)
@@ -461,12 +461,12 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
     plt.show()
 
 
-def plot_response(x, y, img_dir, title, filename):
+def plot_response(x, y, index, x_label, img_dir, title, filename):
 
-    x = np.multiply(x[:, 2], 1000)
+    x = np.multiply(x[:, index], 1000)
     y = y[0]
 
-    plt.xlabel('center proximity sensor', fontsize=11)
+    plt.xlabel(x_label, fontsize=11)
     plt.ylabel('control', fontsize=11)
 
     plt.plot(x, y)
