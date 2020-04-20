@@ -59,7 +59,7 @@ def visualise_simulation(runs_dir, img_dir, simulation, title):
     myt2_control = []
 
     for file_name in os.listdir(runs_dir):
-        if not file_name.endswith('-%d.pkl' % simulation) or file_name.startswith('complete'):
+        if not file_name.endswith('-%d.pkl' % simulation) or not file_name.startswith('complete'):
             continue
 
         pickle_file = os.path.join(runs_dir, file_name)
@@ -175,7 +175,7 @@ def get_pos_sensing_control(runs_dir):
     myt2_control = []
 
     for file_name in os.listdir(runs_dir):
-        if not file_name.endswith('.pkl') or file_name.startswith('complete'):
+        if not file_name.endswith('.pkl') or not file_name.startswith('complete'):
             continue
 
         pickle_file = os.path.join(runs_dir, file_name)
@@ -259,7 +259,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title):
     axes[0].set_ylabel('x position', fontsize=11)
     axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
     for i in range(np.shape(mean_x_positions)[1]):
-        axes[0].plot(time_steps, mean_x_positions[:, i], label='myt%d' % (i + 2))
+        axes[0].plot(time_steps, mean_x_positions[:, i], label='myt%d' % (i + 1))
         axes[0].fill_between(time_steps,
                              mean_x_positions[:, i] - std_x_positions[:, i],
                              mean_x_positions[:, i] + std_x_positions[:, i],
@@ -313,7 +313,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title):
     labels = []
     for i in range(df_x_positions.shape[1] - 1):
         sns.lineplot(x="timestep", y="myt%d_x_positions" % (i + 2), data=df_x_positions, ax=axes[0])
-        labels.append('myt%d' % (i + 2))
+        labels.append('myt%d' % (i + 1))
     axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
     axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23), labels=tuple(labels),
                    ncol=df_x_positions.shape[1] - 1, title="robot")

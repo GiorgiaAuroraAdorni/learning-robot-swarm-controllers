@@ -36,7 +36,7 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
 
     indices = []
     for file_name in os.listdir(runs_dir):
-        if not file_name.endswith('.pkl'):
+        if not file_name.endswith('.pkl') or file_name.startswith('complete'):
             continue
 
         pickle_file = os.path.join(runs_dir, file_name)

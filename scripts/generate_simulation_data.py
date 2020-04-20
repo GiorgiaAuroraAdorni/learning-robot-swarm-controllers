@@ -153,9 +153,9 @@ class DistributedThymio2(pyenki.Thymio2):
             self.learned_controller()
 
 
-def init_positions(myts, variate_pose, min_distance = 10.9, avg_gap = 8, maximum_gap = 14, x=None):
+def init_positions(myts, variate_pose=False, min_distance = 10.9, avg_gap = 8, maximum_gap = 14, x=None):
     """
-myts, simulation, variate_pose
+    myts, simulation, variate_pose
     :param myts:
     """
     myt_quantity = len(myts)
@@ -175,7 +175,7 @@ myts, simulation, variate_pose
     if variate_pose:
         distances = [min_distance + x]
     else:
-        distances = min_distance + np.clip(np.random.normal(avg_gap, std, myt_quantity - 2), 1, maximum_gap)
+        distances = min_distance + np.clip(np.random.normal(avg_gap, std, myt_quantity - 1), 1, maximum_gap)
         distances = distances / np.sum(distances) * last_x
     # distances = np.random.randint(5, 10, 8)  # in the previous version
 
@@ -204,7 +204,7 @@ myts, simulation, variate_pose
         myt.goal_position = (goal_positions[i], 0)
 
 
-def setup(controller, myt_quantity, model_dir=None, aseba: bool = False):
+def setup(controller, myt_quantity, model_dir, aseba: bool = False):
     """
     Set up the world and create the thymios
     :param controller
@@ -303,7 +303,7 @@ def update_dict(myt):
 
 
 def run(simulation, myts, runs_dir,
-        world: pyenki.World, gui: bool = False, T: float = 2, dt: float = 0.1, tol: float = 0.1) -> None:
+        world: pyenki.World, gui: bool = False, T: float = 5, dt: float = 0.1, tol: float = 0.1) -> None:
     """
     :param simulation
     :param myts
@@ -370,26 +370,25 @@ def run(simulation, myts, runs_dir,
             else:
                 world.step(dt)
 
-
         pkl_file = os.path.join(runs_dir, 'simulation-%d.pkl' % simulation)
         json_file = os.path.join(runs_dir, 'simulation-%d.json' % simulation)
         c_pkl_file = os.path.join(runs_dir, 'complete-simulation-%d.pkl' % simulation)
-        c_json_file = os.path.join(runs_dir, 'complete-simulation-%d.json' % simulation)
+        # c_json_file = os.path.join(runs_dir, 'complete-simulation-%d.json' % simulation)
 
         with open(pkl_file, 'wb') as f:
             pickle.dump(data, f)
 
-        with open(json_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        # with open(json_file, 'w', encoding='utf-8') as f:
+        #     json.dump(data, f, ensure_ascii=False, indent=4)
 
         with open(c_pkl_file, 'wb') as f:
             pickle.dump(complete_data, f)
+        #
+        # with open(c_json_file, 'w', encoding='utf-8') as f:
+        #     json.dump(complete_data, f, ensure_ascii=False, indent=4)
 
-        with open(c_json_file, 'w', encoding='utf-8') as f:
-            json.dump(complete_data, f, ensure_ascii=False, indent=4)
 
-
-def generate__simulation(runs_dir, model_dir, simulations, controller, myt_quantity, variate_pose=False):
+def generate__simulation(runs_dir, simulations, controller, myt_quantity, model_dir=None):
     """
 
     :param runs_dir:
@@ -403,8 +402,7 @@ def generate__simulation(runs_dir, model_dir, simulations, controller, myt_quant
 
     for simulation in tqdm(range(simulations)):
         try:
-            init_positions(myts, variate_pose)
-
+            init_positions(myts)
             run(simulation, myts, runs_dir, world, '--gui' in sys.argv)
         except Exception as e:
             print('ERROR: ', e)
@@ -412,12 +410,11 @@ def generate__simulation(runs_dir, model_dir, simulations, controller, myt_quant
 
 if __name__ == '__main__':
     myt_quantity = 5
-    # controller = 'distributed'  # 'omniscient'
 
     model = 'net1'
-    controller = model
+    controller = model  # 'distributed'  # 'omniscient'
 
-    dataset = '%dmyts-%s/' % (myt_quantity, controller)
+    dataset = '%dmyts-%s' % (myt_quantity, controller)
 
     runs_dir = os.path.join('datasets/', dataset)
     model_dir = 'models/distributed/%s' % model
@@ -425,8 +422,8 @@ if __name__ == '__main__':
     check_dir(runs_dir)
     check_dir(model_dir)
 
-    # generate__simulation(runs_dir, model_dir, simulations=17, controller=model, myt_quantity=3)
-
+    # generate__simulation(runs_dir, simulations=1000, controller=controller, myt_quantity=myt_quantity)
+    generate__simulation(runs_dir, simulations=1000, controller=controller, myt_quantity=myt_quantity, model_dir=model_dir)
     img_dir = '%s/images/' % runs_dir
 
     # visualise_simulation(runs_dir, img_dir, 0, 'Distribution simulation %d - %s controller' % (0, controller))
