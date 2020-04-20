@@ -429,15 +429,14 @@ def test_controller_given_init_positions(model_dir, model_img):
 
     world, myts = setup(controller, myt_quantity, model_dir)
 
-    simulations = 17
+    simulations = 17 * 10
 
-    x = np.arange(simulations)
+    x = np.linspace(0, 16, num=simulations)
     control_predictions = []
 
-    for simulation in tqdm(range(simulations)):
+    for simulation in tqdm(x):
         init_positions(myts, variate_pose=True, x=simulation)
 
-        control = myts[1].motor_left_target
         world.step(dt=0.1)
         # myts[1].learned_controller()
         control = myts[1].motor_left_target
