@@ -461,10 +461,21 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
     plt.show()
 
 
-def plot_response(x, y, index, x_label, img_dir, title, filename):
+def plot_response(x, y, x_label, img_dir, title, filename, index=None):
+    """
 
-    x = np.multiply(x[:, index], 1000)
-    y = y[0]
+    :param x
+    :param y
+    :param x_label
+    :param img_dir
+    :param title
+    :param filename
+    :param index: this parameter is different from None only when x is the input sensing, otherwise, x is a 1D vector
+    """
+
+    if index is not None:
+        x = np.multiply(x[:, index], 1000)
+        y = y[0]
 
     plt.xlabel(x_label, fontsize=11)
     plt.ylabel('control', fontsize=11)

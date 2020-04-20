@@ -153,27 +153,30 @@ class DistributedThymio2(pyenki.Thymio2):
             self.learned_controller()
 
 
-def init_positions(myts):
+def init_positions(myts, variate_pose, min_distance = 10.9, avg_gap = 8, maximum_gap = 14, x=None):
     """
-
+myts, simulation, variate_pose
     :param myts:
     """
     myt_quantity = len(myts)
 
     # The minimum distance between two Thymio [wheel - wheel] is 12 cm
-    min_distance = 10.9  # in the previous version it was set at 7.95
-    avg_gap = 8  # 12  # can vary in the range [6, 14]
+    # min_distance = 10.9  # in the previous version it was set at 7.95
+    # avg_gap = 8  # 12  # can vary in the range [6, 14]
 
     # The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range
     # ~ 14 cm is the proximity sensors maximal range
-    maximum_gap = 14  # 12
+    # maximum_gap = 14  # 12
     std = 8
 
     first_x = 0
     last_x = (min_distance + avg_gap) * (myt_quantity - 1)
 
-    distances = min_distance + np.clip(np.random.normal(avg_gap, std, myt_quantity - 1), 1, maximum_gap)
-    distances = distances / np.sum(distances) * last_x
+    if variate_pose:
+        distances = [min_distance + x]
+    else:
+        distances = min_distance + np.clip(np.random.normal(avg_gap, std, myt_quantity - 2), 1, maximum_gap)
+        distances = distances / np.sum(distances) * last_x
     # distances = np.random.randint(5, 10, 8)  # in the previous version
 
     # Decide the goal pose for each robot
@@ -183,7 +186,7 @@ def init_positions(myts):
         # Position the first and last robot at a fixed distance
         if i == 0:
             myt.position = (first_x, 0)
-        elif i == myt_quantity:
+        elif i == myt_quantity - 1:
             myt.position = (last_x, 0)
         else:
             prev_pos = myts[i - 1].position[0]
@@ -367,17 +370,17 @@ def run(simulation, myts, runs_dir,
             else:
                 world.step(dt)
 
+
         pkl_file = os.path.join(runs_dir, 'simulation-%d.pkl' % simulation)
         json_file = os.path.join(runs_dir, 'simulation-%d.json' % simulation)
+        c_pkl_file = os.path.join(runs_dir, 'complete-simulation-%d.pkl' % simulation)
+        c_json_file = os.path.join(runs_dir, 'complete-simulation-%d.json' % simulation)
 
         with open(pkl_file, 'wb') as f:
             pickle.dump(data, f)
 
         with open(json_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-
-        c_pkl_file = os.path.join(runs_dir, 'complete-simulation-%d.pkl' % simulation)
-        c_json_file = os.path.join(runs_dir, 'complete-simulation-%d.json' % simulation)
 
         with open(c_pkl_file, 'wb') as f:
             pickle.dump(complete_data, f)
@@ -386,7 +389,7 @@ def run(simulation, myts, runs_dir,
             json.dump(complete_data, f, ensure_ascii=False, indent=4)
 
 
-def generate__simulation(runs_dir, model_dir, simulations, controller, myt_quantity, ):
+def generate__simulation(runs_dir, model_dir, simulations, controller, myt_quantity, variate_pose=False):
     """
 
     :param runs_dir:
@@ -400,16 +403,16 @@ def generate__simulation(runs_dir, model_dir, simulations, controller, myt_quant
 
     for simulation in tqdm(range(simulations)):
         try:
-            init_positions(myts)
+            init_positions(myts, variate_pose)
+
             run(simulation, myts, runs_dir, world, '--gui' in sys.argv)
         except Exception as e:
             print('ERROR: ', e)
 
 
 if __name__ == '__main__':
-    # controller = 'omniscient'
     myt_quantity = 5
-    # controller = 'distributed'
+    # controller = 'distributed'  # 'omniscient'
 
     model = 'net1'
     controller = model
@@ -422,13 +425,13 @@ if __name__ == '__main__':
     check_dir(runs_dir)
     check_dir(model_dir)
 
-    # generate__simulation(runs_dir, model_dir, simulations=1000, controller=model, myt_quantity=5)
+    # generate__simulation(runs_dir, model_dir, simulations=17, controller=model, myt_quantity=3)
 
     img_dir = '%s/images/' % runs_dir
 
-    visualise_simulation(runs_dir, img_dir, 0, 'Distribution simulation %d - %s controller' % (0, controller))
-    visualise_simulation(runs_dir, img_dir, 1, 'Distribution simulation %d - %s controller' % (1, controller))
-    visualise_simulation(runs_dir, img_dir, 2, 'Distribution simulation %d - %s controller' % (2, controller))
-    visualise_simulation(runs_dir, img_dir, 3, 'Distribution simulation %d - %s controller' % (3, controller))
-    visualise_simulation(runs_dir, img_dir, 4, 'Distribution simulation %d - %s controller' % (4, controller))
-    visualise_simulations_comparison(runs_dir, img_dir, 'Distribution of all simulations - %s controller' % controller)
+    # visualise_simulation(runs_dir, img_dir, 0, 'Distribution simulation %d - %s controller' % (0, controller))
+    # visualise_simulation(runs_dir, img_dir, 1, 'Distribution simulation %d - %s controller' % (1, controller))
+    # visualise_simulation(runs_dir, img_dir, 2, 'Distribution simulation %d - %s controller' % (2, controller))
+    # visualise_simulation(runs_dir, img_dir, 3, 'Distribution simulation %d - %s controller' % (3, controller))
+    # visualise_simulation(runs_dir, img_dir, 4, 'Distribution simulation %d - %s controller' % (4, controller))
+    # visualise_simulations_comparison(runs_dir, img_dir, 'Distribution of all simulations - %s controller' % controller)

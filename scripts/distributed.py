@@ -13,6 +13,8 @@ from torch.utils.data import TensorDataset
 from tqdm import tqdm
 from utils import check_dir, plot_losses, my_scatterplot, my_histogram, plot_regressor, plot_response
 
+from generate_simulation_data import setup, init_positions
+
 
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
     """
@@ -371,8 +373,8 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing):
     :param model_dir:
     :param ds:
     :param ds_eval:
-    :param sensing:
     :param groundtruth:
+    :param sensing: used to obtain the prediction
     """
     controller_predictions = []
 
@@ -388,7 +390,7 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing):
 def generate_sensing():
     """
 
-    :return sensing
+    :return x, s: x is the configuration, s is the zeros array
     """
     x = np.arange(4500)
     s = np.zeros(x.shape[0])
@@ -396,32 +398,66 @@ def generate_sensing():
     return x, s
 
 
-def evaluate_net(model_dir, model, net, controller: Controller, sensing, index, x_label):
+def evaluate_net(model_img, model, net, controller: Controller, sensing, index, x_label):
     """
 
-    :param model_dir:
+    :param model_img:
     :param model:
+    :param net:
     :param controller:
+    :param sensing:
+    :param index:
+    :param x_label:
     """
     predictions = controller(sensing)
-
-    model_img = '%s/images/' % model_dir
-    check_dir(model_img)
 
     title = 'Response %s - %s' % (model, net)
     file_name = 'response-%s-%s.pdf' % (model, net)
 
     # Plot the output of the network
-    plot_response(sensing, predictions, index, x_label, model_img, title, file_name)
+    plot_response(sensing, predictions, x_label, model_img, title, file_name, index)
 
 
-def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, ds_learned, train):
+def test_controller_given_init_positions(model_dir, model_img):
+    """
+
+    :param model_dir:
+    :param model_img:
+    """
+    myt_quantity = 3
+    controller = model
+
+    world, myts = setup(controller, myt_quantity, model_dir)
+
+    simulations = 17
+
+    x = np.arange(simulations)
+    control_predictions = []
+
+    for simulation in tqdm(range(simulations)):
+        init_positions(myts, variate_pose=True, x=simulation)
+
+        control = myts[1].motor_left_target
+        world.step(dt=0.1)
+        # myts[1].learned_controller()
+        control = myts[1].motor_left_target
+        control_predictions.append(control)
+
+    title = 'Response %s by varying init position' % model
+    file_name = 'response-%s-varying_init_position.pdf' % model
+
+    # Plot the output of the network
+    plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
+
+
+def main(file, runs_dir, runs_img, model_dir, model_img, model, ds, ds_eval, train):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir: directory containing the simulations
     :param runs_img: directory containing the images related to the dataset
     :param model_dir: directory containing the network data
-    :param model:
+    :param model_img: directory containing the images related to network
+    :param model
     :param ds
     :param ds_eval
     :param train
@@ -469,29 +505,32 @@ def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, ds_learned, tr
     else:
         d_net = torch.load('%s/%s' % (model_dir, model))
 
-        # # Load the metrics
-        # training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
-        #
-        # prediction = d_net(torch.FloatTensor(valid_sample))
-        #
-        # network_plots(runs_img, model_dir, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
-        #               sensing, groundtruth)
-        #
-        # # Evaluate prediction of the distributed controller to the omniscient groundtruth
-        # evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
+        # Load the metrics
+        training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
+
+        prediction = d_net(torch.FloatTensor(valid_sample))
+
+        network_plots(runs_img, model_dir, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
+                      sensing, groundtruth)
+
+        # Evaluate prediction of the distributed controller to the omniscient groundtruth
+        evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
 
         controller = d_net.controller()
-
-        #
+        # Evaluate the learned controller by passing a specific input sensing configuration
         x, s = generate_sensing()
         sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
         index = 2
-        evaluate_net(model_dir, model, 'net([0, 0, x, 0, 0, 0, 0])', controller, sensing, index, 'center proximity sensor')
+        evaluate_net(model_img, model, 'net([0, 0, x, 0, 0, 0, 0])', controller, sensing, index,
+                     'center proximity sensor')
 
         index = -1
         sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
-        evaluate_net(model_dir, model, 'net([0, 0, 0, 0, 0, x, x])', controller, sensing, index, 'rear proximity '
-                                                                                                 'sensors')
+        evaluate_net(model_img, model, 'net([0, 0, 0, 0, 0, x, x])', controller, sensing, index,
+                     'rear proximity sensors')
+
+        # Evaluate the learned controller by passing a specific initial position configuration
+        test_controller_given_init_positions(model_dir, model_img)
 
 
 if __name__ == '__main__':
@@ -500,16 +539,17 @@ if __name__ == '__main__':
 
     dataset_net = '%dmyts-%s' % (myt_quantity, 'omniscient')
     dataset_eval = '%dmyts-%s' % (myt_quantity, 'distributed')
-    dataset_learned = '%dmyts-%s' % (myt_quantity, model)
 
     runs_dir = os.path.join('datasets/', dataset_net)
     runs_img = '%s/images/' % runs_dir
     model_dir = 'models/distributed/%s' % model
+    model_img = '%s/images/' % model_dir
 
     check_dir(runs_dir)
     check_dir(runs_img)
     check_dir(model_dir)
+    check_dir(model_img)
 
     file = os.path.join('models/distributed/', 'dataset_split.npy')
 
-    main(file, runs_dir, runs_img, model_dir, model, dataset_net, dataset_eval, dataset_learned, train=False)
+    main(file, runs_dir, runs_img, model_dir, model_img, model, dataset_net, dataset_eval, train=False)
