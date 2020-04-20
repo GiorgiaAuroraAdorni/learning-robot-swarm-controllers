@@ -8,7 +8,7 @@ Control = TypeVar('Control')
 Communication = TypeVar('Communication')
 
 ControlOutput = Tuple[Sequence[Control], Sequence[Communication]]
-Controller = Callable[[Sequence[State], Sequence[Sensing]], ControlOutput]
+Controller = Callable[[Sequence[Sensing]], ControlOutput]
 
 
 class DistributedNet(torch.nn.Module):
@@ -34,7 +34,7 @@ class DistributedNet(torch.nn.Module):
 
         :return:
         """
-        def f(state: Sequence[State], sensing: Sequence[Sensing]) -> Tuple[Sequence[Control]]:
+        def f(sensing: Sequence[Sensing]) -> Tuple[Sequence[Control]]:
             with torch.no_grad():
                 return self(torch.FloatTensor(sensing)).numpy().flatten(),
         return f

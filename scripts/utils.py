@@ -464,7 +464,7 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
 def plot_response(x, y, img_dir, title, filename):
 
     x = np.multiply(x[:, 2], 1000)
-    y = np.array(y.tolist()).flatten()
+    y = y[0]
 
     plt.xlabel('center proximity sensor', fontsize=11)
     plt.ylabel('control', fontsize=11)

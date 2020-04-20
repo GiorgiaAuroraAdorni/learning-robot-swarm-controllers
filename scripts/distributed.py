@@ -6,7 +6,7 @@ from typing import List, Tuple, Optional, AnyStr
 import numpy as np
 import pandas as pd
 import torch
-from networks.distributed_network import DistributedNet
+from networks.distributed_network import DistributedNet, Controller
 from pid import PID
 from torch.utils import data
 from torch.utils.data import TensorDataset
@@ -279,6 +279,7 @@ def network_plots(runs_img, model_dir, dataset, prediction, training_loss, valid
     label = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
     my_histogram(x, 'sensing', model_img, title, file_name, label)
 
+    # Evaluate prediction of the learned controller to the omniscient groundtruth
     # Plot R^2 of the regressor between prediction and ground truth on the validation set
     # title = 'Regression learned %s vs %s' % dataset
     title = 'Regression learned controller vs %s' % dataset
@@ -290,14 +291,14 @@ def network_plots(runs_img, model_dir, dataset, prediction, training_loss, valid
     plot_regressor(y_valid, prediction, x_label, y_label, model_img, title, file_name)
 
 
-def controller_plots(model_dir, ds, ds_eval, prediction, groundtruth):
+def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction):
     """
 
     :param model_dir
     :param ds:
     :param ds_eval:
-    :param prediction:
     :param groundtruth:
+    :param prediction:
     """
     model_img = '%s/images/' % model_dir
     check_dir(model_img)
@@ -364,7 +365,7 @@ def distributed_controller(sensing, dt=0.1):
     return speed
 
 
-def compare_net_to_manual_controller(model_dir, ds, ds_eval, sensing, groundtruth):
+def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing):
     """
 
     :param model_dir:
@@ -381,7 +382,7 @@ def compare_net_to_manual_controller(model_dir, ds, ds_eval, sensing, groundtrut
         control = distributed_controller(sample)
         controller_predictions.append(control)
 
-    controller_plots(model_dir, ds, ds_eval, controller_predictions, groundtruth)
+    controller_plots(model_dir, ds, ds_eval, groundtruth, controller_predictions)
 
 
 def generate_sensing():
@@ -397,17 +398,15 @@ def generate_sensing():
     return sensing
 
 
-def evaluate_net(model_dir, model, d_net):
+def evaluate_net(model_dir, model, controller: Controller):
     """
 
     :param model_dir:
     :param model:
-    :param d_net:
+    :param controller:
     """
     sensing = generate_sensing()
-    d_sensing = torch.FloatTensor(sensing)
-
-    predictions = d_net(d_sensing)
+    predictions = controller(sensing)
 
     model_img = '%s/images/' % model_dir
     check_dir(model_img)
@@ -419,7 +418,7 @@ def evaluate_net(model_dir, model, d_net):
     plot_response(sensing, predictions, model_img, title, file_name)
 
 
-def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, train):
+def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, ds_learned, train):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir: directory containing the simulations
@@ -481,9 +480,11 @@ def main(file, runs_dir, runs_img, model_dir, model, ds, ds_eval, train):
         network_plots(runs_img, model_dir, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
                       sensing, groundtruth)
 
-        compare_net_to_manual_controller(model_dir, ds, ds_eval, sensing, groundtruth)
+        # Evaluate prediction of the distributed controller to the omniscient groundtruth
+        evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
 
-        evaluate_net(model_dir, model, d_net)
+        controller = d_net.controller()
+        evaluate_net(model_dir, model, controller)
 
 
 if __name__ == '__main__':
@@ -492,6 +493,7 @@ if __name__ == '__main__':
 
     dataset_net = '%dmyts-%s' % (myt_quantity, 'omniscient')
     dataset_eval = '%dmyts-%s' % (myt_quantity, 'distributed')
+    dataset_learned = '%dmyts-%s' % (myt_quantity, model)
 
     runs_dir = os.path.join('datasets/', dataset_net)
     runs_img = '%s/images/' % runs_dir
@@ -503,4 +505,4 @@ if __name__ == '__main__':
 
     file = os.path.join('models/distributed/', 'dataset_split.npy')
 
-    main(file, runs_dir, runs_img, model_dir, model, dataset_net, dataset_eval, train=False)
+    main(file, runs_dir, runs_img, model_dir, model, dataset_net, dataset_eval, dataset_learned, train=False)
