@@ -9,7 +9,6 @@ import pyenki
 import torch
 from tqdm import tqdm
 from pid import PID
-from utils import check_dir, visualise_simulation, visualise_simulations_comparison
 
 
 # Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
@@ -450,5 +449,3 @@ def generate__simulation(runs_dir, simulations, controller, myt_quantity, model_
             run(simulation, myts, runs_dir, world, '--gui' in sys.argv)
         except Exception as e:
             print('ERROR: ', e)
-
-
