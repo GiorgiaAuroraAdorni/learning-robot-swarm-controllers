@@ -1,181 +1,37 @@
-import json
 import os
 import pickle
 import sys
-from math import pi, sin, cos
+from math import pi
 
 import numpy as np
+import pandas as pd
 import pyenki
-import torch
 from tqdm import tqdm
-from pid import PID
+
+from my_plots import my_scatterplot
+from utils import extract_input_output
 
 
-# Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
-class DistributedThymio2(pyenki.Thymio2):
+def setup(controller_factory, myt_quantity, aseba: bool = False):
+    """
+    Set up the world as an unbounded world.
+    :param controller_factory: if the controller is passed, load the learned network
+    :param myt_quantity: number of robot in the simulation
+    :param aseba
+    :return world, myts
+    """
+    # Create an unbounded world
+    world = pyenki.World()
 
-    def __init__(self, controller, name, index, initial_position, goal_position, goal_angle, dictionary, net,
-                 **kwargs) -> None:
-        """
+    myts = []
 
-        :param controller
-        :param name
-        :param index
-        :param initial_position
-        :param goal_position
-        :param goal_angle
-        :param dictionary
-        :param net
-        :param kwargs
-        """
-        super().__init__(**kwargs)
-        self.name = name
-        self.index = index
-        self.initial_position = initial_position
-        self.goal_position = goal_position
-        self.goal_angle = goal_angle
+    for i in range(myt_quantity):
+        myt = controller_factory(name='myt%d' % (i + 1), index=i, use_aseba_units=aseba)
 
-        #  Encodes speed between -16.6 and +16.6 (aseba units: [-500,500])
-        self.controller = controller
-        self.p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
+        myts.append(myt)
+        world.add_object(myt)
 
-        self.dictionary = dictionary
-        self.net = net
-        if self.net is not None:
-            self.net_controller = net.controller()
-
-    def signed_distance(self):
-        """
-        :return: Signed distance between current and the goal position, along the current theta of the robot
-        """
-        a = self.position[0] * cos(self.angle) + self.position[1] * sin(self.angle)
-        b = self.goal_position[0] * cos(self.angle) + self.goal_position[1] * sin(self.angle)
-
-        return b - a
-
-    def linear_vel(self, constant=4):
-        """
-        :param constant
-        :return: clipped linear velocity
-        """
-        velocity = constant * self.signed_distance()
-        return min(max(-16.6, velocity), 16.6)
-
-    def move_to_goal(self):
-        """
-        Moves the thymio to the goal.
-        :return: speed
-        """
-        return self.linear_vel()
-
-    def neighbors_distance(self):
-        """
-        Check if there is a robot ahead using the infrared sensor 2 (front-front).
-        Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
-        :return back, front: response values of the rear and front sensors
-        """
-        prox_values = self.prox_values
-        front = prox_values[2]
-        back = np.mean(np.array([prox_values[5], prox_values[6]]))
-
-        return back, front
-
-    def compute_difference(self):
-        """
-        :return: the difference between the response value of front and the rear sensor
-        """
-        back, front = self.neighbors_distance()
-
-        # Apply a small correction to the distance measured by the rear sensors: the front sensor used is at a
-        # different x coordinate from the point to which the rear sensor of the robot that follows points. this is
-        # because of the curved shape of the face of the Thymio
-        delta_x = 7.41150769
-        x = 7.95
-
-        # Maximum possible response values
-        delta_x_m = 4505 * delta_x / 14
-        x_m = 4505 * x / 14
-
-        correction = x_m - delta_x_m
-
-        out = front - correction - back
-
-        return out
-
-    def distributed_controller(self, dt):
-        """
-        Move the robots not to the end of the line using the distributed controller, setting the target {left,
-        right} wheel speed each at the same value in order to moves the robot straight ahead. This distributed 
-        controller is a simple proportional controller PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6) that takes in 
-        input the difference between the response value of front and the rear sensor. To the distance measured by the 
-        rear sensors is applied a small correction since the front sensor used is at a different x coordinate from 
-        the point to which the rear sensor of the robot that follows points. This is because of the curved shape of 
-        the face of the Thymio.
-
-        The response values are actually intensities: the front correspond to the frontal center sensor and the back
-        to the mean of the response values of the rear sensors.
-        The final difference is computed ad follow: out = front - correction - back
-        The speed are clipped to [min_out=-16.6, max_out=16.6].
-        :param dt: control step duration
-
-        """
-        # Don't move the first and last robots in the line
-        if self.initial_position[0] != self.goal_position[0]:
-            speed = self.p_distributed_controller.step(self.compute_difference(), dt)
-
-            self.motor_left_target = speed
-            self.motor_right_target = speed
-
-    def omniscient_controller(self):
-        """
-        Move the robots using the omniscient controller by setting the target {left,right} wheel speed
-        each at the same value in order to moves the robot straight ahead.
-        The speed is computed as follow:
-            velocity = constant * self.signed_distance()
-        where the constant is set to 4 and the signed_distance is the distance between the current and the goal 
-        position of the robot, along the current theta of the robot.
-        """
-        speed = self.move_to_goal()
-
-        self.motor_left_target = speed
-        self.motor_right_target = speed
-
-    def learned_controller(self):
-        """
-        Extract the input sensing from the list of (7) proximity sensor readings, one for each sensors.
-        The first 5 entries are from frontal sensors ordered from left to right.
-        The last two entries are from rear sensors ordered from left to right.
-        Then normalise each value of the list, by dividing it by 1000.
-
-        Generate the output speed using the learned controller.
-
-        Move the robots not to the end of the line using the controller, setting the target {left,right} wheel speed
-        each at the same value in order to moves the robot straight ahead.
-        """
-        sensing = np.divide(np.array(self.prox_values), 1000).tolist()
-        speed = float(self.net_controller(sensing)[0])
-
-        if self.initial_position[0] != self.goal_position[0]:
-            self.motor_left_target = speed
-            self.motor_right_target = speed
-
-    def controlStep(self, dt: float) -> None:
-        """
-        Perform one control step:
-        Move the robots in such a way they stand at equal distances from each other.
-        Enable communication and send at each timestep a message containing the index.
-        It is possible to use the distributed, the omniscient or the learned controller.
-        :param dt: control step duration
-        """
-        self.prox_comm_enable = True
-        self.prox_comm_tx = self.index
-
-        if self.controller == 'distributed':
-            self.distributed_controller(dt)
-        elif self.controller == 'omniscient':
-            self.omniscient_controller()
-        elif self.controller == 'net1':
-            self.learned_controller()
+    return world, myts
 
 
 def init_positions(myts, variate_pose=False, min_distance = 10.9, avg_gap = 8, maximum_gap = 14, x=None):
@@ -225,47 +81,13 @@ def init_positions(myts, variate_pose=False, min_distance = 10.9, avg_gap = 8, m
             myt.position = (current_pos, 0)
             # myt.position = (goal_positions[i], 0)
 
-        myt.angle = 0
         myt.initial_position = myt.position
 
         #  Reset the dictionary
         myt.dictionary = None
+        myt.angle = 0
 
         myt.goal_position = (goal_positions[i], 0)
-
-
-def setup(controller, myt_quantity, model_dir, aseba: bool = False):
-    """
-    Set up the world as an unbounded world.
-    :param controller: if the controller is passed, load the learned network
-    :param myt_quantity: number of robot in the simulation
-    :param model_dir
-    :param aseba
-    :return world, myts
-    """
-    # Create an unbounded world
-    world = pyenki.World()
-
-    if model_dir is not None:
-        net = torch.load('%s/%s' % (model_dir, controller))
-    else:
-        net = None
-
-    myts = [DistributedThymio2(controller=controller,
-                               name='myt%d' % (i + 1),
-                               index=i,
-                               initial_position=None,
-                               goal_position=None,
-                               goal_angle=0,
-                               dictionary=None,
-                               net=net,
-                               use_aseba_units=aseba)
-            for i in range(myt_quantity)]
-
-    for myt in myts:
-        world.add_object(myt)
-
-    return world, myts
 
 
 def get_prox_comm(myt):
@@ -341,8 +163,36 @@ def update_dict(myt):
     return dictionary
 
 
+def save_simulation(complete_data, data, runs_dir, simulation):
+    """
+
+    :param complete_data:
+    :param data:
+    :param runs_dir:
+    :param simulation:
+    :return:
+    """
+    pkl_file = os.path.join(runs_dir, 'simulation-%d.pkl' % simulation)
+    json_file = os.path.join(runs_dir, 'simulation-%d.json' % simulation)
+
+    c_pkl_file = os.path.join(runs_dir, 'complete-simulation-%d.pkl' % simulation)
+    # c_json_file = os.path.join(runs_dir, 'complete-simulation-%d.json' % simulation)
+
+    with open(pkl_file, 'wb') as f:
+        pickle.dump(data, f)
+
+    # with open(json_file, 'w', encoding='utf-8') as f:
+    #     json.dump(data, f, ensure_ascii=False, indent=4)
+
+    with open(c_pkl_file, 'wb') as f:
+        pickle.dump(complete_data, f)
+
+    # with open(c_json_file, 'w', encoding='utf-8') as f:
+    #     json.dump(complete_data, f, ensure_ascii=False, indent=4)
+
+
 def run(simulation, myts, runs_dir,
-        world: pyenki.World, gui: bool = False, T: float = 5, dt: float = 0.1, tol: float = 0.1) -> None:
+        world: pyenki.World, gui: bool = False, T: float = 2, dt: float = 0.1, tol: float = 0.1) -> None:
     """
     Run the simulation as fast as possible or using the real time GUI.
     Generate two different type of simulation data, one with all the thymios and the other without including the 2
@@ -413,39 +263,57 @@ def run(simulation, myts, runs_dir,
             else:
                 world.step(dt)
 
-        pkl_file = os.path.join(runs_dir, 'simulation-%d.pkl' % simulation)
-        json_file = os.path.join(runs_dir, 'simulation-%d.json' % simulation)
-        c_pkl_file = os.path.join(runs_dir, 'complete-simulation-%d.pkl' % simulation)
-        # c_json_file = os.path.join(runs_dir, 'complete-simulation-%d.json' % simulation)
-
-        with open(pkl_file, 'wb') as f:
-            pickle.dump(data, f)
-
-        # with open(json_file, 'w', encoding='utf-8') as f:
-        #     json.dump(data, f, ensure_ascii=False, indent=4)
-
-        with open(c_pkl_file, 'wb') as f:
-            pickle.dump(complete_data, f)
-        #
-        # with open(c_json_file, 'w', encoding='utf-8') as f:
-        #     json.dump(complete_data, f, ensure_ascii=False, indent=4)
+        save_simulation(complete_data, data, runs_dir, simulation)
 
 
-def generate__simulation(runs_dir, simulations, controller, myt_quantity, model_dir=None):
+def generate_simulation(runs_dir, simulations, controller_factory, myt_quantity):
     """
 
     :param runs_dir:
-    :param model_dir
     :param simulations:
-    :param controller:
+    :param controller_factory:
     :param myt_quantity:
     """
 
-    world, myts = setup(controller, myt_quantity, model_dir)
+    world, myts = setup(controller_factory, myt_quantity)
 
     for simulation in tqdm(range(simulations)):
         try:
             init_positions(myts)
+            # TODO arg parser gui : args.gui
             run(simulation, myts, runs_dir, world, '--gui' in sys.argv)
         except Exception as e:
             print('ERROR: ', e)
+
+
+def check_dataset_conformity(runs_dir, runs_img, dataset):
+    """
+    Generate a scatter plot to check the conformity of the dataset. The plot will show the distribution of the input
+    sensing, in particular, as the difference between the front sensor and the mean of the rear sensors,
+    with respect to the output control of the datasets.
+    :param runs_dir: directory containing the simulation
+    :param runs_img: directory containing the simulation images
+    :param dataset
+    """
+    input_ = []
+    output_ = []
+
+    for file_name in os.listdir(runs_dir):
+        if not file_name.endswith('.pkl') or file_name.startswith('complete'):
+            continue
+
+        pickle_file = os.path.join(runs_dir, file_name)
+        run = pd.read_pickle(pickle_file)
+
+        extract_input_output(run, input_, output_, 'prox_values', 'motor_left_target')
+
+    #  Generate a scatter plot to check the conformity of the dataset
+    title = 'Dataset %s' % dataset
+    file_name = 'dataset-scatterplot-%s.pdf' % dataset
+
+    x = np.array(input_)[:, 2] - np.mean(np.array(input_)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
+    y = np.array(output_).flatten()  # y: speed
+    x_label = 'sensing'
+    y_label = 'control'
+
+    my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)

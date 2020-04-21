@@ -96,11 +96,55 @@ def visualise_simulation(runs_dir, img_dir, simulation, title):
     plt.show()
 
 
-def visualise_simulations_comparison(runs_dir, img_dir, title):
+def visualise_simulations_comparison_seaborn(img_dir, myt2_control, myt2_sensing, proximity_sensors, target, time_steps,
+                                             title, x_positions):
+    # Seaborn visualisation
+    df_x_positions, df_sensing, df_control = extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps,
+                                                                       x_positions)
+    fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
+    labels = []
+
+    for i in range(df_x_positions.shape[1] - 1):
+        sns.lineplot(x="timestep", y="myt%d_x_positions" % (i + 2), data=df_x_positions, ax=axes[0])
+        labels.append('myt%d' % (i + 1))
+    axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
+    axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23), labels=tuple(labels),
+                   ncol=df_x_positions.shape[1] - 1, title="robot")
+    axes[0].set_yticks(target)
+    axes[0].grid()
+    axes[0].set(ylabel='x position')
+
+    for i in range(df_sensing.shape[1] - 1):
+        sns.lineplot(x="timestep", y="myt2_sensor_%d" % (i + 1), data=df_sensing, ax=axes[1])
+    axes[1].set_title('Thymio 2 Sensing', weight='bold', fontsize=12)
+    axes[1].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23), labels=tuple(proximity_sensors),
+                   ncol=(df_sensing.shape[1] - 1), title="proximity sensor")
+    axes[1].grid()
+    axes[1].set(ylabel='sensing')
+
+    sns.lineplot(x="timestep", y="myt2_control", data=df_control, ax=axes[2])
+    axes[2].set_title('Thymio 2 Control', weight='bold', fontsize=12)
+    axes[2].grid()
+    axes[2].set(ylabel='control')
+
+    fig.tight_layout()
+    fig.subplots_adjust(hspace=0.5)
+    plt.xlabel('timestep', fontsize=11)
+    fig.suptitle(title, fontsize=14, weight='bold')
+
+    filename = 'compare-simulation-seaborn.pdf'
+    file = os.path.join(img_dir, filename)
+    make_space_above(axes, topmargin=1)
+    plt.savefig(file)
+    plt.show()
+
+
+def visualise_simulations_comparison(runs_dir, img_dir, title, seaborn=False):
     """
     :param runs_dir:
     :param img_dir:
     :param title
+    :param seaborn
     """
     time_steps, x_positions, myt2_sensing, myt2_control, target = get_pos_sensing_control(runs_dir)
 
@@ -165,46 +209,9 @@ def visualise_simulations_comparison(runs_dir, img_dir, title):
     plt.savefig(file)
     plt.show()
 
-    # Seaborn visualisation
-    df_x_positions, df_sensing, df_control = extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps,
-                                                                       x_positions)
-
-    fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
-    labels = []
-    for i in range(df_x_positions.shape[1] - 1):
-        sns.lineplot(x="timestep", y="myt%d_x_positions" % (i + 2), data=df_x_positions, ax=axes[0])
-        labels.append('myt%d' % (i + 1))
-    axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
-    axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23), labels=tuple(labels),
-                   ncol=df_x_positions.shape[1] - 1, title="robot")
-    axes[0].set_yticks(target)
-    axes[0].grid()
-    axes[0].set(ylabel='x position')
-
-    for i in range(df_sensing.shape[1] - 1):
-        sns.lineplot(x="timestep", y="myt2_sensor_%d" % (i + 1), data=df_sensing, ax=axes[1])
-    axes[1].set_title('Thymio 2 Sensing', weight='bold', fontsize=12)
-    axes[1].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23), labels=tuple(proximity_sensors),
-                   ncol=(df_sensing.shape[1] - 1), title="proximity sensor")
-    axes[1].grid()
-    axes[1].set(ylabel='sensing')
-
-    sns.lineplot(x="timestep", y="myt2_control", data=df_control, ax=axes[2])
-    axes[2].set_title('Thymio 2 Control', weight='bold', fontsize=12)
-    axes[2].grid()
-    axes[2].set(ylabel='control')
-
-    fig.tight_layout()
-    fig.subplots_adjust(hspace=0.5)
-
-    plt.xlabel('timestep', fontsize=11)
-    fig.suptitle(title, fontsize=14, weight='bold')
-
-    filename = 'compare-simulation-seaborn.pdf'
-    file = os.path.join(img_dir, filename)
-    make_space_above(axes, topmargin=1)
-    plt.savefig(file)
-    plt.show()
+    if seaborn:
+        visualise_simulations_comparison_seaborn(img_dir, myt2_control, myt2_sensing, proximity_sensors, target,
+                                                 time_steps, title, x_positions)
 
 
 def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):

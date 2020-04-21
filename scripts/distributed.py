@@ -1,19 +1,19 @@
 import os
-import os
 import re
 from typing import List, Tuple, Optional, AnyStr
 
 import numpy as np
 import pandas as pd
 import torch
-from networks.distributed_network import DistributedNet, Controller
-from pid import PID
 from torch.utils import data
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
-from utils import check_dir, plot_losses, my_scatterplot, my_histogram, plot_regressor, plot_response
 
 from generate_simulation_data import setup, init_positions
+from my_plots import plot_losses, my_scatterplot, my_histogram, plot_regressor, plot_response
+from networks.distributed_network import DistributedNet, Controller
+from pid import PID
+from utils import check_dir, extract_input_output
 
 
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
@@ -55,18 +55,7 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
             input_ = test_sample
             output_ = test_target
 
-        for step in run:
-            for myt in step:
-                # The input is the prox_values, that are the response values of ​​the sensors [array of 7 floats]
-                # they are normalised so that the average is around 1 or a constant (e.g. for all (dividing by 1000))
-                sample = myt['prox_values'].copy()
-                normalised_sample = np.divide(np.array(sample), 1000).tolist()
-                input_.append(normalised_sample)
-
-                # The output is the speed of the wheels (which we assume equals left and right) [array of 1 float]
-                # There is no need to normalize the outputs.
-                speed = myt['motor_left_target']
-                output_.append([speed])
+        extract_input_output(run, input_, output_, 'prox_values', 'motor_left_target')
 
     return train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input_, output_
 
@@ -225,34 +214,21 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, padded=False, c
         validation_loss.append(sum(valid_losses) / n_valid)
 
 
-def network_plots(runs_img, model_dir, dataset, prediction, training_loss, validation_loss, x_train, y_valid,
-                  sensing, groundtruth):
+def network_plots(model_dir, model_img, dataset, prediction, training_loss, validation_loss, x_train, y_valid,
+                  groundtruth):
     """
 
-    :param runs_img
     :param model_dir
+    :param model_img
     :param dataset:
     :param prediction:
     :param training_loss:
     :param validation_loss:
     :param x_train:
     :param y_valid:
-    :param sensing:
     :param groundtruth:
     """
-    model_img = '%s/images/' % model_dir
-    check_dir(model_img)
-
-    #  Generate a scatter plot to check the conformity of the dataset
-    title = 'Dataset %s' % dataset
-    file_name = 'dataset-scatterplot-%s.pdf' % dataset
-
-    x = np.array(sensing)[:, 2] - np.mean(np.array(sensing)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
     y = np.array(groundtruth).flatten()  # y: speed
-    x_label = 'sensing'
-    y_label = 'control'
-
-    my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)
 
     # Plot train and validation losses
     title = 'Loss %s' % dataset
@@ -449,10 +425,9 @@ def test_controller_given_init_positions(model_dir, model_img):
     plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
-def main(file, runs_dir, runs_img, model_dir, model_img, model, ds, ds_eval, train):
+def main(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train):
     """
     :param file: file containing the defined indices for the split
-    :param runs_dir: directory containing the simulations
     :param runs_img: directory containing the images related to the dataset
     :param model_dir: directory containing the network data
     :param model_img: directory containing the images related to network
@@ -509,10 +484,10 @@ def main(file, runs_dir, runs_img, model_dir, model_img, model, ds, ds_eval, tra
 
         prediction = d_net(torch.FloatTensor(valid_sample))
 
-        network_plots(runs_img, model_dir, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
-                      sensing, groundtruth)
+        network_plots(model_dir, model_img, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
+                      groundtruth)
 
-        # Evaluate prediction of the distributed controller to the omniscient groundtruth
+        # Evaluate prediction of the distributed controller with the omniscient groundtruth
         evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
 
         controller = d_net.controller()
@@ -529,15 +504,15 @@ def main(file, runs_dir, runs_img, model_dir, model_img, model, ds, ds_eval, tra
                      'rear proximity sensors')
 
         # Evaluate the learned controller by passing a specific initial position configuration
-        test_controller_given_init_positions(model_dir, model_img)
+        # test_controller_given_init_positions(model_dir, model_img)
 
 
 if __name__ == '__main__':
     model = 'net1'
     myt_quantity = 5
 
-    dataset_net = '%dmyts-%s' % (myt_quantity, 'omniscient')
-    dataset_eval = '%dmyts-%s' % (myt_quantity, 'distributed')
+    dataset_net = '%dmyts-%s' % (myt_quantity, 'omniscient-controller')
+    dataset_eval = '%dmyts-%s' % (myt_quantity, 'manual-controller')
 
     runs_dir = os.path.join('datasets/', dataset_net)
     runs_img = '%s/images/' % runs_dir
@@ -551,4 +526,4 @@ if __name__ == '__main__':
 
     file = os.path.join('models/distributed/', 'dataset_split.npy')
 
-    main(file, runs_dir, runs_img, model_dir, model_img, model, dataset_net, dataset_eval, train=False)
+    main(file, runs_dir, model_dir, model_img, model, dataset_net, dataset_eval, train=False)
