@@ -25,7 +25,8 @@ def dataset_split(file_name, num_run=1000):
     np.save(file_name, x)
 
 
-def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, run_time_steps=None):
+def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, distance_from_goal=None,
+                     run_time_steps=None):
     """
 
     :param myt2_control:
@@ -33,11 +34,13 @@ def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, r
     :param run:
     :param time_steps:
     :param x_positions:
+    :param distance_from_goal
     :param run_time_steps:
     """
     run_x_positions = []
     run_myt2_sensing = []
     run_myt2_control = []
+
     target = []
 
     counter = 0
@@ -67,14 +70,18 @@ def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, r
     x_positions.append(run_x_positions)
     myt2_sensing.append(run_myt2_sensing)
     myt2_control.append(run_myt2_control)
-    
+
+    if distance_from_goal is not None:
+        distance_from_goal.append((np.array(run_x_positions) - np.array(target)).tolist())
+
     return target
 
 
-def get_pos_sensing_control(runs_dir):
+def get_pos_sensing_control(runs_dir, distance_from_goal=None):
     """
 
     :param runs_dir:
+    :param distance_from_goal
     :return time_steps, x_positions, myt2_sensing, myt2_control, target
     """
 
@@ -84,7 +91,6 @@ def get_pos_sensing_control(runs_dir):
     myt2_control = []
 
     for file_name in os.listdir(runs_dir):
-        # FIXME
         if not file_name.endswith('.pkl') or not file_name.startswith('complete'):
             continue
 
@@ -92,7 +98,8 @@ def get_pos_sensing_control(runs_dir):
         run = pd.read_pickle(pickle_file)
 
         run_time_steps = np.arange(len(run)).tolist()
-        target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, run_time_steps)
+        target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, distance_from_goal,
+                                  run_time_steps)
 
     length = max(map(len, time_steps))
     time_steps = np.arange(length)
@@ -115,7 +122,15 @@ def get_pos_sensing_control(runs_dir):
         el1.extend([np.nan] * (length - len(el1)))
     myt2_control = np.array(myt2_control)
 
-    return time_steps, x_positions, myt2_sensing, myt2_control, target
+    length4 = max(len(el) for el in list(chain(*distance_from_goal)))
+    for el1 in distance_from_goal:
+        el1.extend([[]] * (length - len(el1)))
+        for el2 in el1:
+            el2.extend([np.nan] * (length4 - len(el2)))
+    distance_from_goal = np.array(np.abs(distance_from_goal))
+    mean_distances = np.mean(distance_from_goal, axis=2)
+
+    return time_steps, x_positions, myt2_sensing, myt2_control, target, mean_distances
 
 
 def extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps, x_positions):

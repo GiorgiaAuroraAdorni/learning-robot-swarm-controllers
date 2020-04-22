@@ -3,7 +3,7 @@ import os
 
 from distributed import run_distributed
 from utils import check_dir
-from my_plots import visualise_simulation, visualise_simulations_comparison
+from my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal
 from generate_simulation_data import GenerateSimulationData as g
 
 
@@ -65,6 +65,8 @@ if __name__ == '__main__':
     visualise_simulations_comparison(runs_dir_omniscient, img_dir_omniscient,
                                      'Distribution of all simulations - %s' % omniscient_controller)
 
+    plot_distance_from_goal(runs_dir_omniscient, img_dir_omniscient, 'Robot distance from goal - %s' %
+                            omniscient_controller, 'distances-from-goal-%s' % omniscient_controller)
     g.check_dataset_conformity(runs_dir_omniscient, img_dir_omniscient, omniscient_controller)
 
     # # # # #
@@ -91,6 +93,8 @@ if __name__ == '__main__':
     visualise_simulations_comparison(runs_dir_manual, img_dir_manual, 'Distribution of all simulations - %s' %
                                      manual_controller)
 
+    plot_distance_from_goal(runs_dir_manual, img_dir_manual, 'Robot distance from goal - %s' %
+                            manual_controller, 'distances-from-goal-%s' % manual_controller)
     g.check_dataset_conformity(runs_dir_manual, img_dir_manual, dataset_manual)
 
     # # # # #
@@ -133,4 +137,6 @@ if __name__ == '__main__':
     visualise_simulations_comparison(runs_dir_learned, img_dir_learned, 'Distribution of all simulations - %s' %
                                      learned_controller)
 
+    plot_distance_from_goal(runs_dir_learned, img_dir_learned, 'Robot distance from goal - %s' %
+                            learned_controller, 'distances-from-goal-%s' % learned_controller)
     g.check_dataset_conformity(runs_dir_learned, img_dir_learned, dataset_learned)

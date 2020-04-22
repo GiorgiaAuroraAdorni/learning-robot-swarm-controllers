@@ -45,6 +45,27 @@ def save_visualisation(filename, img_dir, make_space=False, axes=None):
     plt.close()
 
 
+def plot_distance_from_goal(runs_dir, img_dir, title, filename):
+    """
+    :param runs_dir:
+    :param img_dir:
+    :param title
+    :param seaborn
+    """
+    distance_from_goal = []
+    time_steps, _, _, _, _, distance_from_goal = get_pos_sensing_control(runs_dir, distance_from_goal)
+
+    plt.figure()
+    plt.xlabel('timestep', fontsize=11)
+    plt.ylabel('mean distance from goal', fontsize=11)
+    plt.ylim(0, 4)
+
+    plt.plot(time_steps, np.nanmean(distance_from_goal, axis=0))
+
+    plt.title(title, weight='bold', fontsize=12)
+    save_visualisation(filename, img_dir)
+
+
 def visualise_simulation(runs_dir, img_dir, simulation, title):
     """
 
@@ -111,6 +132,9 @@ def visualise_simulation(runs_dir, img_dir, simulation, title):
 
     filename = 'plot-simulation-%d' % simulation
     save_visualisation(filename, img_dir, make_space=True, axes=axes)
+
+    # plot distance from goal
+    plt.figure()
 
 
 def visualise_simulations_comparison_seaborn(img_dir, myt2_control, myt2_sensing, proximity_sensors, target, time_steps,
@@ -263,6 +287,8 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
     plt.plot(x, valid_loss, label='validation')
     if scale is not None:
         plt.ylim(0, scale)
+
+    plt.yscale('log')
 
     plt.legend()
     plt.title(title, weight='bold', fontsize=12)
