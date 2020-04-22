@@ -14,17 +14,17 @@ def Parse():
     """
     parser = argparse.ArgumentParser(description='PyTorch FrontNet')
 
-    parser.add_argument('--gui', type=bool, default=False, metavar='N',
+    parser.add_argument('--gui', action="store_true",
                         help='run simulation using the gui (default: False)')
     parser.add_argument('--myt-quantity', type=int, default=5, metavar='N',
                         help='number of thymios for the simulation (default: 5)')
-    parser.add_argument('--train-model', type=bool, default=False,
+    parser.add_argument('--train-model', action="store_true",
                         help='train the model  (default: False)')
     parser.add_argument('--simulations', type=int, default=1000, metavar='N',
                         help='number of runs for each simulation (default: 1000)')
     parser.add_argument('--model', default='net1', type=str,
                         help='name of the model (default: net1)')
-    parser.add_argument('--generate-split', type=bool, default=False, metavar='N',
+    parser.add_argument('--generate-split', action="store_true",
                         help='generate the indices for the split of the dataset (default: False)')
 
     args = parser.parse_args()
@@ -69,11 +69,11 @@ if __name__ == '__main__':
                             omniscient_controller, 'distances-from-goal-%s' % omniscient_controller)
     g.check_dataset_conformity(runs_dir_omniscient, img_dir_omniscient, omniscient_controller)
 
-    # # # # #
+    # # # # # #
     manual_controller = "manual-controller"
 
     dataset_manual = '%dmyts-%s' % (myt_quantity, manual_controller)
-
+    #
     runs_dir_manual = os.path.join('datasets/', dataset_manual)
     img_dir_manual = '%s/images/' % runs_dir_manual
 
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     run_distributed(file, runs_dir_omniscient, model_dir, model_img, args.model, dataset_omniscient, dataset_manual,
                     train=args.train_model, generate_split=args.generate_split)
 
-    # # # # #
+    # # # # # #
     dataset_learned = '%dmyts-%s' % (myt_quantity, learned_controller)
 
     runs_dir_learned = os.path.join('datasets/', dataset_learned)
