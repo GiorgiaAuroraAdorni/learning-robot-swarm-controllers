@@ -13,7 +13,7 @@ from controllers import distributed_controllers
 from generate_simulation_data import GenerateSimulationData as g
 from my_plots import plot_losses, my_histogram, plot_regressor, plot_response
 from networks.distributed_network import DistributedNet, Controller
-from utils import check_dir, extract_input_output
+from utils import check_dir, extract_input_output, dataset_split
 
 
 class ThymioState:
@@ -399,7 +399,7 @@ def test_controller_given_init_positions(model_img, net, model):
     plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
-def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train):
+def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir:
@@ -411,7 +411,8 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     :param train
     """
     # Uncomment the following line to generate a new dataset split
-    # dataset_split(file)
+    if generate_split:
+        dataset_split(file)
 
     # Load the indices
     dataset = np.load(file)

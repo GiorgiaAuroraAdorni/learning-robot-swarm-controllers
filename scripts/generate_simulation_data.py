@@ -276,7 +276,7 @@ class GenerateSimulationData:
             cls.save_simulation(complete_data, data, runs_dir, simulation)
 
     @classmethod
-    def generate_simulation(cls, runs_dir, simulations, controller, myt_quantity, model_dir=None, model=None):
+    def generate_simulation(cls, runs_dir, simulations, controller, myt_quantity, args, model_dir=None, model=None):
         """
 
         :param runs_dir:
@@ -304,8 +304,7 @@ class GenerateSimulationData:
         for simulation in tqdm(range(simulations)):
             try:
                 cls.init_positions(myts)
-                # TODO arg parser gui : args.gui
-                cls.run(simulation, myts, runs_dir, world, '--gui' in sys.argv)
+                cls.run(simulation, myts, runs_dir, world, args.gui)
             except Exception as e:
                 print('ERROR: ', e)
 
