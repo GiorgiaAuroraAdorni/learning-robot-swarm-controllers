@@ -43,14 +43,12 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     output_ = []
 
     indices = []
-    for file_name in os.listdir(runs_dir):
-        if not file_name.endswith('.pkl') or file_name.startswith('complete'):
-            continue
 
-        pickle_file = os.path.join(runs_dir, file_name)
-        run = pd.read_pickle(pickle_file)
+    pickle_file = os.path.join(runs_dir, 'simulation.pkl')
+    runs = pd.read_pickle(pickle_file)
 
-        i = int(re.findall('\d+', file_name)[0])
+    for i, run in enumerate(runs):
+
         indices.append(i)
 
         if i in train_indices:

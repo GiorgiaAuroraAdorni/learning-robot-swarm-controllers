@@ -16,6 +16,7 @@ class ManualController:
         super().__init__(**kwargs)
 
         self.p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
+        # self.p_distributed_controller = PID(-0.005, 0, 0, max_out=16.6, min_out=-16.6)
 
     def neighbors_distance(self, state):
         """
@@ -70,9 +71,9 @@ class ManualController:
         """
         # Don't move the first and last robots in the line
         if state.initial_position[0] != state.goal_position[0]:
-            speed = self.p_distributed_controller.step(self.compute_difference(state), dt)
-
-            return speed
+            return self.p_distributed_controller.step(self.compute_difference(state), dt)
+        else:
+            return 0
 
 
 class OmniscientController:
@@ -120,7 +121,7 @@ class OmniscientController:
         return speed
 
 
-class LearnedController():
+class LearnedController:
     """
     The robots can be moved following a controller learned by a neural network.
     """

@@ -74,18 +74,14 @@ def visualise_simulation(runs_dir, img_dir, simulation, title):
     :param simulation:
     :param title:
     """
-    run = None
-
     x_positions = []
     myt2_sensing = []
     myt2_control = []
 
-    for file_name in os.listdir(runs_dir):
-        if not file_name.endswith('-%d.pkl' % simulation) or not file_name.startswith('complete'):
-            continue
+    pickle_file = os.path.join(runs_dir, 'complete-simulation.pkl')
+    runs = pd.read_pickle(pickle_file)
 
-        pickle_file = os.path.join(runs_dir, file_name)
-        run = pd.read_pickle(pickle_file)
+    run = runs[simulation]
 
     time_steps = np.arange(len(run))
     target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions)
@@ -132,9 +128,6 @@ def visualise_simulation(runs_dir, img_dir, simulation, title):
 
     filename = 'plot-simulation-%d' % simulation
     save_visualisation(filename, img_dir, make_space=True, axes=axes)
-
-    # plot distance from goal
-    plt.figure()
 
 
 def visualise_simulations_comparison_seaborn(img_dir, myt2_control, myt2_sensing, proximity_sensors, target, time_steps,
@@ -199,7 +192,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, seaborn=False):
     :param title
     :param seaborn
     """
-    time_steps, x_positions, myt2_sensing, myt2_control, target = get_pos_sensing_control(runs_dir)
+    time_steps, x_positions, myt2_sensing, myt2_control, target, _ = get_pos_sensing_control(runs_dir)
 
     mean_x_positions = np.nanmean(x_positions, axis=0)
     mean_myt2_control = np.nanmean(myt2_control, axis=0)

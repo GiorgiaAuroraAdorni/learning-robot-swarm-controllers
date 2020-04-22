@@ -1,6 +1,6 @@
+import json
 import os
 import pickle
-import sys
 from math import pi
 
 import numpy as np
@@ -173,45 +173,42 @@ class GenerateSimulationData:
         return dictionary
 
     @classmethod
-    def save_simulation(cls, complete_data, data, runs_dir, simulation):
+    def save_simulation(cls, complete_data, data, runs_dir):
         """
 
         :param complete_data:
         :param data:
         :param runs_dir:
-        :param simulation:
         :return:
         """
-        pkl_file = os.path.join(runs_dir, 'simulation-%d.pkl' % simulation)
-        json_file = os.path.join(runs_dir, 'simulation-%d.json' % simulation)
+        pkl_file = os.path.join(runs_dir, 'simulation.pkl')
+        json_file = os.path.join(runs_dir, 'simulation.json')
 
-        c_pkl_file = os.path.join(runs_dir, 'complete-simulation-%d.pkl' % simulation)
-        # c_json_file = os.path.join(runs_dir, 'complete-simulation-%d.json' % simulation)
+        c_pkl_file = os.path.join(runs_dir, 'complete-simulation.pkl')
+        c_json_file = os.path.join(runs_dir, 'complete-simulation.json')
 
         with open(pkl_file, 'wb') as f:
             pickle.dump(data, f)
 
-        # with open(json_file, 'w', encoding='utf-8') as f:
-        #     json.dump(data, f, ensure_ascii=False, indent=4)
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
 
         with open(c_pkl_file, 'wb') as f:
             pickle.dump(complete_data, f)
 
-        # with open(c_json_file, 'w', encoding='utf-8') as f:
-        #     json.dump(complete_data, f, ensure_ascii=False, indent=4)
+        with open(c_json_file, 'w', encoding='utf-8') as f:
+            json.dump(complete_data, f, ensure_ascii=False, indent=4)
 
     @classmethod
-    def run(cls, simulation, myts, runs_dir,
+    def run(cls, myts, runs, complete_runs,
             world: pyenki.World, gui: bool = False, T: float = 2, dt: float = 0.1, tol: float = 0.1) -> None:
         """
         Run the simulation as fast as possible or using the real time GUI.
         Generate two different type of simulation data, one with all the thymios and the other without including the 2
         thymios at the ends, but only the ones that have to move.
         If all the robots have reached their target, stop the simulation.
-
-        :param simulation
         :param myts
-        :param runs_dir
+        :param runs
         :param world
         :param gui
         :param T
@@ -273,7 +270,8 @@ class GenerateSimulationData:
                 else:
                     world.step(dt)
 
-            cls.save_simulation(complete_data, data, runs_dir, simulation)
+            runs.append(data)
+            complete_runs.append(complete_data)
 
     @classmethod
     def generate_simulation(cls, runs_dir, simulations, controller, myt_quantity, args, model_dir=None, model=None):
@@ -301,12 +299,16 @@ class GenerateSimulationData:
 
         world, myts = cls.setup(controller_factory, myt_quantity)
 
-        for simulation in tqdm(range(simulations)):
+        runs = []
+        complete_runs = []
+        for _ in tqdm(range(simulations)):
             try:
                 cls.init_positions(myts)
-                cls.run(simulation, myts, runs_dir, world, args.gui)
+                cls.run(myts, runs, complete_runs, world, args.gui)
             except Exception as e:
                 print('ERROR: ', e)
+
+        cls.save_simulation(complete_runs, runs, runs_dir)
 
     @classmethod
     def check_dataset_conformity(cls, runs_dir, runs_img, dataset):
@@ -321,13 +323,10 @@ class GenerateSimulationData:
         input_ = []
         output_ = []
 
-        for file_name in os.listdir(runs_dir):
-            if not file_name.endswith('.pkl') or file_name.startswith('complete'):
-                continue
+        pickle_file = os.path.join(runs_dir, 'simulation.pkl')
+        runs = pd.read_pickle(pickle_file)
 
-            pickle_file = os.path.join(runs_dir, file_name)
-            run = pd.read_pickle(pickle_file)
-
+        for run in runs:
             extract_input_output(run, input_, output_, 'prox_values', 'motor_left_target')
 
         #  Generate a scatter plot to check the conformity of the dataset

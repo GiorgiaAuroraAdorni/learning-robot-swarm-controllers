@@ -89,14 +89,13 @@ def get_pos_sensing_control(runs_dir, distance_from_goal=None):
     x_positions = []
     myt2_sensing = []
     myt2_control = []
+    target = None
+    mean_distances = None
 
-    for file_name in os.listdir(runs_dir):
-        if not file_name.endswith('.pkl') or not file_name.startswith('complete'):
-            continue
+    pickle_file = os.path.join(runs_dir, 'complete-simulation.pkl')
+    runs = pd.read_pickle(pickle_file)
 
-        pickle_file = os.path.join(runs_dir, file_name)
-        run = pd.read_pickle(pickle_file)
-
+    for run in runs:
         run_time_steps = np.arange(len(run)).tolist()
         target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, distance_from_goal,
                                   run_time_steps)
@@ -122,13 +121,14 @@ def get_pos_sensing_control(runs_dir, distance_from_goal=None):
         el1.extend([np.nan] * (length - len(el1)))
     myt2_control = np.array(myt2_control)
 
-    length4 = max(len(el) for el in list(chain(*distance_from_goal)))
-    for el1 in distance_from_goal:
-        el1.extend([[]] * (length - len(el1)))
-        for el2 in el1:
-            el2.extend([np.nan] * (length4 - len(el2)))
-    distance_from_goal = np.array(np.abs(distance_from_goal))
-    mean_distances = np.mean(distance_from_goal, axis=2)
+    if distance_from_goal is not None:
+        length4 = max(len(el) for el in list(chain(*distance_from_goal)))
+        for el1 in distance_from_goal:
+            el1.extend([[]] * (length - len(el1)))
+            for el2 in el1:
+                el2.extend([np.nan] * (length4 - len(el2)))
+        distance_from_goal = np.array(np.abs(distance_from_goal))
+        mean_distances = np.mean(distance_from_goal, axis=2)
 
     return time_steps, x_positions, myt2_sensing, myt2_control, target, mean_distances
 

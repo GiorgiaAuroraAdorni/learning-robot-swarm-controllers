@@ -69,11 +69,11 @@ if __name__ == '__main__':
                             omniscient_controller, 'distances-from-goal-%s' % omniscient_controller)
     g.check_dataset_conformity(runs_dir_omniscient, img_dir_omniscient, omniscient_controller)
 
-    # # # # # #
+    # # # # # # #
     manual_controller = "manual-controller"
 
     dataset_manual = '%dmyts-%s' % (myt_quantity, manual_controller)
-    #
+
     runs_dir_manual = os.path.join('datasets/', dataset_manual)
     img_dir_manual = '%s/images/' % runs_dir_manual
 
@@ -97,7 +97,7 @@ if __name__ == '__main__':
                             manual_controller, 'distances-from-goal-%s' % manual_controller)
     g.check_dataset_conformity(runs_dir_manual, img_dir_manual, dataset_manual)
 
-    # # # # #
+    # # # # # #
     learned_controller = "learned-controller"
 
     model_dir = 'models/distributed/%s' % args.model
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     run_distributed(file, runs_dir_omniscient, model_dir, model_img, args.model, dataset_omniscient, dataset_manual,
                     train=args.train_model, generate_split=args.generate_split)
 
-    # # # # # #
+    # # # # # # #
     dataset_learned = '%dmyts-%s' % (myt_quantity, learned_controller)
 
     runs_dir_learned = os.path.join('datasets/', dataset_learned)
