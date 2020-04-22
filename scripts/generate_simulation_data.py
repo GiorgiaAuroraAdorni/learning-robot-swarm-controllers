@@ -10,6 +10,7 @@ import torch
 from tqdm import tqdm
 
 from controllers import distributed_controllers
+from distributed_thymio import DistributedThymio2
 from my_plots import my_scatterplot
 from utils import extract_input_output
 
@@ -34,7 +35,8 @@ class GenerateSimulationData:
         myts = []
 
         for i in range(myt_quantity):
-            myt = controller_factory(name='myt%d' % (i + 1), index=i, use_aseba_units=aseba)
+            controller = controller_factory()
+            myt = DistributedThymio2(name='myt%d' % (i + 1), index=i, controller=controller, use_aseba_units=aseba)
 
             myts.append(myt)
             world.add_object(myt)

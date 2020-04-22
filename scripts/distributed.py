@@ -17,6 +17,14 @@ from pid import PID
 from utils import check_dir, extract_input_output
 
 
+class ThymioState:
+    def __init__(self, prox_values, initial_position=(0, 0), goal_position=(10, 0)):
+
+        self.prox_values = prox_values
+        self.goal_position = goal_position
+        self.initial_position = initial_position
+
+
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
     """
     :param runs_dir: directory containing the simulations
@@ -215,11 +223,9 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, padded=False, c
         validation_loss.append(sum(valid_losses) / n_valid)
 
 
-def network_plots(model_dir, model_img, dataset, prediction, training_loss, validation_loss, x_train, y_valid,
+def network_plots(model_img, dataset, prediction, training_loss, validation_loss, x_train, y_valid,
                   groundtruth):
     """
-
-    :param model_dir
     :param model_img
     :param dataset:
     :param prediction:
@@ -293,57 +299,6 @@ def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction):
     plot_regressor(groundtruth, prediction, x_label, y_label, model_img, title, file_name)
 
 
-def neighbors_distance(sensing):
-    """
-    :param sensing
-    Check if there is a robot ahead using the infrared sensor 2 (front-front).
-    Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
-    :return back, front: response values of the rear and front sensors
-    """
-    front = sensing[2]
-    back = np.mean(np.array([sensing[5], sensing[6]]))
-
-    return back, front
-
-
-def compute_difference(sensing):
-    """
-    :param sensing
-    :return out: the difference between the response value of front and the rear sensor
-    """
-    back, front = neighbors_distance(sensing)
-
-    # Apply a small correction to the distance measured by the rear sensors: the front sensor used is at a
-    # different x coordinate from the point to which the rear sensor of the robot that follows points. this is
-    # because of the curved shape of the face of the Thymio
-    delta_x = 7.41150769
-    x = 7.95
-
-    # Maximum possible response values
-    delta_x_m = 4505 * delta_x / 14
-    x_m = 4505 * x / 14
-
-    correction = x_m - delta_x_m
-
-    out = front - correction - back
-
-    return out
-
-
-def distributed_controller(sensing, dt=0.1):
-    """
-
-    :param sensing
-    :param dt: timestep
-    :return speed
-
-    """
-    p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
-    speed = p_distributed_controller.step(compute_difference(sensing), dt)
-
-    return speed
-
-
 def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing):
     """
 
@@ -358,7 +313,12 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing):
     for sample in sensing:
         # Rescale the values of the sensor
         sample = np.multiply(np.array(sample), 1000).tolist()
-        control = distributed_controller(sample)
+
+        controller = distributed_controllers.ManualController()
+        state = ThymioState(prox_values=sample)
+
+        control = controller.perform_control(state, dt = 0.1)
+
         controller_predictions.append(control)
 
     controller_plots(model_dir, ds, ds_eval, groundtruth, controller_predictions)
@@ -489,8 +449,7 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
 
     prediction = d_net(torch.FloatTensor(valid_sample))
 
-    network_plots(model_dir, model_img, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
-                  groundtruth)
+    network_plots(model_img, ds, prediction, training_loss, validation_loss, train_sample, valid_target, groundtruth)
 
     # Evaluate prediction of the distributed controller with the omniscient groundtruth
     evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
