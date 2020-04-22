@@ -9,12 +9,12 @@ from torch.utils import data
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
 
-from generate_simulation_data import setup, init_positions
-from my_plots import plot_losses, my_scatterplot, my_histogram, plot_regressor, plot_response
+from controllers import distributed_controllers
+from my_plots import plot_losses, my_histogram, plot_regressor, plot_response
 from networks.distributed_network import DistributedNet, Controller
 from pid import PID
 from utils import check_dir, extract_input_output
-
+from generate_simulation_data import GenerateSimulationData as g
 
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
     """
@@ -232,26 +232,26 @@ def network_plots(model_dir, model_img, dataset, prediction, training_loss, vali
 
     # Plot train and validation losses
     title = 'Loss %s' % dataset
-    file_name = 'loss-%s.pdf' % dataset
+    file_name = 'loss-%s' % dataset
     plot_losses(training_loss, validation_loss, model_img, title, file_name)
 
-    file_name = 'loss-rescaled-%s.pdf' % dataset
+    file_name = 'loss-rescaled-%s' % dataset
     plot_losses(training_loss, validation_loss, model_img, title, file_name, scale=min(validation_loss) * 10)
 
     # Plot groundtruth histogram
     title = 'Groundtruth Validation Set %s' % dataset
-    file_name = 'histogram-groundtruth-validation-%s.pdf' % dataset
+    file_name = 'histogram-groundtruth-validation-%s' % dataset
     my_histogram(y, 'groundtruth', model_img, title, file_name)
 
     # Plot prediction histogram
     title = 'Prediction Validation Set %s' % dataset
-    file_name = 'histogram-prediction-validation-%s.pdf' % dataset
+    file_name = 'histogram-prediction-validation-%s' % dataset
     prediction = torch.flatten(prediction).tolist()
     my_histogram(prediction, 'prediction', model_img, title, file_name)
 
     # Plot sensing histogram
     title = 'Sensing Validation Set%s' % dataset
-    file_name = 'histogram-sensing-validation-%s.pdf' % dataset
+    file_name = 'histogram-sensing-validation-%s' % dataset
 
     x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
     label = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
@@ -261,7 +261,7 @@ def network_plots(model_dir, model_img, dataset, prediction, training_loss, vali
     # Plot R^2 of the regressor between prediction and ground truth on the validation set
     # title = 'Regression learned %s vs %s' % dataset
     title = 'Regression learned controller vs %s' % dataset
-    file_name = 'regression-learned-vs-%s.pdf' % dataset
+    file_name = 'regression-learned-vs-%s' % dataset
 
     y_valid = np.array(y_valid).flatten()
     x_label = 'groundtruth'
@@ -283,7 +283,7 @@ def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction):
 
     # Plot R^2 of the regressor between prediction and ground truth
     title = 'Regression %s vs %s' % (ds_eval, ds)
-    file_name = 'regression-%svs%s.pdf' % (ds_eval, ds)
+    file_name = 'regression-%svs%s' % (ds_eval, ds)
 
     groundtruth = np.array(groundtruth).flatten()
     prediction = np.array(prediction).flatten()
@@ -388,7 +388,7 @@ def evaluate_net(model_img, model, net, controller: Controller, sensing, index, 
     predictions = controller(sensing)
 
     title = 'Response %s - %s' % (model, net)
-    file_name = 'response-%s-%s.pdf' % (model, net)
+    file_name = 'response-%s-%s' % (model, net)
 
     # Plot the output of the network
     plot_response(sensing, predictions, x_label, model_img, title, file_name, index)
@@ -401,9 +401,16 @@ def test_controller_given_init_positions(model_dir, model_img):
     :param model_img:
     """
     myt_quantity = 3
-    controller = model
 
-    world, myts = setup(controller, myt_quantity, model_dir)
+    model_dir = 'models/distributed/%s' % model
+    net = torch.load('%s/%s' % (model_dir, model))
+
+    # controller_factory = lambda **kwargs: d_c.LearnedController(net=net, **kwargs)
+
+    def controller_factory(**kwargs):
+        return distributed_controllers.LearnedController(net=net, **kwargs)
+
+    world, myts = g.setup(controller_factory, myt_quantity)
 
     simulations = 17 * 10
 
@@ -411,7 +418,7 @@ def test_controller_given_init_positions(model_dir, model_img):
     control_predictions = []
 
     for simulation in tqdm(x):
-        init_positions(myts, variate_pose=True, x=simulation)
+        g.init_positions(myts, variate_pose=True, x=simulation)
 
         world.step(dt=0.1)
         # myts[1].learned_controller()
@@ -419,7 +426,7 @@ def test_controller_given_init_positions(model_dir, model_img):
         control_predictions.append(control)
 
     title = 'Response %s by varying init position' % model
-    file_name = 'response-%s-varying_init_position.pdf' % model
+    file_name = 'response-%s-varying_init_position' % model
 
     # Plot the output of the network
     plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
@@ -504,7 +511,7 @@ def main(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train):
                      'rear proximity sensors')
 
         # Evaluate the learned controller by passing a specific initial position configuration
-        # test_controller_given_init_positions(model_dir, model_img)
+        test_controller_given_init_positions(model_dir, model_img)
 
 
 if __name__ == '__main__':

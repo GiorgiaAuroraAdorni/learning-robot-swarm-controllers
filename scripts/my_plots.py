@@ -25,6 +25,26 @@ def make_space_above(axes, topmargin=1):
     fig.set_figheight(figh)
 
 
+def save_visualisation(filename, img_dir, make_space=False, axes=None):
+    """
+
+    :param filename:
+    :param img_dir:
+    :param make_space:
+    :param axes:
+
+    """
+    file = os.path.join(img_dir, '%s.pdf' % filename)
+    img = os.path.join(img_dir, '%s.png' % filename)
+    if make_space:
+        make_space_above(axes, topmargin=1)
+
+    plt.savefig(file)
+    plt.savefig(img)
+    # plt.show()
+    plt.close()
+
+
 def visualise_simulation(runs_dir, img_dir, simulation, title):
     """
 
@@ -55,6 +75,7 @@ def visualise_simulation(runs_dir, img_dir, simulation, title):
 
     proximity_sensors = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
 
+    plt.figure()
     fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
@@ -88,19 +109,30 @@ def visualise_simulation(runs_dir, img_dir, simulation, title):
     plt.xlabel('timestep', fontsize=11)
     fig.suptitle(title, fontsize=14, weight='bold')
 
-    check_dir(img_dir)
-    filename = 'plot-simulation-%d.pdf' % simulation
-    file = os.path.join(img_dir, filename)
-    make_space_above(axes, topmargin=1)
-    plt.savefig(file)
-    plt.show()
+    filename = 'plot-simulation-%d' % simulation
+    save_visualisation(filename, img_dir, make_space=True, axes=axes)
 
 
 def visualise_simulations_comparison_seaborn(img_dir, myt2_control, myt2_sensing, proximity_sensors, target, time_steps,
                                              title, x_positions):
+    """
+
+    :param img_dir:
+    :param myt2_control:
+    :param myt2_sensing:
+    :param proximity_sensors:
+    :param target:
+    :param time_steps:
+    :param title:
+    :param x_positions:
+    :return:
+    """
+
     # Seaborn visualisation
     df_x_positions, df_sensing, df_control = extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps,
                                                                        x_positions)
+
+    plt.figure()
     fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
     labels = []
 
@@ -132,11 +164,8 @@ def visualise_simulations_comparison_seaborn(img_dir, myt2_control, myt2_sensing
     plt.xlabel('timestep', fontsize=11)
     fig.suptitle(title, fontsize=14, weight='bold')
 
-    filename = 'compare-simulation-seaborn.pdf'
-    file = os.path.join(img_dir, filename)
-    make_space_above(axes, topmargin=1)
-    plt.savefig(file)
-    plt.show()
+    filename = 'compare-simulation-seaborn'
+    save_visualisation(filename, img_dir, make_space=True, axes=axes)
 
 
 def visualise_simulations_comparison(runs_dir, img_dir, title, seaborn=False):
@@ -157,6 +186,8 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, seaborn=False):
     std_myt2_sensing = np.nanstd(myt2_sensing, axis=0)
 
     proximity_sensors = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
+
+    plt.figure()
     fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
@@ -202,12 +233,8 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, seaborn=False):
     fig.tight_layout()
     fig.subplots_adjust(hspace=0.4)
 
-    check_dir(img_dir)
-    filename = 'compare-simulation.pdf'
-    file = os.path.join(img_dir, filename)
-    make_space_above(axes, topmargin=1)
-    plt.savefig(file)
-    plt.show()
+    filename = 'compare-simulation'
+    save_visualisation(filename, img_dir, make_space=True, axes=axes)
 
     if seaborn:
         visualise_simulations_comparison_seaborn(img_dir, myt2_control, myt2_sensing, proximity_sensors, target,
@@ -226,6 +253,7 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
     """
     x = np.arange(1, len(train_loss) + 1, dtype=int)
 
+    plt.figure()
     plt.xlabel('epoch', fontsize=11)
     plt.ylabel('loss', fontsize=11)
 
@@ -239,10 +267,7 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
     plt.legend()
     plt.title(title, weight='bold', fontsize=12)
 
-    check_dir(img_dir)
-    file = os.path.join(img_dir, filename)
-    plt.savefig(file)
-    plt.show()
+    save_visualisation(filename, img_dir)
 
 
 def my_scatterplot(x, y, x_label, y_label, img_dir, title, filename):
@@ -256,16 +281,14 @@ def my_scatterplot(x, y, x_label, y_label, img_dir, title, filename):
     :param title:
     :param filename:
     """
+    plt.figure()
     plt.xlabel(x_label, fontsize=11)
     plt.ylabel(y_label, fontsize=11)
 
     plt.scatter(x, y, alpha=0.5, marker='.')
     plt.title(title, weight='bold', fontsize=12)
 
-    check_dir(img_dir)
-    file = os.path.join(img_dir, filename)
-    plt.savefig(file)
-    plt.show()
+    save_visualisation(filename, img_dir)
 
 
 def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
@@ -278,6 +301,8 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
     :param filename:
     :param label:
     """
+    plt.figure()
+
     plt.yscale('log')
     plt.xlabel(x_label, fontsize=11)
 
@@ -291,10 +316,7 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
                    title="proximity sensor", title_fontsize=11, markerscale=0.2)
         plt.tight_layout()
 
-    check_dir(img_dir)
-    file = os.path.join(img_dir, filename)
-    plt.savefig(file)
-    plt.show()
+    save_visualisation(filename, img_dir)
 
 
 def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
@@ -312,6 +334,8 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
     lr.fit(np.reshape(x, [-1, 1]), np.reshape(y, [-1, 1]))
     score = lr.score(np.reshape(x, [-1, 1]), np.reshape(y, [-1, 1]))
 
+    plt.figure()
+
     plt.xlabel(x_label, fontsize=11)
     plt.ylabel(y_label, fontsize=11)
 
@@ -321,10 +345,7 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
     plt.title(title, weight='bold', fontsize=12)
     plt.legend()
 
-    check_dir(img_dir)
-    file = os.path.join(img_dir, filename)
-    plt.savefig(file)
-    plt.show()
+    save_visualisation(filename, img_dir)
 
 
 def plot_response(x, y, x_label, img_dir, title, filename, index=None):
@@ -343,6 +364,7 @@ def plot_response(x, y, x_label, img_dir, title, filename, index=None):
         x = np.multiply(x[:, index], 1000)
         y = y[0]
 
+    plt.figure()
     plt.xlabel(x_label, fontsize=11)
     plt.ylabel('control', fontsize=11)
 
@@ -350,7 +372,4 @@ def plot_response(x, y, x_label, img_dir, title, filename, index=None):
 
     plt.title(title, weight='bold', fontsize=12)
 
-    check_dir(img_dir)
-    file = os.path.join(img_dir, filename)
-    plt.savefig(file)
-    plt.show()
+    save_visualisation(filename, img_dir)
