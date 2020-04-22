@@ -13,7 +13,6 @@ from controllers import distributed_controllers
 from generate_simulation_data import GenerateSimulationData as g
 from my_plots import plot_losses, my_histogram, plot_regressor, plot_response
 from networks.distributed_network import DistributedNet, Controller
-from pid import PID
 from utils import check_dir, extract_input_output
 
 
@@ -309,15 +308,15 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing):
     :param sensing: used to obtain the prediction
     """
     controller_predictions = []
+    controller = distributed_controllers.ManualController()
 
     for sample in sensing:
         # Rescale the values of the sensor
         sample = np.multiply(np.array(sample), 1000).tolist()
 
-        controller = distributed_controllers.ManualController()
         state = ThymioState(prox_values=sample)
 
-        control = controller.perform_control(state, dt = 0.1)
+        control = controller.perform_control(state, dt=0.1)
 
         controller_predictions.append(control)
 
@@ -335,24 +334,34 @@ def generate_sensing():
     return x, s
 
 
-def evaluate_net(model_img, model, net, controller: Controller, sensing, index, x_label):
+def evaluate_net(model_img, model, net, input_label, sensing, index, x_label):
     """
 
     :param model_img:
     :param model:
     :param net:
-    :param controller:
     :param sensing:
     :param index:
     :param x_label:
     """
-    predictions = controller(sensing)
+    controller_predictions = []
+    controller = distributed_controllers.LearnedController(net=net)
 
-    title = 'Response %s - %s' % (model, net)
-    file_name = 'response-%s-%s' % (model, net)
+    for sample in sensing:
+        # Rescale the values of the sensor
+        sample = np.multiply(np.array(sample), 1000).tolist()
+
+        state = ThymioState(prox_values=sample)
+
+        control = controller.perform_control(state, dt=0.1)
+
+        controller_predictions.append(control)
+
+    title = 'Response %s - %s' % (model, input_label)
+    file_name = 'response-%s-%s' % (model, input_label)
 
     # Plot the output of the network
-    plot_response(sensing, predictions, x_label, model_img, title, file_name, index)
+    plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
 
 
 def test_controller_given_init_positions(model_img, net, model):
@@ -454,18 +463,16 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     # Evaluate prediction of the distributed controller with the omniscient groundtruth
     evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
 
-    controller = d_net.controller()
     # Evaluate the learned controller by passing a specific input sensing configuration
     x, s = generate_sensing()
     sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
     index = 2
-    evaluate_net(model_img, model, 'net([0, 0, x, 0, 0, 0, 0])', controller, sensing, index,
-                 'center proximity sensor')
+
+    evaluate_net(model_img, model, d_net, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index, 'center proximity sensor')
 
     index = -1
     sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
-    evaluate_net(model_img, model, 'net([0, 0, 0, 0, 0, x, x])', controller, sensing, index,
-                 'rear proximity sensors')
+    evaluate_net(model_img, model, d_net, 'net([0, 0, 0, 0, 0, x, x])', sensing, index, 'rear proximity sensors')
 
     # Evaluate the learned controller by passing a specific initial position configuration
     test_controller_given_init_positions(model_img, d_net, model)

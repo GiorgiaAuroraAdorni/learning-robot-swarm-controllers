@@ -362,7 +362,7 @@ def plot_response(x, y, x_label, img_dir, title, filename, index=None):
 
     if index is not None:
         x = np.multiply(x[:, index], 1000)
-        y = y[0]
+        # y = y[0]
 
     plt.figure()
     plt.xlabel(x_label, fontsize=11)
