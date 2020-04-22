@@ -187,22 +187,24 @@ def train_net(file: AnyStr,
         training_loss.append(avg_loss / n_train)
         print(avg_loss / n_train)
 
-        validate_net(n_valid, net, valid_minibatch, validation_loss, padded, criterion)
+        validate_net(n_valid, net, valid_minibatch, validation_loss, batch_size, padded, criterion)
 
     return training_loss, validation_loss, testing_loss
 
 
-def validate_net(n_valid, net, valid_minibatch, validation_loss, padded=False, criterion=torch.nn.MSELoss()):
+def validate_net(n_valid, net, valid_minibatch, validation_loss, batch_size, padded=False,
+                 criterion=torch.nn.MSELoss()):
     """
     :param n_valid:
     :param net:
     :param valid_minibatch:
     :param validation_loss:
+    :param batch_size
     :param padded:
     :param criterion:
     :return outputs:
     """
-    valid_losses = []
+    avg_loss = 0.0
 
     with torch.no_grad():
         for inputs, labels in valid_minibatch:
@@ -217,9 +219,8 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, padded=False, c
                 loss = torch.mean(torch.stack(losses))
             else:
                 loss = criterion(t_output, labels)
-
-            valid_losses.append(float(loss))
-        validation_loss.append(sum(valid_losses) / n_valid)
+            avg_loss += float(loss) * batch_size
+        validation_loss.append(avg_loss / n_valid)
 
 
 def network_plots(model_img, dataset, prediction, training_loss, validation_loss, x_train, y_valid,
@@ -241,8 +242,8 @@ def network_plots(model_img, dataset, prediction, training_loss, validation_loss
     file_name = 'loss-%s' % dataset
     plot_losses(training_loss, validation_loss, model_img, title, file_name)
 
-    file_name = 'loss-rescaled-%s' % dataset
-    plot_losses(training_loss, validation_loss, model_img, title, file_name, scale=min(validation_loss) * 10)
+    # file_name = 'loss-rescaled-%s' % dataset
+    # plot_losses(training_loss, validation_loss, model_img, title, file_name, scale=min(validation_loss) * 10)
 
     # Plot groundtruth histogram
     title = 'Groundtruth Validation Set %s' % dataset
