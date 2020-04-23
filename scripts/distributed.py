@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from controllers import distributed_controllers
 from generate_simulation_data import GenerateSimulationData as g
-from my_plots import plot_losses, my_histogram, plot_regressor, plot_response
+from my_plots import plot_regressor, plot_response, my_histogram, plot_losses
 from networks.distributed_network import DistributedNet
 from utils import check_dir, extract_input_output, dataset_split
 
@@ -22,12 +22,13 @@ class ThymioState:
         self.initial_position = initial_position
 
 
-def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices):
+def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input):
     """
     :param runs_dir: directory containing the simulations
     :param train_indices
     :param validation_indices
     :param test_indices
+    :param net_input
     :return: train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input_, output_
     """
     train_sample = []
@@ -59,7 +60,7 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
             input_ = test_sample
             output_ = test_target
 
-        extract_input_output(run, input_, output_, 'prox_values', 'motor_left_target')
+        extract_input_output(run, input_, output_, net_input, 'motor_left_target')
 
     return train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input_, output_
 
@@ -219,11 +220,13 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, batch_size, pad
         validation_loss.append(avg_loss / n_valid)
 
 
-def network_plots(model_img, dataset, prediction, training_loss, validation_loss, x_train, y_valid,
+def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid,
                   groundtruth):
     """
     :param model_img
     :param dataset:
+    :param model
+    :param net_input
     :param prediction:
     :param training_loss:
     :param validation_loss:
@@ -234,37 +237,37 @@ def network_plots(model_img, dataset, prediction, training_loss, validation_loss
     y = np.array(groundtruth).flatten()  # y: speed
 
     # Plot train and validation losses
-    title = 'Loss %s' % dataset
-    file_name = 'loss-%s' % dataset
+    title = 'Loss %s' % model
+    file_name = 'loss-%s' % model
     plot_losses(training_loss, validation_loss, model_img, title, file_name)
 
     # file_name = 'loss-rescaled-%s' % dataset
     # plot_losses(training_loss, validation_loss, model_img, title, file_name, scale=min(validation_loss) * 10)
 
     # Plot groundtruth histogram
-    title = 'Groundtruth Validation Set %s' % dataset
-    file_name = 'histogram-groundtruth-validation-%s' % dataset
+    title = 'Groundtruth Validation Set %s' % model
+    file_name = 'histogram-groundtruth-validation-%s' % model
     my_histogram(y, 'groundtruth', model_img, title, file_name)
 
     # Plot prediction histogram
-    title = 'Prediction Validation Set %s' % dataset
-    file_name = 'histogram-prediction-validation-%s' % dataset
+    title = 'Prediction Validation Set %s' % model
+    file_name = 'histogram-prediction-validation-%s' % model
     prediction = torch.flatten(prediction).tolist()
     my_histogram(prediction, 'prediction', model_img, title, file_name)
 
     # Plot sensing histogram
-    title = 'Sensing Validation Set%s' % dataset
-    file_name = 'histogram-sensing-validation-%s' % dataset
+    title = 'Sensing Validation Set%s' % model
+    file_name = 'histogram-sensing-validation-%s' % model
 
     x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
     label = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
-    my_histogram(x, 'sensing', model_img, title, file_name, label)
+    my_histogram(x, 'sensing (%s)' % net_input, model_img, title, file_name, label)
 
     # Evaluate prediction of the learned controller to the omniscient groundtruth
     # Plot R^2 of the regressor between prediction and ground truth on the validation set
     # title = 'Regression learned %s vs %s' % dataset
-    title = 'Regression learned controller vs %s' % dataset
-    file_name = 'regression-learned-vs-%s' % dataset
+    title = 'Regression %s vs %s' % (model, dataset)
+    file_name = 'regression-%s-vs-%s' % (model, dataset)
 
     y_valid = np.array(y_valid).flatten()
     x_label = 'groundtruth'
@@ -295,7 +298,7 @@ def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction):
     plot_regressor(groundtruth, prediction, x_label, y_label, model_img, title, file_name)
 
 
-def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing):
+def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input):
     """
 
     :param model_dir:
@@ -303,9 +306,10 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing):
     :param ds_eval:
     :param groundtruth:
     :param sensing: used to obtain the prediction
+    :param net_input
     """
     controller_predictions = []
-    controller = distributed_controllers.ManualController()
+    controller = distributed_controllers.ManualController(net_input=net_input)
 
     for sample in sensing:
         # Rescale the values of the sensor
@@ -331,18 +335,19 @@ def generate_sensing():
     return x, s
 
 
-def evaluate_net(model_img, model, net, input_label, sensing, index, x_label):
+def evaluate_net(model_img, model, net, net_input, sensing, index, x_label):
     """
 
     :param model_img:
     :param model:
     :param net:
+    :param net_input
     :param sensing:
     :param index:
     :param x_label:
     """
     controller_predictions = []
-    controller = distributed_controllers.LearnedController(net=net)
+    controller = distributed_controllers.LearnedController(net=net, net_input=net_input)
 
     for sample in sensing:
         # Rescale the values of the sensor
@@ -354,25 +359,25 @@ def evaluate_net(model_img, model, net, input_label, sensing, index, x_label):
 
         controller_predictions.append(control)
 
-    title = 'Response %s - %s' % (model, input_label)
-    file_name = 'response-%s-%s' % (model, input_label)
+    title = 'Response %s - %s' % (model, net_input)
+    file_name = 'response-%s-%s' % (model, net_input)
 
     # Plot the output of the network
     plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
 
 
-def test_controller_given_init_positions(model_img, net, model):
+def test_controller_given_init_positions(model_img, net, model, net_input):
     """
 
     :param model_img:
     :param net:
     :param model:
-    :return:
+    :param net_input
     """
     myt_quantity = 3
 
     def controller_factory(**kwargs):
-        return distributed_controllers.LearnedController(net=net, **kwargs)
+        return distributed_controllers.LearnedController(net=net, net_input=net_input, **kwargs)
 
     world, myts = g.setup(controller_factory, myt_quantity)
 
@@ -396,7 +401,7 @@ def test_controller_given_init_positions(model_img, net, model):
     plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
-def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split, plots):
+def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split, plots, net_input):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir:
@@ -406,6 +411,9 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     :param ds
     :param ds_eval
     :param train
+    :param generate_split
+    :param plots
+    :param net_input
     """
     # Uncomment the following line to generate a new dataset split
     if generate_split:
@@ -421,7 +429,7 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     # Split the dataset also defining input and output, using the indices
     train_sample, valid_sample, test_sample, \
     train_target, valid_target, test_target, \
-    sensing, groundtruth = from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices)
+    sensing, groundtruth = from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input)
 
     # Generate the tensors
     d_test_set, d_train_set, d_valid_set, x_train, y_valid = from_dataset_to_tensors(test_sample, test_target,
@@ -457,11 +465,11 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
 
         prediction = d_net(torch.FloatTensor(valid_sample))
 
-        network_plots(model_img, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
-                      groundtruth)
+        network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, train_sample,
+                      valid_target, groundtruth)
 
         # Evaluate prediction of the distributed controller with the omniscient groundtruth
-        evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
+        evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
 
         # Evaluate the learned controller by passing a specific input sensing configuration
         x, s = generate_sensing()
@@ -475,4 +483,4 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
         evaluate_net(model_img, model, d_net, 'net([0, 0, 0, 0, 0, x, x])', sensing, index, 'rear proximity sensors')
 
         # Evaluate the learned controller by passing a specific initial position configuration
-        test_controller_given_init_positions(model_img, d_net, model)
+        test_controller_given_init_positions(model_img, d_net, model, net_input)

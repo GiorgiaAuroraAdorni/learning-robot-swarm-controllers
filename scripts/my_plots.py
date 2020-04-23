@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
-from utils import extract_run_data, check_dir, get_pos_sensing_control, extract_flatten_dataframe
+from utils import extract_run_data, check_dir, get_pos_sensing_control, extract_flatten_dataframe, extract_input
+from itertools import chain
 
 sns.set(style="white")
 
@@ -45,7 +46,7 @@ def save_visualisation(filename, img_dir, make_space=False, axes=None):
     plt.close()
 
 
-def plot_distance_from_goal(runs_dir, img_dir, title, filename):
+def plot_distance_from_goal(runs_dir, img_dir, title, filename, net_input):
     """
     :param runs_dir:
     :param img_dir:
@@ -53,7 +54,7 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
     :param seaborn
     """
     distance_from_goal = []
-    time_steps, _, _, _, _, distance_from_goal = get_pos_sensing_control(runs_dir, distance_from_goal)
+    time_steps, _, _, _, _, distance_from_goal = get_pos_sensing_control(runs_dir, net_input, distance_from_goal)
 
     plt.figure()
     plt.xlabel('timestep', fontsize=11)
@@ -66,7 +67,7 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
     save_visualisation(filename, img_dir)
 
 
-def visualise_simulation(runs_dir, img_dir, simulation, title):
+def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     """
 
     :param runs_dir:
@@ -84,7 +85,7 @@ def visualise_simulation(runs_dir, img_dir, simulation, title):
     run = runs[simulation]
 
     time_steps = np.arange(len(run))
-    target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions)
+    target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input)
 
     x_positions = np.array(x_positions[0])
     myt2_sensing = np.array(myt2_sensing[0])
@@ -185,14 +186,14 @@ def visualise_simulations_comparison_seaborn(img_dir, myt2_control, myt2_sensing
     save_visualisation(filename, img_dir, make_space=True, axes=axes)
 
 
-def visualise_simulations_comparison(runs_dir, img_dir, title, seaborn=False):
+def visualise_simulations_comparison(runs_dir, img_dir, title, net_input, seaborn=False):
     """
     :param runs_dir:
     :param img_dir:
     :param title
     :param seaborn
     """
-    time_steps, x_positions, myt2_sensing, myt2_control, target, _ = get_pos_sensing_control(runs_dir)
+    time_steps, x_positions, myt2_sensing, myt2_control, target, _ = get_pos_sensing_control(runs_dir, net_input)
 
     mean_x_positions = np.nanmean(x_positions, axis=0)
     mean_myt2_control = np.nanmean(myt2_control, axis=0)
@@ -392,3 +393,71 @@ def plot_response(x, y, x_label, img_dir, title, filename, index=None):
     plt.title(title, weight='bold', fontsize=12)
 
     save_visualisation(filename, img_dir)
+
+
+def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
+    """
+
+    :param x
+    :param y
+    :param x_label
+    :param img_dir
+    :param title
+    :param filename
+    :param index: this parameter is different from None only when x is the input sensing, otherwise, x is a 1D vector
+    """
+    # FIXME
+    time_steps = []
+    sensing = []
+
+    pickle_file = os.path.join(runs_dir, 'complete-simulation.pkl')
+    runs = pd.read_pickle(pickle_file)
+
+    for run in runs:
+        run_time_steps = np.arange(len(run)).tolist()
+        extract_input(run, sensing, net_input)
+
+        time_steps.append(run_time_steps)
+
+    length = max(map(len, time_steps))
+    time_steps = np.arange(length)
+
+    length2 = len(sensing[0][0])
+    length3 = len(sensing[0][0][0])
+
+    for el1 in sensing:
+        el1.extend([[[]]] * (length - len(el1)))
+        for el2 in el1:
+            el2.extend([[]] * (length2 - len(el2)))
+            for el3 in el2:
+                el3.extend([np.nan] * (length3 - len(el3)))
+
+    sensing = np.array(sensing)
+
+    # Mean of the sensing of each run, among all the robots
+    mean_sensing = np.nanmean(np.nanmean(sensing, axis=0), axis=1)
+    std_sensing = np.nanstd(np.nanstd(sensing, axis=0), axis=1)
+
+    proximity_sensors = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
+    plt.figure()
+
+    # Plot the evolution of the sensing over time
+    plt.ylabel('sensing (%s)' % net_input, fontsize=11)
+
+    for i in range(np.shape(mean_sensing)[1]):
+        plt.plot(time_steps, mean_sensing[:, i], label=proximity_sensors[i])  # , color='black')
+        plt.fill_between(time_steps,
+                             mean_sensing[:, i] - std_sensing[:, i],
+                             mean_sensing[:, i] + std_sensing[:, i],
+                             alpha=0.2)
+    plt.legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.5), ncol=np.shape(mean_sensing)[1],
+               title="proximity sensor")
+
+    plt.xlabel('timestep', fontsize=11)
+    title = 'Response Sensing %s' % model
+    plt.title(title, weight='bold', fontsize=12)
+
+    plt.tight_layout()
+
+    file_name = 'response-sensing-%s' % model
+    save_visualisation(file_name, img_dir)

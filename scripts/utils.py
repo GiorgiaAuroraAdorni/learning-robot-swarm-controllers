@@ -25,7 +25,32 @@ def dataset_split(file_name, num_run=1000):
     np.save(file_name, x)
 
 
-def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, distance_from_goal=None,
+def get_input_sensing(in_label, myt, normalise=True):
+    """
+
+    :param in_label:
+    :param myt:
+    :return:
+    """
+    sensing = myt[in_label].copy()
+
+    if in_label == 'prox_comm':
+        if len(sensing) == 0:
+            sensing = [0, 0, 0, 0, 0, 0, 0]
+        else:
+            _, values = get_key_value_of_nested_dict(sensing)
+            if len(sensing) == 1:
+                sensing = values[0]
+            else:
+                sensing = np.max(np.array(values), axis=0).tolist()
+
+    if normalise:
+        sensing = np.divide(np.array(sensing), 1000).tolist()
+
+    return sensing
+
+
+def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input, distance_from_goal=None,
                      run_time_steps=None):
     """
 
@@ -56,13 +81,13 @@ def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, d
                 target.append(x_t)
 
             if myt['name'] == 'myt2':
-                sensing = myt['prox_values'].copy()
+                sensing = get_input_sensing(net_input, myt)
                 control = myt['motor_left_target']
 
                 run_myt2_sensing.append(sensing)
                 run_myt2_control.append(control)
 
-        counter =+ 1
+        counter += 1
         run_x_positions.append(x_pos)
 
     if run_time_steps is not None:
@@ -77,7 +102,7 @@ def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, d
     return target
 
 
-def get_pos_sensing_control(runs_dir, distance_from_goal=None):
+def get_pos_sensing_control(runs_dir, net_input, distance_from_goal=None):
     """
 
     :param runs_dir:
@@ -97,8 +122,8 @@ def get_pos_sensing_control(runs_dir, distance_from_goal=None):
 
     for run in runs:
         run_time_steps = np.arange(len(run)).tolist()
-        target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, distance_from_goal,
-                                  run_time_steps)
+        target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input,
+                                  distance_from_goal, run_time_steps)
 
     length = max(map(len, time_steps))
     time_steps = np.arange(length)
@@ -198,19 +223,28 @@ def extract_input_output(run, input_, output_, in_label, out_label):
     """
     for step in run:
         for myt in step:
-            sample = myt[in_label].copy()
-            if in_label == 'prox_comm':
-                if len(sample) == 0:
-                    sample = [0, 0, 0, 0, 0, 0, 0]
-                else:
-                    _, values = get_key_value_of_nested_dict(sample)
-                    if len(sample) == 1:
-                        sample = values[0]
-                    else:
-                        sample = np.max(np.array(values), axis=0).tolist()
-
-            normalised_sample = np.divide(np.array(sample), 1000).tolist()
-            input_.append(normalised_sample)
+            sensing = get_input_sensing(in_label, myt)
+            input_.append(sensing)
 
             speed = myt[out_label]
             output_.append([speed])
+
+
+def extract_input(run, sensing, net_input):
+    """
+
+    :param run:
+    :param sensing:
+    :param net_input:
+    """
+    run_sensing = []
+
+    for step in run:
+        step_sensing = []
+        for myt in step:
+            s = get_input_sensing(net_input, myt)
+            step_sensing.append(s)
+        run_sensing.append(step_sensing)
+
+    sensing.append(run_sensing)
+
