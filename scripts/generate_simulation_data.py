@@ -326,12 +326,8 @@ class GenerateSimulationData:
         pickle_file = os.path.join(runs_dir, 'simulation.pkl')
         runs = pd.read_pickle(pickle_file)
 
-        if input == 'prox_values':
-            for run in runs:
-                extract_input_output(run, input_, output_, 'prox_values', 'motor_left_target')
-        else:
-        #     FIXME
-            pass
+        for run in runs:
+            extract_input_output(run, input_, output_, input, 'motor_left_target')
 
         #  Generate a scatter plot to check the conformity of the dataset
         title = 'Dataset %s' % dataset
@@ -342,7 +338,7 @@ class GenerateSimulationData:
 
         x = np.array(input_)[:, 2] - np.mean(np.array(input_)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
         y = np.array(output_).flatten()  # y: speed
-        x_label = 'sensing'
+        x_label = 'sensing (%s)' % input
         y_label = 'control'
 
         my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)

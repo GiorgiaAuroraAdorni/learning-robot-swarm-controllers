@@ -162,6 +162,28 @@ def extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps, x_position
     return df_x_positions, df_sensing, df_control
 
 
+def get_key_value_of_nested_dict(nested_dict):
+    """
+    Access a nested dictionary and return a list of tuples (rv) and values. Used to return the list of intensities
+    given a prox_comm dictionary containing multiple senders.
+    :param nested_dict
+    :return rv, values: rv is a list of tuples where, in each of these, the first element is a list of keys and the
+    second is the final value. values is the list of inner values.
+    """
+    rv = []
+    values = []
+    for outer_key, value in nested_dict.items():
+        try:
+            inner_kvs, _ = get_key_value_of_nested_dict(value)
+            for i_kvs in inner_kvs:
+                rv.append((outer_key,) + i_kvs)
+                values.append(i_kvs[1])
+        except AttributeError:
+            rv.append((outer_key, value))
+            values.append(value)
+    return rv, values
+
+
 def extract_input_output(run, input_, output_, in_label, out_label):
     """
     The input is the prox_values, that are the response values of ​​the sensors [array of 7 floats],
@@ -176,8 +198,17 @@ def extract_input_output(run, input_, output_, in_label, out_label):
     """
     for step in run:
         for myt in step:
-
             sample = myt[in_label].copy()
+            if in_label == 'prox_comm':
+                if len(sample) == 0:
+                    sample = [0, 0, 0, 0, 0, 0, 0]
+                else:
+                    _, values = get_key_value_of_nested_dict(sample)
+                    if len(sample) == 1:
+                        sample = values[0]
+                    else:
+                        sample = np.max(np.array(values), axis=0).tolist()
+
             normalised_sample = np.divide(np.array(sample), 1000).tolist()
             input_.append(normalised_sample)
 

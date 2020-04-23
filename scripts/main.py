@@ -31,7 +31,7 @@ def Parse():
                         help='name of the model (default: net1)')
     parser.add_argument('--generate-split', action="store_true",
                         help='generate the indices for the split of the dataset (default: False)')
-    parser.add_argument('--net-input', default='prox_values', choices=['prox_values', 'prox_comm_events'],
+    parser.add_argument('--net-input', default='prox_values', choices=['prox_values', 'prox_comm'],
                         help='choose the input of the net between prox_values and prox_comm_events (default: '
                              'prox_values)')
     parser.add_argument('--plots-net', action="store_true",
