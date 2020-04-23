@@ -3,6 +3,7 @@ from math import sin, cos
 import numpy as np
 
 from pid import PID
+from utils import get_input_sensing
 
 
 class ManualController:
@@ -12,11 +13,12 @@ class ManualController:
     ​​recorded by the front and rear sensors.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, net_input, **kwargs):
         super().__init__(**kwargs)
 
         self.p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
         # self.p_distributed_controller = PID(-0.005, 0, 0, max_out=16.6, min_out=-16.6)
+        self.net_input = net_input
 
     def neighbors_distance(self, state):
         """
@@ -24,9 +26,15 @@ class ManualController:
         Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
         :return back, front: response values of the rear and front sensors
         """
-        prox_values = state.prox_values
-        front = prox_values[2]
-        back = np.mean(np.array([prox_values[5], prox_values[6]]))
+        if self.net_input == 'prox_values':
+            sensing = state.prox_values
+        elif self.net_input == 'prox_comm':
+            sensing = get_input_sensing(self.net_input, self, normalise=False)
+        else:
+            raise ValueError("Invalid value for net_input")
+
+        front = sensing[2]
+        back = np.mean(np.array([sensing[5], sensing[6]]))
 
         return back, front
 
@@ -126,12 +134,14 @@ class LearnedController:
     The robots can be moved following a controller learned by a neural network.
     """
 
-    def __init__(self, net, **kwargs):
+    def __init__(self, net, net_input, **kwargs):
         super().__init__(**kwargs)
 
         self.net = net
-        if self.net is not None:
-            self.net_controller = net.controller()
+        if self.net is None:
+            raise ValueError("Value for net not provided")
+        self.net_controller = net.controller()
+        self.net_input = net_input
 
     def perform_control(self, state, dt):
         """
@@ -145,7 +155,14 @@ class LearnedController:
         Move the robots not to the end of the line using the controller, setting the target {left,right} wheel speed
         each at the same value in order to moves the robot straight ahead.
         """
-        sensing = np.divide(np.array(state.prox_values), 1000).tolist()
+
+        if self.net_input == 'prox_values':
+            sensing = np.divide(np.array(state.prox_values), 1000).tolist()
+        elif self.net_input == 'prox_comm':
+            sensing = get_input_sensing(self.net_input, self)
+        else:
+            raise ValueError("Invalid value for net_input")
+
         speed = float(self.net_controller(sensing)[0])
 
         if state.initial_position[0] != state.goal_position[0]:

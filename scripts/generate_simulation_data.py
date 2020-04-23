@@ -8,7 +8,7 @@ import pandas as pd
 import pyenki
 import torch
 from tqdm import tqdm
-
+import re
 from controllers import distributed_controllers
 from distributed_thymio import DistributedThymio2
 from my_plots import my_scatterplot
@@ -18,7 +18,7 @@ from utils import extract_input_output, check_dir
 class GenerateSimulationData:
     MANUAL_CONTROLLER = "manual-controller"
     OMNISCIENT_CONTROLLER = "omniscient-controller"
-    LEARNED_CONTROLLER = "learned-controller"
+    LEARNED_CONTROLLER = r"^learned-controller-net\d"
 
     @classmethod
     def setup(cls, controller_factory, myt_quantity, aseba: bool = False):
@@ -274,7 +274,8 @@ class GenerateSimulationData:
             complete_runs.append(complete_data)
 
     @classmethod
-    def generate_simulation(cls, runs_dir, simulations, controller, myt_quantity, args, model_dir=None, model=None):
+    def generate_simulation(cls, runs_dir, simulations, controller, myt_quantity, args, model_dir=None,
+                            model=None):
         """
 
         :param runs_dir:
@@ -285,15 +286,17 @@ class GenerateSimulationData:
         :param model:
         """
         if controller == cls.MANUAL_CONTROLLER:
-            controller_factory = distributed_controllers.ManualController
+            def controller_factory(**kwargs):
+                return distributed_controllers.ManualController(net_input=args.net_input, **kwargs)
+
         elif controller == cls.OMNISCIENT_CONTROLLER:
             controller_factory = distributed_controllers.OmniscientController
-        elif controller == cls.LEARNED_CONTROLLER:
+        elif re.match(cls.LEARNED_CONTROLLER, controller):
             # controller_factory = lambda **kwargs: d_c.LearnedController(net=net, **kwargs)
             net = torch.load('%s/%s' % (model_dir, model))
 
             def controller_factory(**kwargs):
-                return distributed_controllers.LearnedController(net=net, **kwargs)
+                return distributed_controllers.LearnedController(net=net, net_input=args.net_input, **kwargs)
         else:
             raise ValueError("Invalid value for controller")
 
@@ -311,7 +314,7 @@ class GenerateSimulationData:
         cls.save_simulation(complete_runs, runs, runs_dir)
 
     @classmethod
-    def check_dataset_conformity(cls, runs_dir, runs_img, dataset, input):
+    def check_dataset_conformity(cls, runs_dir, runs_img, dataset, net_input):
         """
         Generate a scatter plot to check the conformity of the dataset. The plot will show the distribution of the input
         sensing, in particular, as the difference between the front sensor and the mean of the rear sensors,
@@ -327,18 +330,18 @@ class GenerateSimulationData:
         runs = pd.read_pickle(pickle_file)
 
         for run in runs:
-            extract_input_output(run, input_, output_, input, 'motor_left_target')
+            extract_input_output(run, input_, output_, net_input, 'motor_left_target')
 
         #  Generate a scatter plot to check the conformity of the dataset
         title = 'Dataset %s' % dataset
         file_name = 'dataset-scatterplot-%s' % dataset
 
-        runs_img = os.path.join(runs_img, input)
+        runs_img = os.path.join(runs_img, net_input)
         check_dir(runs_img)
 
         x = np.array(input_)[:, 2] - np.mean(np.array(input_)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
         y = np.array(output_).flatten()  # y: speed
-        x_label = 'sensing (%s)' % input
+        x_label = 'sensing (%s)' % net_input
         y_label = 'control'
 
         my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)

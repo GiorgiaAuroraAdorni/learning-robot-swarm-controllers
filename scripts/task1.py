@@ -3,7 +3,8 @@ import os
 
 from distributed import run_distributed
 from generate_simulation_data import GenerateSimulationData as g
-from my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal
+from my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal, \
+    plot_sensing_timestep
 from utils import check_dir
 
 
@@ -93,8 +94,10 @@ if __name__ == '__main__':
             plot_distance_from_goal(runs_dir_omniscient, img_dir_omniscient, 'Robot distance from goal - %s' %
                                     omniscient_controller, 'distances-from-goal-%s' % omniscient_controller, net_input=args.net_input)
 
+            plot_sensing_timestep(runs_dir_omniscient, img_dir_omniscient, net_input=args.net_input, model=args.model)
+
         if args.check_dataset:
-            print('Checking conformity of %s dataset…' % omniscient_controller)
+            print('\nChecking conformity of %s dataset…' % omniscient_controller)
             g.check_dataset_conformity(runs_dir_omniscient, img_dir_omniscient, omniscient_controller, net_input=args.net_input)
 
     # # # # # # #
@@ -135,7 +138,7 @@ if __name__ == '__main__':
                                     net_input=args.net_input)
 
         if args.check_dataset:
-            print('Checking conformity of %s dataset…' % manual_controller)
+            print('\nChecking conformity of %s dataset…' % manual_controller)
             g.check_dataset_conformity(runs_dir_manual, img_dir_manual, dataset_manual, net_input=args.net_input)
 
     # # # # # #
@@ -161,7 +164,7 @@ if __name__ == '__main__':
                         train=args.train_net, generate_split=args.generate_split, plots=args.plots_net, net_input=args.net_input)
 
     # # # # # # #
-    dataset_learned = '%dmyts-%s-%s' % (myt_quantity, learned_controller, args.model)
+    dataset_learned = '%dmyts-%s' % (myt_quantity, learned_controller)
 
     runs_dir_learned = os.path.join('datasets/', dataset_learned)
     img_dir_learned = '%s/images/' % runs_dir_learned
@@ -196,5 +199,5 @@ if __name__ == '__main__':
                                     net_input=args.net_input)
 
         if args.check_dataset:
-            print('Checking conformity of %s dataset…' % learned_controller)
+            print('\nChecking conformity of %s dataset…' % learned_controller)
             g.check_dataset_conformity(runs_dir_learned, img_dir_learned, dataset_learned, net_input=args.net_input)
