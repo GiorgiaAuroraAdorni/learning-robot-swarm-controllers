@@ -12,7 +12,7 @@ from tqdm import tqdm
 from controllers import distributed_controllers
 from distributed_thymio import DistributedThymio2
 from my_plots import my_scatterplot
-from utils import extract_input_output
+from utils import extract_input_output, check_dir
 
 
 class GenerateSimulationData:
@@ -311,7 +311,7 @@ class GenerateSimulationData:
         cls.save_simulation(complete_runs, runs, runs_dir)
 
     @classmethod
-    def check_dataset_conformity(cls, runs_dir, runs_img, dataset):
+    def check_dataset_conformity(cls, runs_dir, runs_img, dataset, input):
         """
         Generate a scatter plot to check the conformity of the dataset. The plot will show the distribution of the input
         sensing, in particular, as the difference between the front sensor and the mean of the rear sensors,
@@ -326,12 +326,19 @@ class GenerateSimulationData:
         pickle_file = os.path.join(runs_dir, 'simulation.pkl')
         runs = pd.read_pickle(pickle_file)
 
-        for run in runs:
-            extract_input_output(run, input_, output_, 'prox_values', 'motor_left_target')
+        if input == 'prox_values':
+            for run in runs:
+                extract_input_output(run, input_, output_, 'prox_values', 'motor_left_target')
+        else:
+        #     FIXME
+            pass
 
         #  Generate a scatter plot to check the conformity of the dataset
         title = 'Dataset %s' % dataset
         file_name = 'dataset-scatterplot-%s' % dataset
+
+        runs_img = os.path.join(runs_img, input)
+        check_dir(runs_img)
 
         x = np.array(input_)[:, 2] - np.mean(np.array(input_)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
         y = np.array(output_).flatten()  # y: speed

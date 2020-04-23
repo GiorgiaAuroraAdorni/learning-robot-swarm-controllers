@@ -1,5 +1,4 @@
 import os
-import re
 from typing import List, Tuple, Optional, AnyStr
 
 import numpy as np
@@ -12,13 +11,12 @@ from tqdm import tqdm
 from controllers import distributed_controllers
 from generate_simulation_data import GenerateSimulationData as g
 from my_plots import plot_losses, my_histogram, plot_regressor, plot_response
-from networks.distributed_network import DistributedNet, Controller
+from networks.distributed_network import DistributedNet
 from utils import check_dir, extract_input_output, dataset_split
 
 
 class ThymioState:
     def __init__(self, prox_values, initial_position=(0, 0), goal_position=(10, 0)):
-
         self.prox_values = prox_values
         self.goal_position = goal_position
         self.initial_position = initial_position
@@ -398,7 +396,7 @@ def test_controller_given_init_positions(model_img, net, model):
     plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
-def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split):
+def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split, plots):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir:
@@ -453,26 +451,28 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     else:
         d_net = torch.load('%s/%s' % (model_dir, model))
 
-    # Load the metrics
-    training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
+    if plots:
+        # Load the metrics
+        training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
 
-    prediction = d_net(torch.FloatTensor(valid_sample))
+        prediction = d_net(torch.FloatTensor(valid_sample))
 
-    network_plots(model_img, ds, prediction, training_loss, validation_loss, train_sample, valid_target, groundtruth)
+        network_plots(model_img, ds, prediction, training_loss, validation_loss, train_sample, valid_target,
+                      groundtruth)
 
-    # Evaluate prediction of the distributed controller with the omniscient groundtruth
-    evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
+        # Evaluate prediction of the distributed controller with the omniscient groundtruth
+        evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing)
 
-    # Evaluate the learned controller by passing a specific input sensing configuration
-    x, s = generate_sensing()
-    sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
-    index = 2
+        # Evaluate the learned controller by passing a specific input sensing configuration
+        x, s = generate_sensing()
+        sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
+        index = 2
 
-    evaluate_net(model_img, model, d_net, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index, 'center proximity sensor')
+        evaluate_net(model_img, model, d_net, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index, 'center proximity sensor')
 
-    index = -1
-    sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
-    evaluate_net(model_img, model, d_net, 'net([0, 0, 0, 0, 0, x, x])', sensing, index, 'rear proximity sensors')
+        index = -1
+        sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
+        evaluate_net(model_img, model, d_net, 'net([0, 0, 0, 0, 0, x, x])', sensing, index, 'rear proximity sensors')
 
-    # Evaluate the learned controller by passing a specific initial position configuration
-    test_controller_given_init_positions(model_img, d_net, model)
+        # Evaluate the learned controller by passing a specific initial position configuration
+        test_controller_given_init_positions(model_img, d_net, model)
