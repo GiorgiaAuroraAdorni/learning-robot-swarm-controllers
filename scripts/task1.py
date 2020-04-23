@@ -94,8 +94,6 @@ if __name__ == '__main__':
             plot_distance_from_goal(runs_dir_omniscient, img_dir_omniscient, 'Robot distance from goal - %s' %
                                     omniscient_controller, 'distances-from-goal-%s' % omniscient_controller, net_input=args.net_input)
 
-            plot_sensing_timestep(runs_dir_omniscient, img_dir_omniscient, net_input=args.net_input, model=args.model)
-
         if args.check_dataset:
             print('\nChecking conformity of %s dataset…' % omniscient_controller)
             g.check_dataset_conformity(runs_dir_omniscient, img_dir_omniscient, omniscient_controller, net_input=args.net_input)
@@ -155,10 +153,12 @@ if __name__ == '__main__':
     if args.controller == 'all' or args.controller == 'learned':
         if args.train_net and args.plots_net:
             print('\nTraining %s and generating plots…' % args.model)
+            plot_sensing_timestep(runs_dir_omniscient, model_img, net_input=args.net_input, model=args.model)
         elif args.train_net and not args.plots_net:
             print('\nTraining %s…' % args.model)
         elif not args.train_net and args.plots_net:
             print('\nGenerating plots for %s…' % args.model)
+            plot_sensing_timestep(runs_dir_omniscient, model_img, net_input=args.net_input, model=args.model)
 
         run_distributed(file, runs_dir_omniscient, model_dir, model_img, args.model, dataset_omniscient, dataset_manual,
                         train=args.train_net, generate_split=args.generate_split, plots=args.plots_net, net_input=args.net_input)

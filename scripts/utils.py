@@ -4,6 +4,9 @@ from itertools import chain
 import numpy as np
 import pandas as pd
 
+import distributed
+from distributed_thymio import DistributedThymio2
+
 
 def check_dir(directory):
     """
@@ -11,6 +14,26 @@ def check_dir(directory):
     :param directory: path to the directory
     """
     os.makedirs(directory, exist_ok=True)
+
+
+def get_prox_comm(myt):
+    """
+    Create a dictionary containing all the senders as key and the corresponding intensities as value.
+    :param myt
+    :return prox_comm
+    """
+    prox_comm = {}
+
+    prox_comm_events = myt.prox_comm_events
+
+    if len(prox_comm_events) > 0:
+        for idx, _ in enumerate(prox_comm_events):
+            sender = prox_comm_events[idx].rx + 1
+            intensities = prox_comm_events[idx].intensities
+
+            prox_comm['myt%d' % sender] = {'intensities': intensities}
+
+    return prox_comm
 
 
 def dataset_split(file_name, num_run=1000):
@@ -32,7 +55,18 @@ def get_input_sensing(in_label, myt, normalise=True):
     :param myt:
     :return:
     """
-    sensing = myt[in_label].copy()
+    if isinstance(myt, dict):
+        myt = distributed.ThymioState(myt)
+    elif isinstance(myt, DistributedThymio2):
+        if len(myt.prox_comm_events) == 0:
+            prox_comm = {'sender': {'intensities': [0, 0, 0, 0, 0, 0, 0]}}
+        else:
+            prox_comm = get_prox_comm(myt)
+
+        state_dict = {'initial_position': myt.initial_position, 'goal_position': myt.goal_position,
+                      'prox_values': myt.prox_values, 'prox_comm': prox_comm}
+        myt = distributed.ThymioState(state_dict)
+    sensing = getattr(myt, in_label).copy()
 
     if in_label == 'prox_comm':
         if len(sensing) == 0:

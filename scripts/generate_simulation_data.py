@@ -12,7 +12,7 @@ import re
 from controllers import distributed_controllers
 from distributed_thymio import DistributedThymio2
 from my_plots import my_scatterplot
-from utils import extract_input_output, check_dir
+from utils import extract_input_output, check_dir, get_prox_comm
 
 
 class GenerateSimulationData:
@@ -100,26 +100,6 @@ class GenerateSimulationData:
             myt.goal_position = (goal_positions[i], 0)
 
     @classmethod
-    def get_prox_comm(cls, myt):
-        """
-        Create a dictionary containing all the senders as key and the corresponding intensities as value.
-        :param myt
-        :return prox_comm
-        """
-        prox_comm = {}
-
-        prox_comm_events = myt.prox_comm_events
-
-        if len(prox_comm_events) > 0:
-            for idx, _ in enumerate(prox_comm_events):
-                sender = prox_comm_events[idx].rx + 1
-                intensities = prox_comm_events[idx].intensities
-
-                prox_comm['myt%d' % sender] = {'intensities': intensities}
-
-        return prox_comm
-
-    @classmethod
     def generate_dict(cls, myt):
         """
         Save data in a dictionary
@@ -141,7 +121,7 @@ class GenerateSimulationData:
             'name': myt.name,
             'index': myt.index,
             'prox_values': myt.prox_values,
-            'prox_comm': cls.get_prox_comm(myt),
+            'prox_comm': get_prox_comm(myt),
             'initial_position': myt.initial_position,
             'position': myt.position,
             'angle': myt.angle,
@@ -162,7 +142,7 @@ class GenerateSimulationData:
         :return dictionary
         """
         myt.dictionary['prox_values'] = myt.prox_values
-        myt.dictionary['prox_comm'] = cls.get_prox_comm(myt)
+        myt.dictionary['prox_comm'] = get_prox_comm(myt)
         myt.dictionary['position'] = myt.position
         myt.dictionary['angle'] = myt.angle
         myt.dictionary['motor_left_target'] = myt.motor_left_target

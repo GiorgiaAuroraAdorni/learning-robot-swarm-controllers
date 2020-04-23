@@ -16,10 +16,9 @@ from utils import check_dir, extract_input_output, dataset_split
 
 
 class ThymioState:
-    def __init__(self, prox_values, initial_position=(0, 0), goal_position=(10, 0)):
-        self.prox_values = prox_values
-        self.goal_position = goal_position
-        self.initial_position = initial_position
+    def __init__(self, state_dict):
+        for k, v in state_dict.items():
+            setattr(self, k, v)
 
 
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input):
@@ -315,7 +314,18 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
         # Rescale the values of the sensor
         sample = np.multiply(np.array(sample), 1000).tolist()
 
-        state = ThymioState(prox_values=sample)
+        if net_input == 'prox_comm':
+            prox_comm = {'sender': {'intensities': sample}}
+            prox_values = None
+        elif net_input == 'prox_values':
+            prox_values = sample
+            prox_comm = None
+        else:
+            raise AttributeError('Input not found')
+        state_dict = {'initial_position': (0, 0), 'goal_position': (10, 0), 'prox_values': prox_values,
+                      'prox_comm': prox_comm}
+
+        state = ThymioState(state_dict)
 
         control = controller.perform_control(state, dt=0.1)
 
@@ -353,7 +363,19 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
         # Rescale the values of the sensor
         sample = np.multiply(np.array(sample), 1000).tolist()
 
-        state = ThymioState(prox_values=sample)
+        if net_input == 'prox_comm':
+            prox_comm = {'sender': {'intensities': sample}}
+            prox_values = None
+        elif net_input == 'prox_values':
+            prox_values = sample
+            prox_comm = None
+        else:
+            raise AttributeError('Input not found')
+
+        state_dict = {'initial_position': (0, 0), 'goal_position': (10, 0), 'prox_values': prox_values,
+                      'prox_comm': prox_comm}
+
+        state = ThymioState(state_dict)
 
         control = controller.perform_control(state, dt=0.1)
 
@@ -379,6 +401,7 @@ def test_controller_given_init_positions(model_img, net, model, net_input):
     def controller_factory(**kwargs):
         return distributed_controllers.LearnedController(net=net, net_input=net_input, **kwargs)
 
+    # FIXME do not use simulation
     world, myts = g.setup(controller_factory, myt_quantity)
 
     simulations = 17 * 10

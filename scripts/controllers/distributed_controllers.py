@@ -29,7 +29,7 @@ class ManualController:
         if self.net_input == 'prox_values':
             sensing = state.prox_values
         elif self.net_input == 'prox_comm':
-            sensing = get_input_sensing(self.net_input, self, normalise=False)
+            sensing = get_input_sensing(self.net_input, state, normalise=False)
         else:
             raise ValueError("Invalid value for net_input")
 
@@ -159,7 +159,7 @@ class LearnedController:
         if self.net_input == 'prox_values':
             sensing = np.divide(np.array(state.prox_values), 1000).tolist()
         elif self.net_input == 'prox_comm':
-            sensing = get_input_sensing(self.net_input, self)
+            sensing = get_input_sensing(self.net_input, state)
         else:
             raise ValueError("Invalid value for net_input")
 
