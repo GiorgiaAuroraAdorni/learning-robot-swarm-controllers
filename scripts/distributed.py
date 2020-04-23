@@ -335,7 +335,7 @@ def generate_sensing():
     return x, s
 
 
-def evaluate_net(model_img, model, net, net_input, sensing, index, x_label):
+def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_label):
     """
 
     :param model_img:
@@ -359,8 +359,8 @@ def evaluate_net(model_img, model, net, net_input, sensing, index, x_label):
 
         controller_predictions.append(control)
 
-    title = 'Response %s - %s' % (model, net_input)
-    file_name = 'response-%s-%s' % (model, net_input)
+    title = 'Response %s - %s' % (model, net_title)
+    file_name = 'response-%s-%s' % (model, net_title)
 
     # Plot the output of the network
     plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
@@ -476,11 +476,13 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
         sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
         index = 2
 
-        evaluate_net(model_img, model, d_net, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index, 'center proximity sensor')
+        evaluate_net(model_img, model, d_net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
+                     'center proximity sensor')
 
         index = -1
         sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
-        evaluate_net(model_img, model, d_net, 'net([0, 0, 0, 0, 0, x, x])', sensing, index, 'rear proximity sensors')
+        evaluate_net(model_img, model, d_net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
+                     'rear proximity sensors')
 
         # Evaluate the learned controller by passing a specific initial position configuration
         test_controller_given_init_positions(model_img, d_net, model, net_input)
