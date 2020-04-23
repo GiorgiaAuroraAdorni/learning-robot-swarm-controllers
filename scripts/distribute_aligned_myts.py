@@ -1,7 +1,9 @@
-import pyenki
 import sys
 from math import pi
+
 import numpy as np
+import pyenki
+
 from pid import PID
 
 
@@ -14,6 +16,7 @@ class DistributedThymio2(pyenki.Thymio2):
         self.distribute = True
 
         self.distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
+
     def neighbors_distance(self):
         """
         Check if there is a robot ahead using the infrared sensor 2 (front-front).
@@ -61,7 +64,6 @@ class DistributedThymio2(pyenki.Thymio2):
         to the mean of the response values of the rear sensors.
         The final difference is computed ad follow: out = front - correction - back
         The speed are clipped to [min_out=-16.6, max_out=16.6].
-
 
         :param dt: control step duration
         """

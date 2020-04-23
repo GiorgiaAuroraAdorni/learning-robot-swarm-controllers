@@ -1,6 +1,7 @@
 import json
 import os
 import pickle
+import re
 from math import pi
 
 import numpy as np
@@ -8,7 +9,7 @@ import pandas as pd
 import pyenki
 import torch
 from tqdm import tqdm
-import re
+
 from controllers import distributed_controllers
 from distributed_thymio import DistributedThymio2
 from my_plots import my_scatterplot

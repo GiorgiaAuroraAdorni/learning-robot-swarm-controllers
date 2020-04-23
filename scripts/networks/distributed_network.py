@@ -1,5 +1,6 @@
+from typing import TypeVar, Callable, Tuple, Sequence
+
 import torch
-from typing import Sequence, TypeVar, Callable, List, Tuple, Sequence, Optional
 import torch.nn.functional as nn_funct
 
 State = TypeVar('State')
@@ -34,7 +35,9 @@ class DistributedNet(torch.nn.Module):
 
         :return:
         """
+
         def f(sensing: Sequence[Sensing]) -> Tuple[Sequence[Control]]:
             with torch.no_grad():
                 return self(torch.FloatTensor(sensing)).numpy().flatten(),
+
         return f

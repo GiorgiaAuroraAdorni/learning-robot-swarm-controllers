@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
-from utils import extract_run_data, check_dir, get_pos_sensing_control, extract_flatten_dataframe, extract_input
-from itertools import chain
+
+from utils import extract_run_data, get_pos_sensing_control, extract_flatten_dataframe, extract_input
 
 sns.set(style="white")
 
@@ -447,9 +447,9 @@ def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
     for i in range(np.shape(mean_sensing)[1]):
         plt.plot(time_steps, mean_sensing[:, i], label=proximity_sensors[i])  # , color='black')
         plt.fill_between(time_steps,
-                             mean_sensing[:, i] - std_sensing[:, i],
-                             mean_sensing[:, i] + std_sensing[:, i],
-                             alpha=0.2)
+                         mean_sensing[:, i] - std_sensing[:, i],
+                         mean_sensing[:, i] + std_sensing[:, i],
+                         alpha=0.2)
     plt.legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.5), ncol=np.shape(mean_sensing)[1],
                title="proximity sensor")
 

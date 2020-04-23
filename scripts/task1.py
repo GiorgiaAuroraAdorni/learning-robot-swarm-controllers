@@ -92,11 +92,13 @@ if __name__ == '__main__':
                                              net_input=args.net_input)
 
             plot_distance_from_goal(runs_dir_omniscient, img_dir_omniscient, 'Robot distance from goal - %s' %
-                                    omniscient_controller, 'distances-from-goal-%s' % omniscient_controller, net_input=args.net_input)
+                                    omniscient_controller, 'distances-from-goal-%s' % omniscient_controller,
+                                    net_input=args.net_input)
 
         if args.check_dataset:
             print('\nChecking conformity of %s dataset…' % omniscient_controller)
-            g.check_dataset_conformity(runs_dir_omniscient, img_dir_omniscient, omniscient_controller, net_input=args.net_input)
+            g.check_dataset_conformity(runs_dir_omniscient, img_dir_omniscient, omniscient_controller,
+                                       net_input=args.net_input)
 
     # # # # # # #
     manual_controller = "manual-controller"
@@ -161,7 +163,8 @@ if __name__ == '__main__':
             plot_sensing_timestep(runs_dir_omniscient, model_img, net_input=args.net_input, model=args.model)
 
         run_distributed(file, runs_dir_omniscient, model_dir, model_img, args.model, dataset_omniscient, dataset_manual,
-                        train=args.train_net, generate_split=args.generate_split, plots=args.plots_net, net_input=args.net_input)
+                        train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
+                        net_input=args.net_input)
 
     # # # # # # #
     dataset_learned = '%dmyts-%s' % (myt_quantity, learned_controller)
