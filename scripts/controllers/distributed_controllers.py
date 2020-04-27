@@ -24,6 +24,7 @@ class ManualController:
         """
         Check if there is a robot ahead using the infrared sensor 2 (front-front).
         Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
+        :param state
         :return back, front: response values of the rear and front sensors
         """
         sensing = get_input_sensing(self.net_input, state, normalise=False)
@@ -35,6 +36,7 @@ class ManualController:
 
     def compute_difference(self, state):
         """
+        :param state
         :return: the difference between the response value of front and the rear sensor
         """
         back, front = self.neighbors_distance(state)
@@ -89,6 +91,7 @@ class OmniscientController:
 
     def linear_vel(self, state, constant=4):
         """
+        :param state
         :param constant
         :return: clipped linear velocity
         """
@@ -98,6 +101,7 @@ class OmniscientController:
     def move_to_goal(self, state):
         """
         Moves the thymio to the goal.
+        :param state
         :return: speed
         """
         return self.linear_vel(state)
@@ -110,6 +114,8 @@ class OmniscientController:
             velocity = constant * self.signed_distance()
         where the constant is set to 4 and the signed_distance is the distance between the current and the goal
         position of the robot, along the current theta of the robot.
+        :param state
+        :param dt
         """
         speed = self.move_to_goal(state)
 
@@ -142,6 +148,8 @@ class LearnedController:
 
         Move the robots not to the end of the line using the controller, setting the target {left,right} wheel speed
         each at the same value in order to moves the robot straight ahead.
+        :param state
+        :param dt
         """
 
         sensing = get_input_sensing(self.net_input, state)
