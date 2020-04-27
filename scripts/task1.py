@@ -28,6 +28,9 @@ def Parse():
     parser.add_argument('--check-dataset', action="store_true",
                         help='generate the plots that check the dataset conformity (default: False)')
 
+    parser.add_argument('--avg-gap', type=int, default=8, metavar='N',
+                        help='average gap distance between thymios (default: 8)')
+
     parser.add_argument('--controller', default='all', choices=['all', 'learned', 'manual', 'omniscient'],
                         help='choose the controller for the current execution between all, learned, manual and '
                              'omniscient (default: all)')
@@ -56,14 +59,7 @@ if __name__ == '__main__':
 
     args = Parse()
 
-    if args.net_input == 'prox_values':
-        runs_dir = os.path.join(args.dataset_folder, args.net_input, 'gap-8')
-    elif args.net_input == 'prox_comm':
-        runs_dir = os.path.join(args.dataset_folder, args.net_input, 'gap-25')
-    elif args.net_input == 'all_sensors':
-        runs_dir = os.path.join(args.dataset_folder, args.net_input, 'gap-13')
-    else:
-        raise ValueError("Invalid value for net_input")
+    runs_dir = os.path.join(args.dataset_folder, args.net_input, 'gap-%d' % args.avg_gap)
 
     img_dir = '%s/images/' % runs_dir
     check_dir(img_dir)
@@ -183,7 +179,7 @@ if __name__ == '__main__':
 
         run_distributed(file, runs_dir_omniscient, model_dir, model_img, args.model, dataset_omniscient, dataset_manual,
                         train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
-                        net_input=args.net_input)
+                        net_input=args.net_input, avg_gap=args.avg_gap)
 
     # # # # # # #
     dataset_learned = '%dmyts-%s' % (myt_quantity, learned_controller)

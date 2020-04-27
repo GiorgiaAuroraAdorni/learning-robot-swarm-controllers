@@ -45,7 +45,7 @@ class GenerateSimulationData:
         return world, myts
 
     @classmethod
-    def init_positions(cls, myts, net_input, variate_pose=False, min_distance=10.9, x=None):
+    def init_positions(cls, myts, net_input, avg_gap, variate_pose=False, min_distance=10.9, x=None):
         """
         Create multiple Thymios and position them such as all x-axes are aligned.
         The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range.
@@ -57,6 +57,7 @@ class GenerateSimulationData:
         the thymio. The distances obtained are rescaled in such a way their sum corresponds to the total gap that is known.
         :param myts
         :param net_input
+        :param avg_gap: for the prox_values the default value is 8cm; for the prox_comm the default value is 25cm
         :param variate_pose
         :param min_distance: the minimum distance between two Thymio [wheel - wheel] is 10.9 cm.
         :param x
@@ -64,18 +65,14 @@ class GenerateSimulationData:
         myt_quantity = len(myts)
         std = 8
 
-        # avg_gap: for the prox_values the default value is 8cm; for the prox_comm the default value is 25cm
         # maximum_gap: corresponds to the proximity sensors maximal range and is 14cm for the prox_values and
         # 50cm for prox_comm
         if net_input == 'prox_values':
             maximum_gap = 14
-            avg_gap = 8
         elif net_input == 'prox_comm':
             maximum_gap = 50
-            avg_gap = maximum_gap / 2
         elif net_input == 'all_sensors':
-            maximum_gap = 14
-            avg_gap = 12
+            maximum_gap = avg_gap * 2
         else:
             raise ValueError("Invalid value for net_input")
 
@@ -302,7 +299,7 @@ class GenerateSimulationData:
         complete_runs = []
         for _ in tqdm(range(simulations)):
             try:
-                cls.init_positions(myts, args.net_input)
+                cls.init_positions(myts, args.net_input, args.avg_gap)
                 cls.run(myts, runs, complete_runs, world, args.gui)
             except Exception as e:
                 print('ERROR: ', e)

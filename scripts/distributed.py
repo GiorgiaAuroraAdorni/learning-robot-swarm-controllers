@@ -357,6 +357,7 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     :param model:
     :param net:
     :param net_input
+    :param net_title
     :param sensing:
     :param index:
     :param x_label:
@@ -393,13 +394,14 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
 
 
-def test_controller_given_init_positions(model_img, net, model, net_input):
+def test_controller_given_init_positions(model_img, net, model, net_input, avg_gap):
     """
 
     :param model_img:
     :param net:
     :param model:
     :param net_input
+    :param avg_gap
     """
     myt_quantity = 3
 
@@ -411,11 +413,13 @@ def test_controller_given_init_positions(model_img, net, model, net_input):
 
     simulations = 17 * 10
 
-    x = np.linspace(0, 16, num=simulations)
+    range = 2 * avg_gap
+
+    x = np.linspace(0, range, num=simulations)
     control_predictions = []
 
     for simulation in tqdm(x):
-        g.init_positions(myts, net_input, variate_pose=True, x=simulation)
+        g.init_positions(myts, net_input, avg_gap, variate_pose=True, x=simulation)
 
         world.step(dt=0.1)
         # myts[1].learned_controller()
@@ -429,7 +433,8 @@ def test_controller_given_init_positions(model_img, net, model, net_input):
     plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
-def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split, plots, net_input):
+def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split, plots,
+                    net_input, avg_gap):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir:
@@ -442,6 +447,7 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     :param generate_split
     :param plots
     :param net_input
+    :param avg_gap
     """
     # Uncomment the following line to generate a new dataset split
     if generate_split:
@@ -514,4 +520,4 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
                          'rear proximity sensors')
 
         # Evaluate the learned controller by passing a specific initial position configuration
-        test_controller_given_init_positions(model_img, d_net, model, net_input)
+        test_controller_given_init_positions(model_img, d_net, model, net_input, avg_gap)
