@@ -32,6 +32,9 @@ def Parse():
                         help='choose the controller for the current execution between all, learned, manual and '
                              'omniscient (default: all)')
 
+    parser.add_argument('--dataset-folder', default='datasets/', type=str,
+                        help='name of the directory containing the datasets (default: datasets/)')
+
     parser.add_argument('--train-net', action="store_true",
                         help='train the model  (default: False)')
     parser.add_argument('--model', default='net1', type=str,
@@ -53,12 +56,19 @@ if __name__ == '__main__':
 
     args = Parse()
 
+    if args.net_input == 'prox_values':
+        runs_dir = os.path.join(args.dataset_folder, 'gap-8/', args.net_input)
+    elif args.net_input == 'prox_comm':
+        runs_dir = os.path.join(args.dataset_folder, 'gap-25/', args.net_input)
+    else:
+        raise ValueError("Invalid value for net_input")
+
     myt_quantity = args.myt_quantity
     omniscient_controller = "omniscient-controller"
 
     dataset_omniscient = '%dmyts-%s' % (myt_quantity, omniscient_controller)
 
-    runs_dir_omniscient = os.path.join('datasets/', dataset_omniscient)
+    runs_dir_omniscient = os.path.join(runs_dir, dataset_omniscient)
     img_dir_omniscient = '%s/images/' % runs_dir_omniscient
 
     check_dir(runs_dir_omniscient)
@@ -105,7 +115,7 @@ if __name__ == '__main__':
 
     dataset_manual = '%dmyts-%s' % (myt_quantity, manual_controller)
 
-    runs_dir_manual = os.path.join('datasets/', dataset_manual)
+    runs_dir_manual = os.path.join(runs_dir, dataset_manual)
     img_dir_manual = '%s/images/' % runs_dir_manual
 
     check_dir(runs_dir_manual)
@@ -169,7 +179,7 @@ if __name__ == '__main__':
     # # # # # # #
     dataset_learned = '%dmyts-%s' % (myt_quantity, learned_controller)
 
-    runs_dir_learned = os.path.join('datasets/', dataset_learned)
+    runs_dir_learned = os.path.join(runs_dir, dataset_learned)
     img_dir_learned = '%s/images/' % runs_dir_learned
 
     check_dir(runs_dir_learned)

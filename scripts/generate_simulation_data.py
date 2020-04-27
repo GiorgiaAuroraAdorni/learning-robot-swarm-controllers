@@ -13,7 +13,7 @@ from tqdm import tqdm
 from controllers import distributed_controllers
 from distributed_thymio import DistributedThymio2
 from my_plots import my_scatterplot
-from utils import extract_input_output, check_dir, get_prox_comm
+from utils import extract_input_output, get_prox_comm
 
 
 class GenerateSimulationData:
@@ -45,7 +45,7 @@ class GenerateSimulationData:
         return world, myts
 
     @classmethod
-    def init_positions(cls, myts, variate_pose=False, min_distance=10.9, avg_gap=8, maximum_gap=14, x=None):
+    def init_positions(cls, myts, net_input, variate_pose=False, min_distance=10.9, x=None):
         """
         Create multiple Thymios and position them such as all x-axes are aligned.
         The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range.
@@ -55,15 +55,26 @@ class GenerateSimulationData:
         distribution with mean equal to the average gap and stdev fixed to 8. This values are clipped between 1 and the
         maximum_gap. Then, the minimum distance is added to all the distances, in order to move from the ICR to the front of
         the thymio. The distances obtained are rescaled in such a way their sum corresponds to the total gap that is known.
-        :param myts:
+        :param myts
+        :param net_input
         :param variate_pose
         :param min_distance: the minimum distance between two Thymio [wheel - wheel] is 10.9 cm.
-        :param avg_gap: can vary in the range [6, 14], the default value is 8cm
-        :param maximum_gap: corresponds to the proximity sensors maximal range and id 14cm
         :param x
         """
         myt_quantity = len(myts)
         std = 8
+
+        # avg_gap: for the prox_values the default value is 8cm; for the prox_comm the default value is 25cm
+        # maximum_gap: corresponds to the proximity sensors maximal range and is 14cm for the prox_values and
+        # 50cm for prox_comm
+        if net_input == 'prox_values':
+            maximum_gap = 14
+            avg_gap = 8
+        elif net_input == 'prox_comm':
+            maximum_gap = 50
+            avg_gap = maximum_gap / 2
+        else:
+            raise ValueError("Invalid value for net_input")
 
         first_x = 0
         last_x = (min_distance + avg_gap) * (myt_quantity - 1)
@@ -287,7 +298,7 @@ class GenerateSimulationData:
         complete_runs = []
         for _ in tqdm(range(simulations)):
             try:
-                cls.init_positions(myts)
+                cls.init_positions(myts, args.net_input)
                 cls.run(myts, runs, complete_runs, world, args.gui)
             except Exception as e:
                 print('ERROR: ', e)
@@ -317,8 +328,8 @@ class GenerateSimulationData:
         title = 'Dataset %s' % dataset
         file_name = 'dataset-scatterplot-%s' % dataset
 
-        runs_img = os.path.join(runs_img, net_input)
-        check_dir(runs_img)
+        # runs_img = os.path.join(runs_img, net_input)
+        # check_dir(runs_img)
 
         x = np.array(input_)[:, 2] - np.mean(np.array(input_)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
         y = np.array(output_).flatten()  # y: speed

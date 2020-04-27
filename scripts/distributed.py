@@ -410,7 +410,7 @@ def test_controller_given_init_positions(model_img, net, model, net_input):
     control_predictions = []
 
     for simulation in tqdm(x):
-        g.init_positions(myts, variate_pose=True, x=simulation)
+        g.init_positions(myts, net_input, variate_pose=True, x=simulation)
 
         world.step(dt=0.1)
         # myts[1].learned_controller()
