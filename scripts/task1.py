@@ -4,7 +4,7 @@ import os
 from distributed import run_distributed
 from generate_simulation_data import GenerateSimulationData as g
 from my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal, \
-    plot_sensing_timestep
+    plot_sensing_timestep, plot_compared_distance_from_goal
 from utils import check_dir
 
 
@@ -64,6 +64,9 @@ if __name__ == '__main__':
         runs_dir = os.path.join(args.dataset_folder, args.net_input, 'gap-13')
     else:
         raise ValueError("Invalid value for net_input")
+
+    img_dir = '%s/images/' % runs_dir
+    check_dir(img_dir)
 
     myt_quantity = args.myt_quantity
     omniscient_controller = "omniscient-controller"
@@ -221,3 +224,8 @@ if __name__ == '__main__':
         if args.check_dataset:
             print('\nChecking conformity of %s dataset…' % learned_controller)
             g.check_dataset_conformity(runs_dir_learned, img_dir_learned, dataset_learned, net_input=args.net_input)
+
+    # # # # #
+    # Comparison among all datasets:
+    plot_compared_distance_from_goal(runs_dir_omniscient, runs_dir_manual, runs_dir_learned, img_dir,
+                                     'Robot distances from goal', 'distances-from-goal', net_input=args.net_input)

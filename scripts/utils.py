@@ -163,6 +163,7 @@ def get_pos_sensing_control(runs_dir, net_input, distance_from_goal=None):
     """
 
     :param runs_dir:
+    :param net_input
     :param distance_from_goal
     :return time_steps, x_positions, myt2_sensing, myt2_control, target
     """
@@ -173,6 +174,7 @@ def get_pos_sensing_control(runs_dir, net_input, distance_from_goal=None):
     myt2_control = []
     target = None
     mean_distances = None
+    std_distances = None
 
     pickle_file = os.path.join(runs_dir, 'complete-simulation.pkl')
     runs = pd.read_pickle(pickle_file)
@@ -211,8 +213,9 @@ def get_pos_sensing_control(runs_dir, net_input, distance_from_goal=None):
                 el2.extend([np.nan] * (length4 - len(el2)))
         distance_from_goal = np.array(np.abs(distance_from_goal))
         mean_distances = np.mean(distance_from_goal, axis=2)
+        std_distances = np.std(distance_from_goal, axis=2)
 
-    return time_steps, x_positions, myt2_sensing, myt2_control, target, mean_distances
+    return time_steps, x_positions, myt2_sensing, myt2_control, target, mean_distances, std_distances
 
 
 def extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps, x_positions):

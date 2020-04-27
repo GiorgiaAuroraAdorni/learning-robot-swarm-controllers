@@ -55,15 +55,81 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename, net_input):
     :param net_input
     """
     distance_from_goal = []
-    time_steps, _, _, _, _, distance_from_goal = get_pos_sensing_control(runs_dir, net_input, distance_from_goal)
+
+    time_steps, _, _, _, _, mean_distance_from_goal, std_distance_from_goal = get_pos_sensing_control(runs_dir,
+                                                                                                      net_input,
+                                                                                                      distance_from_goal)
 
     plt.figure()
     plt.xlabel('timestep', fontsize=11)
-    plt.ylabel('mean distance from goal', fontsize=11)
+    plt.ylabel('distance from goal', fontsize=11)
     plt.ylim(0, 4)
 
-    plt.plot(time_steps, np.nanmean(distance_from_goal, axis=0))
+    mean_distances = np.nanmean(mean_distance_from_goal, axis=0)
+    std_distances = np.nanstd(std_distance_from_goal, axis=0)
+    plt.plot(time_steps, mean_distances, label='mean')
+    plt.fill_between(time_steps, mean_distances - std_distances, mean_distances + std_distances, alpha=0.2,
+                     label='+/- 1 std')
 
+    plt.legend()
+
+    plt.title(title, weight='bold', fontsize=12)
+    save_visualisation(filename, img_dir)
+
+
+def plot_compared_distance_from_goal(runs_dir_omniscient, runs_dir_manual, runs_dir_learned, img_dir, title, filename, net_input):
+    """
+
+    :param runs_dir_omniscient:
+    :param runs_dir_manual:
+    :param runs_dir_learned:
+    :param img_dir:
+    :param title:
+    :param filename:
+    :param net_input:
+    :return:
+    """
+
+    dist_from_goal_o = []
+    dist_from_goal_m = []
+    dist_from_goal_l = []
+
+    time_steps_o, _, _, _, _, mean_dist_from_goal_o, std_dist_from_goal_o = get_pos_sensing_control(runs_dir_omniscient,
+                                                                                                    net_input,
+                                                                                                    dist_from_goal_o)
+
+    time_steps_m, _, _, _, _, mean_dist_from_goal_m, std_dist_from_goal_m = get_pos_sensing_control(runs_dir_manual,
+                                                                                                    net_input,
+                                                                                                    dist_from_goal_m)
+
+    time_steps_l, _, _, _, _, mean_dist_from_goal_l, std_dist_from_goal_l = get_pos_sensing_control(runs_dir_learned,
+                                                                                                    net_input,
+                                                                                                    dist_from_goal_l)
+
+    plt.figure()
+    plt.xlabel('timestep', fontsize=11)
+    plt.ylabel('distance from goal', fontsize=11)
+    plt.ylim(0, 4)
+
+    mean_dist_o = np.nanmean(mean_dist_from_goal_o, axis=0)
+    std_dist_o = np.nanstd(std_dist_from_goal_o, axis=0)
+    plt.plot(time_steps_o, mean_dist_o, label='omniscient mean')
+    plt.fill_between(time_steps_o, mean_dist_o - std_dist_o, mean_dist_o + std_dist_o, alpha=0.2,
+                     label='omniscient +/- 1 std')
+
+    mean_dist_m = np.nanmean(mean_dist_from_goal_m, axis=0)
+    std_dist_m = np.nanstd(std_dist_from_goal_m, axis=0)
+    plt.plot(time_steps_m, mean_dist_m, label='manual mean')
+    plt.fill_between(time_steps_m, mean_dist_m - std_dist_m, mean_dist_m + std_dist_m, alpha=0.2,
+                     label='manual +/- 1 std')
+
+    mean_dist_l = np.nanmean(mean_dist_from_goal_l, axis=0)
+    std_dist_l = np.nanstd(std_dist_from_goal_l, axis=0)
+    plt.plot(time_steps_l, mean_dist_l, label='learned mean')
+    plt.fill_between(time_steps_l, mean_dist_l - std_dist_l, mean_dist_l + std_dist_l, alpha=0.2,
+                     label='learned +/- 1 std')
+
+    plt.legend()
     plt.title(title, weight='bold', fontsize=12)
     save_visualisation(filename, img_dir)
 
@@ -90,8 +156,6 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input)
 
     x_positions = np.array(x_positions[0])
-    if net_input == 'all_sensors':
-        print()
     myt2_sensing = np.array(myt2_sensing[0])
     myt2_control = np.array(myt2_control[0])
 
@@ -197,7 +261,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input, seabor
     :param title
     :param seaborn
     """
-    time_steps, x_positions, myt2_sensing, myt2_control, target, _ = get_pos_sensing_control(runs_dir, net_input)
+    time_steps, x_positions, myt2_sensing, myt2_control, target, _, _ = get_pos_sensing_control(runs_dir, net_input)
 
     mean_x_positions = np.nanmean(x_positions, axis=0)
     mean_myt2_control = np.nanmean(myt2_control, axis=0)
