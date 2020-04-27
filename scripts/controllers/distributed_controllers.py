@@ -3,7 +3,7 @@ from math import sin, cos
 import numpy as np
 
 from pid import PID
-from utils import get_input_sensing
+from utils import get_input_sensing, signed_distance
 
 
 class ManualController:
@@ -26,12 +26,7 @@ class ManualController:
         Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
         :return back, front: response values of the rear and front sensors
         """
-        if self.net_input == 'prox_values':
-            sensing = state.prox_values
-        elif self.net_input == 'prox_comm':
-            sensing = get_input_sensing(self.net_input, state, normalise=False)
-        else:
-            raise ValueError("Invalid value for net_input")
+        sensing = get_input_sensing(self.net_input, state, normalise=False)
 
         front = sensing[2]
         back = np.mean(np.array([sensing[5], sensing[6]]))
@@ -74,6 +69,7 @@ class ManualController:
         to the mean of the response values of the rear sensors.
         The final difference is computed ad follow: out = front - correction - back
         The speed are clipped to [min_out=-16.6, max_out=16.6].
+        :param state:
         :param dt: control step duration
 
         """
@@ -91,21 +87,12 @@ class OmniscientController:
     actual pose to the target one.
     """
 
-    def signed_distance(self, state):
-        """
-        :return: Signed distance between current and the goal position, along the current theta of the robot
-        """
-        a = state.position[0] * cos(state.angle) + state.position[1] * sin(state.angle)
-        b = state.goal_position[0] * cos(state.angle) + state.goal_position[1] * sin(state.angle)
-
-        return b - a
-
     def linear_vel(self, state, constant=4):
         """
         :param constant
         :return: clipped linear velocity
         """
-        velocity = constant * self.signed_distance(state)
+        velocity = constant * signed_distance(state)
         return min(max(-16.6, velocity), 16.6)
 
     def move_to_goal(self, state):
@@ -140,6 +127,7 @@ class LearnedController:
         self.net = net
         if self.net is None:
             raise ValueError("Value for net not provided")
+
         self.net_controller = net.controller()
         self.net_input = net_input
 
@@ -156,12 +144,7 @@ class LearnedController:
         each at the same value in order to moves the robot straight ahead.
         """
 
-        if self.net_input == 'prox_values':
-            sensing = np.divide(np.array(state.prox_values), 1000).tolist()
-        elif self.net_input == 'prox_comm':
-            sensing = get_input_sensing(self.net_input, state)
-        else:
-            raise ValueError("Invalid value for net_input")
+        sensing = get_input_sensing(self.net_input, state)
 
         speed = float(self.net_controller(sensing)[0])
 

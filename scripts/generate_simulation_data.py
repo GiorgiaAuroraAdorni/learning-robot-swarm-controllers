@@ -73,6 +73,9 @@ class GenerateSimulationData:
         elif net_input == 'prox_comm':
             maximum_gap = 50
             avg_gap = maximum_gap / 2
+        elif net_input == 'all_sensors':
+            maximum_gap = 14
+            avg_gap = 12
         else:
             raise ValueError("Invalid value for net_input")
 
@@ -275,6 +278,7 @@ class GenerateSimulationData:
         :param controller:
         :param model_dir:
         :param myt_quantity:
+        :param args:
         :param model:
         """
         if controller == cls.MANUAL_CONTROLLER:
@@ -314,6 +318,7 @@ class GenerateSimulationData:
         :param runs_dir: directory containing the simulation
         :param runs_img: directory containing the simulation images
         :param dataset
+        :param net_input
         """
         input_ = []
         output_ = []

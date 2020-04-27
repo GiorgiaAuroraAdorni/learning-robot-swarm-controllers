@@ -254,13 +254,14 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
     prediction = torch.flatten(prediction).tolist()
     my_histogram(prediction, 'prediction', model_img, title, file_name)
 
-    # Plot sensing histogram
-    title = 'Sensing Validation Set%s' % model
-    file_name = 'histogram-sensing-validation-%s' % model
+    if not net_input == 'all_sensors':
+        # Plot sensing histogram
+        title = 'Sensing Validation Set%s' % model
+        file_name = 'histogram-sensing-validation-%s' % model
 
-    x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
-    label = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
-    my_histogram(x, 'sensing (%s)' % net_input, model_img, title, file_name, label)
+        x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
+        label = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
+        my_histogram(x, 'sensing (%s)' % net_input, model_img, title, file_name, label)
 
     # Evaluate prediction of the learned controller to the omniscient groundtruth
     # Plot R^2 of the regressor between prediction and ground truth on the validation set
@@ -320,8 +321,12 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
         elif net_input == 'prox_values':
             prox_values = sample
             prox_comm = None
+        elif net_input == 'all_sensors':
+            prox_values = sample[:7]
+            prox_comm = {'sender': {'intensities': sample[7:]}}
         else:
-            raise AttributeError('Input not found')
+            raise AttributeError("Invalid value for net_input")
+
         state_dict = {'initial_position': (0, 0), 'goal_position': (10, 0), 'prox_values': prox_values,
                       'prox_comm': prox_comm}
 
@@ -494,18 +499,19 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
         # Evaluate prediction of the distributed controller with the omniscient groundtruth
         evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
 
-        # Evaluate the learned controller by passing a specific input sensing configuration
-        x, s = generate_sensing()
-        sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
-        index = 2
+        if not net_input == 'all_sensors':
+            # Evaluate the learned controller by passing a specific input sensing configuration
+            x, s = generate_sensing()
+            sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
+            index = 2
 
-        evaluate_net(model_img, model, d_net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
-                     'center proximity sensor')
+            evaluate_net(model_img, model, d_net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
+                         'center proximity sensor')
 
-        index = -1
-        sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
-        evaluate_net(model_img, model, d_net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
-                     'rear proximity sensors')
+            index = -1
+            sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
+            evaluate_net(model_img, model, d_net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
+                         'rear proximity sensors')
 
         # Evaluate the learned controller by passing a specific initial position configuration
         test_controller_given_init_positions(model_img, d_net, model, net_input)

@@ -41,7 +41,7 @@ def Parse():
                         help='name of the model (default: net1)')
     parser.add_argument('--generate-split', action="store_true",
                         help='generate the indices for the split of the dataset (default: False)')
-    parser.add_argument('--net-input', default='prox_values', choices=['prox_values', 'prox_comm'],
+    parser.add_argument('--net-input', default='prox_values', choices=['prox_values', 'prox_comm', 'all_sensors'],
                         help='choose the input of the net between prox_values and prox_comm_events (default: '
                              'prox_values)')
     parser.add_argument('--plots-net', action="store_true",
@@ -57,9 +57,11 @@ if __name__ == '__main__':
     args = Parse()
 
     if args.net_input == 'prox_values':
-        runs_dir = os.path.join(args.dataset_folder, 'gap-8/', args.net_input)
+        runs_dir = os.path.join(args.dataset_folder, args.net_input, 'gap-8')
     elif args.net_input == 'prox_comm':
-        runs_dir = os.path.join(args.dataset_folder, 'gap-25/', args.net_input)
+        runs_dir = os.path.join(args.dataset_folder, args.net_input, 'gap-25')
+    elif args.net_input == 'all_sensors':
+        runs_dir = os.path.join(args.dataset_folder, args.net_input, 'gap-13')
     else:
         raise ValueError("Invalid value for net_input")
 
@@ -82,24 +84,25 @@ if __name__ == '__main__':
 
         if args.plots_dataset:
             print('\nGenerating plots for %s…' % omniscient_controller)
-            visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 0,
-                                 'Distribution simulation %d - %s' % (0, omniscient_controller),
-                                 net_input=args.net_input)
-            visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 1,
-                                 'Distribution simulation %d - %s' % (1, omniscient_controller),
-                                 net_input=args.net_input)
-            visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 2,
-                                 'Distribution simulation %d - %s' % (2, omniscient_controller),
-                                 net_input=args.net_input)
-            visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 3,
-                                 'Distribution simulation %d - %s' % (3, omniscient_controller),
-                                 net_input=args.net_input)
-            visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 4,
-                                 'Distribution simulation %d - %s' % (4, omniscient_controller),
-                                 net_input=args.net_input)
-            visualise_simulations_comparison(runs_dir_omniscient, img_dir_omniscient,
-                                             'Distribution of all simulations - %s' % omniscient_controller,
-                                             net_input=args.net_input)
+            if not args.net_input == 'all_sensors':
+                visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 0,
+                                     'Distribution simulation %d - %s' % (0, omniscient_controller),
+                                     net_input=args.net_input)
+                visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 1,
+                                     'Distribution simulation %d - %s' % (1, omniscient_controller),
+                                     net_input=args.net_input)
+                visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 2,
+                                     'Distribution simulation %d - %s' % (2, omniscient_controller),
+                                     net_input=args.net_input)
+                visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 3,
+                                     'Distribution simulation %d - %s' % (3, omniscient_controller),
+                                     net_input=args.net_input)
+                visualise_simulation(runs_dir_omniscient, img_dir_omniscient, 4,
+                                     'Distribution simulation %d - %s' % (4, omniscient_controller),
+                                     net_input=args.net_input)
+                visualise_simulations_comparison(runs_dir_omniscient, img_dir_omniscient,
+                                                 'Distribution of all simulations - %s' % omniscient_controller,
+                                                 net_input=args.net_input)
 
             plot_distance_from_goal(runs_dir_omniscient, img_dir_omniscient, 'Robot distance from goal - %s' %
                                     omniscient_controller, 'distances-from-goal-%s' % omniscient_controller,
@@ -129,19 +132,20 @@ if __name__ == '__main__':
 
         if args.plots_dataset:
             print('\nGenerating plots for %s…' % manual_controller)
-            visualise_simulation(runs_dir_manual, img_dir_manual, 0,
-                                 'Distribution simulation %d - %s' % (0, manual_controller), net_input=args.net_input)
-            visualise_simulation(runs_dir_manual, img_dir_manual, 1,
-                                 'Distribution simulation %d - %s' % (1, manual_controller), net_input=args.net_input)
-            visualise_simulation(runs_dir_manual, img_dir_manual, 2,
-                                 'Distribution simulation %d - %s' % (2, manual_controller), net_input=args.net_input)
-            visualise_simulation(runs_dir_manual, img_dir_manual, 3,
-                                 'Distribution simulation %d - %s' % (3, manual_controller), net_input=args.net_input)
-            visualise_simulation(runs_dir_manual, img_dir_manual, 4,
-                                 'Distribution simulation %d - %s' % (4, manual_controller), net_input=args.net_input)
-            visualise_simulations_comparison(runs_dir_manual, img_dir_manual,
-                                             'Distribution of all simulations - %s' % manual_controller,
-                                             net_input=args.net_input)
+            if not args.net_input == 'all_sensors':
+                visualise_simulation(runs_dir_manual, img_dir_manual, 0,
+                                     'Distribution simulation %d - %s' % (0, manual_controller), net_input=args.net_input)
+                visualise_simulation(runs_dir_manual, img_dir_manual, 1,
+                                     'Distribution simulation %d - %s' % (1, manual_controller), net_input=args.net_input)
+                visualise_simulation(runs_dir_manual, img_dir_manual, 2,
+                                     'Distribution simulation %d - %s' % (2, manual_controller), net_input=args.net_input)
+                visualise_simulation(runs_dir_manual, img_dir_manual, 3,
+                                     'Distribution simulation %d - %s' % (3, manual_controller), net_input=args.net_input)
+                visualise_simulation(runs_dir_manual, img_dir_manual, 4,
+                                     'Distribution simulation %d - %s' % (4, manual_controller), net_input=args.net_input)
+                visualise_simulations_comparison(runs_dir_manual, img_dir_manual,
+                                                 'Distribution of all simulations - %s' % manual_controller,
+                                                 net_input=args.net_input)
 
             plot_distance_from_goal(runs_dir_manual, img_dir_manual, 'Robot distance from goal - %s' %
                                     manual_controller, 'distances-from-goal-%s' % manual_controller,
@@ -165,12 +169,14 @@ if __name__ == '__main__':
     if args.controller == 'all' or args.controller == 'learned':
         if args.train_net and args.plots_net:
             print('\nTraining %s and generating plots…' % args.model)
-            plot_sensing_timestep(runs_dir_omniscient, model_img, net_input=args.net_input, model=args.model)
+            if not  args.net_input == 'all_sensors':
+                plot_sensing_timestep(runs_dir_omniscient, model_img, net_input=args.net_input, model=args.model)
         elif args.train_net and not args.plots_net:
             print('\nTraining %s…' % args.model)
         elif not args.train_net and args.plots_net:
             print('\nGenerating plots for %s…' % args.model)
-            plot_sensing_timestep(runs_dir_omniscient, model_img, net_input=args.net_input, model=args.model)
+            if not args.net_input == 'all_sensors':
+                plot_sensing_timestep(runs_dir_omniscient, model_img, net_input=args.net_input, model=args.model)
 
         run_distributed(file, runs_dir_omniscient, model_dir, model_img, args.model, dataset_omniscient, dataset_manual,
                         train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
@@ -193,19 +199,20 @@ if __name__ == '__main__':
 
         if args.plots_dataset:
             print('\nGenerating plots for %s…' % learned_controller)
-            visualise_simulation(runs_dir_learned, img_dir_learned, 0,
-                                 'Distribution simulation %d - %s' % (0, learned_controller), net_input=args.net_input)
-            visualise_simulation(runs_dir_learned, img_dir_learned, 1,
-                                 'Distribution simulation %d - %s' % (1, learned_controller), net_input=args.net_input)
-            visualise_simulation(runs_dir_learned, img_dir_learned, 2,
-                                 'Distribution simulation %d - %s' % (2, learned_controller), net_input=args.net_input)
-            visualise_simulation(runs_dir_learned, img_dir_learned, 3,
-                                 'Distribution simulation %d - %s' % (3, learned_controller), net_input=args.net_input)
-            visualise_simulation(runs_dir_learned, img_dir_learned, 4,
-                                 'Distribution simulation %d - %s' % (4, learned_controller), net_input=args.net_input)
-            visualise_simulations_comparison(runs_dir_learned, img_dir_learned,
-                                             'Distribution of all simulations - %s' % learned_controller,
-                                             net_input=args.net_input)
+            if not args.net_input == 'all_sensors':
+                visualise_simulation(runs_dir_learned, img_dir_learned, 0,
+                                     'Distribution simulation %d - %s' % (0, learned_controller), net_input=args.net_input)
+                visualise_simulation(runs_dir_learned, img_dir_learned, 1,
+                                     'Distribution simulation %d - %s' % (1, learned_controller), net_input=args.net_input)
+                visualise_simulation(runs_dir_learned, img_dir_learned, 2,
+                                     'Distribution simulation %d - %s' % (2, learned_controller), net_input=args.net_input)
+                visualise_simulation(runs_dir_learned, img_dir_learned, 3,
+                                     'Distribution simulation %d - %s' % (3, learned_controller), net_input=args.net_input)
+                visualise_simulation(runs_dir_learned, img_dir_learned, 4,
+                                     'Distribution simulation %d - %s' % (4, learned_controller), net_input=args.net_input)
+                visualise_simulations_comparison(runs_dir_learned, img_dir_learned,
+                                                 'Distribution of all simulations - %s' % learned_controller,
+                                                 net_input=args.net_input)
 
             plot_distance_from_goal(runs_dir_learned, img_dir_learned, 'Robot distance from goal - %s' %
                                     learned_controller, 'distances-from-goal-%s' % learned_controller,

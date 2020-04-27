@@ -16,6 +16,16 @@ def check_dir(directory):
     os.makedirs(directory, exist_ok=True)
 
 
+def signed_distance(state):
+    """
+    :return: Signed distance between current and the goal position, along the current theta of the robot
+    """
+    a = state.position[0] * np.cos(state.angle) + state.position[1] * np.sin(state.angle)
+    b = state.goal_position[0] * np.cos(state.angle) + state.goal_position[1] * np.sin(state.angle)
+
+    return b - a
+
+
 def get_prox_comm(myt):
     """
     Create a dictionary containing all the senders as key and the corresponding intensities as value.
@@ -53,6 +63,7 @@ def get_input_sensing(in_label, myt, normalise=True):
 
     :param in_label:
     :param myt:
+    :param normalise
     :return:
     """
     if isinstance(myt, dict):
@@ -66,20 +77,31 @@ def get_input_sensing(in_label, myt, normalise=True):
         state_dict = {'initial_position': myt.initial_position, 'goal_position': myt.goal_position,
                       'prox_values': myt.prox_values, 'prox_comm': prox_comm}
         myt = distributed.ThymioState(state_dict)
-    sensing = getattr(myt, in_label).copy()
 
-    if in_label == 'prox_comm':
-        if len(sensing) == 0:
-            sensing = [0, 0, 0, 0, 0, 0, 0]
+    prox_values = getattr(myt, 'prox_values').copy()
+    prox_comm = getattr(myt, 'prox_comm').copy()
+
+    if len(prox_comm) == 0:
+        prox_comm = [0, 0, 0, 0, 0, 0, 0]
+    else:
+        _, values = get_key_value_of_nested_dict(prox_comm)
+        if len(prox_comm) == 1:
+            prox_comm = values[0]
         else:
-            _, values = get_key_value_of_nested_dict(sensing)
-            if len(sensing) == 1:
-                sensing = values[0]
-            else:
-                sensing = np.max(np.array(values), axis=0).tolist()
+            prox_comm = np.max(np.array(values), axis=0).tolist()
 
     if normalise:
-        sensing = np.divide(np.array(sensing), 1000).tolist()
+        prox_values = np.divide(np.array(prox_values), 1000).tolist()
+        prox_comm = np.divide(np.array(prox_comm), 1000).tolist()
+
+    if in_label == 'prox_values':
+        sensing = prox_values
+    elif in_label == 'prox_comm':
+        sensing = prox_comm
+    elif in_label == 'all_sensors':
+        sensing = prox_values + prox_comm
+    else:
+        raise ValueError("Invalid value for net_input")
 
     return sensing
 
@@ -93,6 +115,7 @@ def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, n
     :param run:
     :param time_steps:
     :param x_positions:
+    :param net_input
     :param distance_from_goal
     :param run_time_steps:
     """

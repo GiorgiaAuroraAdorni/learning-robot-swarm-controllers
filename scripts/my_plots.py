@@ -51,7 +51,8 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename, net_input):
     :param runs_dir:
     :param img_dir:
     :param title
-    :param seaborn
+    :param filename
+    :param net_input
     """
     distance_from_goal = []
     time_steps, _, _, _, _, distance_from_goal = get_pos_sensing_control(runs_dir, net_input, distance_from_goal)
@@ -74,6 +75,7 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     :param img_dir:
     :param simulation:
     :param title:
+    :param: net_input:
     """
     x_positions = []
     myt2_sensing = []
@@ -88,6 +90,8 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input)
 
     x_positions = np.array(x_positions[0])
+    if net_input == 'all_sensors':
+        print()
     myt2_sensing = np.array(myt2_sensing[0])
     myt2_control = np.array(myt2_control[0])
 
