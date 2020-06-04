@@ -16,8 +16,8 @@ class DistributedNet(torch.nn.Module):
 
     def __init__(self, input_size):
         super(DistributedNet, self).__init__()
-        self.l1 = torch.nn.Linear(input_size, 10)
-        self.l2 = torch.nn.Linear(10, 1)
+        self.l1 = torch.nn.Linear(input_size, 64)
+        self.l2 = torch.nn.Linear(64, 1)
 
     def forward(self, xs):
         """

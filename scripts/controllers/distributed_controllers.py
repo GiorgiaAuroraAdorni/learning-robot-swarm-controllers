@@ -89,7 +89,7 @@ class OmniscientController:
     actual pose to the target one.
     """
 
-    def linear_vel(self, state, constant=4):
+    def linear_vel(self, state, constant=10):
         """
         :param state
         :param constant

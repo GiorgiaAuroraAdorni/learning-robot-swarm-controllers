@@ -17,9 +17,9 @@ from utils import extract_input_output, get_prox_comm
 
 
 class GenerateSimulationData:
-    MANUAL_CONTROLLER = "manual-controller"
-    OMNISCIENT_CONTROLLER = "omniscient-controller"
-    LEARNED_CONTROLLER = r"^learned-controller-net\d"
+    MANUAL_CONTROLLER = "manual"
+    OMNISCIENT_CONTROLLER = "omniscient"
+    LEARNED_CONTROLLER = r"^learned"
 
     @classmethod
     def setup(cls, controller_factory, myt_quantity, aseba: bool = False):
@@ -114,7 +114,7 @@ class GenerateSimulationData:
     @classmethod
     def generate_dict(cls, myt):
         """
-        Save data in a dictionary
+        Save data in a dictionary FIXME rename in state_dict
         :param myt
         :return dictionary:
             'name': myt.name,
@@ -266,12 +266,12 @@ class GenerateSimulationData:
             complete_runs.append(complete_data)
 
     @classmethod
-    def generate_simulation(cls, runs_dir, simulations, controller, myt_quantity, args, model_dir=None,
+    def generate_simulation(cls, run_dir, n_simulations, controller, myt_quantity, args, model_dir=None,
                             model=None):
         """
 
-        :param runs_dir:
-        :param simulations:
+        :param run_dir:
+        :param n_simulations:
         :param controller:
         :param model_dir:
         :param myt_quantity:
@@ -297,14 +297,14 @@ class GenerateSimulationData:
 
         runs = []
         complete_runs = []
-        for _ in tqdm(range(simulations)):
+        for _ in tqdm(range(n_simulations)):
             try:
                 cls.init_positions(myts, args.net_input, args.avg_gap)
                 cls.run(myts, runs, complete_runs, world, args.gui)
             except Exception as e:
                 print('ERROR: ', e)
 
-        cls.save_simulation(complete_runs, runs, runs_dir)
+        cls.save_simulation(complete_runs, runs, run_dir)
 
     @classmethod
     def check_dataset_conformity(cls, runs_dir, runs_img, dataset, net_input):

@@ -478,7 +478,7 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
         d_training_loss, d_validation_loss, d_testing_loss = [], [], []
 
         training_loss, validation_loss, testing_loss = train_net(file=file_minibatch,
-                                                                 epochs=20,
+                                                                 epochs=50,
                                                                  train_dataset=d_train_set,
                                                                  valid_dataset=d_valid_set,
                                                                  test_dataset=d_test_set,
