@@ -451,7 +451,7 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     """
     # Uncomment the following line to generate a new dataset split
     if generate_split:
-        utils.dataset_split(file, runs_dir)
+        utils.dataset_split(file)
 
     # Load the indices
     dataset = np.load(file)

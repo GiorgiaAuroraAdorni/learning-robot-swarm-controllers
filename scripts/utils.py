@@ -83,18 +83,16 @@ def get_prox_comm(myt):
     return prox_comm
 
 
-def dataset_split(file_name, runs_dir, num_run=1000):
+def dataset_split(file_name, num_run=1000):
     """
 
     :param file_name:
-    :param runs_dir
     :param num_run:
     """
     x = np.arange(num_run)
     np.random.shuffle(x)
 
-    path = os.path.join(runs_dir, file_name)
-    np.save(path, x)
+    np.save(file_name, x)
 
 
 def get_input_sensing(in_label, myt, normalise=True):

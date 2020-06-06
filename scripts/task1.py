@@ -118,17 +118,15 @@ if __name__ == '__main__':
                 print('\nChecking conformity of %s dataset…' % c)
                 sim.check_dataset_conformity(run_dir, run_img_dir, c, net_input=args.net_input)
 
-            if not args.net_input == 'all_sensors':
-                if args.train_net:
-                    from distributed import run_distributed
-                    print('Generating splits…')
-                    file = os.path.join(run_dir, 'dataset_split.npy')
+            if args.train_net:
+                from distributed import run_distributed
+                file = os.path.join(run_dir, 'dataset_split.npy')
 
-                    print('\nTraining %s…' % args.model)
-                    # FIXME
-                    run_distributed(file, runs_dir_omniscient, model_dir, model_img_dir, args.model, 'omniscient', 'manual',
-                                    train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
-                                    net_input=args.net_input, avg_gap=args.avg_gap)
+                print('\nTraining %s…' % args.model)
+                # FIXME
+                run_distributed(file, runs_dir_omniscient, model_dir, model_img_dir, args.model, 'omniscient', 'manual',
+                                train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
+                                net_input=args.net_input, avg_gap=args.avg_gap)
 
                 if args.plot_net:
                     from my_plots import plot_sensing_timestep
