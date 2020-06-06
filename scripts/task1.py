@@ -12,48 +12,48 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Simulation of robot swarms for learning communication-aware coordination - Task 1')
 
     parser.add_argument('--gui', action="store_true",
-                        help='run simulation using the gui (default: False)')
+                        help='Run simulation using the gui (default: False)')
     parser.add_argument('--myt-quantity', type=int, default=5, metavar='N',
-                        help='number of thymios for the simulation (default: 5)')
+                        help='Number of thymios for the simulation (default: 5)')
     parser.add_argument('--avg-gap', type=int, default=8, metavar='N',
-                        help='average gap distance between thymios (default: 8)')
+                        help='Average gap distance between thymios (default: 8)')
 
     parser.add_argument('--n-simulations', type=int, default=1000, metavar='N',
-                        help='number of runs for each simulation (default: 1000)')
+                        help='Number of runs for each simulation (default: 1000)')
     parser.add_argument('--generate-dataset', action="store_true",
-                        help='generate the dataset containing the simulations (default: False)')
+                        help='Generate the dataset containing the simulations (default: False)')
     parser.add_argument('--generate-split', action="store_true",
-                        help='generate the indices for the split of the dataset (default: False)')
+                        help='Generate the indices for the split of the dataset (default: False)')
 
     parser.add_argument('--plots-dataset', action="store_true",
-                        help='generate the plots of regarding the dataset (default: False)')
+                        help='Generate the plots of regarding the dataset (default: False)')
     parser.add_argument('--check-dataset', action="store_true",
-                        help='generate the plots that check the dataset conformity (default: False)')
+                        help='Generate the plots that check the dataset conformity (default: False)')
 
-    parser.add_argument('--controller', default='all', choices=['all', 'learned', 'manual', 'omniscient'],
-                        help='choose the controller for the current execution between all, learned, manual and '
-                             'omniscient (default: all)')
+    parser.add_argument('--controller', default='all', type=str,
+                        help='Choose the controller for the current execution. Usually between all, learned, '
+                             'manual and omniscient (default: all)')
 
     parser.add_argument('--dataset-folder', default='datasets', type=str,
-                        help='name of the directory containing the datasets (default: datasets)')
+                        help='Name of the directory containing the datasets (default: datasets)')
     parser.add_argument('--dataset', default='all', type=str,
-                        help='choose the datasets to use in the current execution (default: all)')
+                        help='Choose the datasets to use in the current execution (default: all)')
 
     parser.add_argument('--models-folder', default='models', type=str,
-                        help='name of the directory containing the models (default: models)')
+                        help='Name of the directory containing the models (default: models)')
     parser.add_argument('--model-type', default='distributed', type=str,
-                        help='name of the sub-directory containing the models (default: distributed)')
+                        help='Name of the sub-directory containing the models (default: distributed)')
     parser.add_argument('--model', default='net1', type=str,
-                        help='name of the model (default: net1)')
+                        help='Name of the model (default: net1)')
 
     parser.add_argument('--train-net', action="store_true",
-                        help='train the model  (default: False)')
+                        help='Train the model  (default: False)')
 
     parser.add_argument('--net-input', default='prox_values', choices=['prox_values', 'prox_comm', 'all_sensors'],
-                        help='choose the input of the net between prox_values and prox_comm_events (default: '
+                        help='Choose the input of the net between prox_values and prox_comm_events (default: '
                              'prox_values)')
     parser.add_argument('--plots-net', action="store_true",
-                        help='generate the plots of regarding the model (default: False)')
+                        help='Generate the plots of regarding the model (default: False)')
 
     args = parser.parse_args()
 
@@ -93,15 +93,13 @@ if __name__ == '__main__':
 
                 if c == 'learned':
                     sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                            myt_quantity=myt_quantity, args=args.gui, model_dir=model_dir, model=args.model)
+                                            myt_quantity=myt_quantity, args=args, model_dir=model_dir, model=args.model)
                 else:
                     sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                            myt_quantity=myt_quantity, args=args.gui)
+                                            myt_quantity=myt_quantity, args=args)
 
             if args.plots_dataset:
                 from my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal
-
-
                 print('Generating plots for %s %s controller…' % (d, c))
 
                 if not args.net_input == 'all_sensors':
@@ -123,7 +121,6 @@ if __name__ == '__main__':
                 file = os.path.join(run_dir, 'dataset_split.npy')
 
                 print('\nTraining %s…' % args.model)
-                # FIXME
                 run_distributed(file, runs_dir_omniscient, model_dir, model_img_dir, args.model, 'omniscient', 'manual',
                                 train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
                                 net_input=args.net_input, avg_gap=args.avg_gap)

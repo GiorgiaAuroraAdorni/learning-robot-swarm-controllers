@@ -143,7 +143,7 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     :param img_dir:
     :param simulation:
     :param title:
-    :param: net_input:
+    :param net_input:
     """
     x_positions = []
     myt2_sensing = []
