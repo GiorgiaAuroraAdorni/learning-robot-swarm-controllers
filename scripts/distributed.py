@@ -12,7 +12,7 @@ from controllers import distributed_controllers
 from generate_simulation_data import GenerateSimulationData as g
 from my_plots import plot_regressor, plot_response, my_histogram, plot_losses
 from networks.distributed_network import DistributedNet
-from utils import check_dir, extract_input_output, dataset_split
+import utils
 
 
 class ThymioState:
@@ -59,7 +59,7 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
             input_ = test_sample
             output_ = test_target
 
-        extract_input_output(run, input_, output_, net_input, 'motor_left_target')
+        utils.extract_input_output(run, input_, output_, net_input, 'motor_left_target')
 
     return train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input_, output_
 
@@ -285,7 +285,7 @@ def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction):
     :param prediction:
     """
     model_img = '%s/images/' % model_dir
-    check_dir(model_img)
+    utils.check_dir(model_img)
 
     # Plot R^2 of the regressor between prediction and ground truth
     title = 'Regression %s vs %s' % (ds_eval, ds)
@@ -451,7 +451,7 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     """
     # Uncomment the following line to generate a new dataset split
     if generate_split:
-        dataset_split(file)
+        utils.dataset_split(file, runs_dir)
 
     # Load the indices
     dataset = np.load(file)

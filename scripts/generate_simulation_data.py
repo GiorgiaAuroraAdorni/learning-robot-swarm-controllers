@@ -13,7 +13,7 @@ from tqdm import tqdm
 from controllers import distributed_controllers
 from distributed_thymio import DistributedThymio2
 from my_plots import my_scatterplot
-from utils import extract_input_output, get_prox_comm
+import utils
 
 
 class GenerateSimulationData:
@@ -133,7 +133,7 @@ class GenerateSimulationData:
             'name': myt.name,
             'index': myt.index,
             'prox_values': myt.prox_values,
-            'prox_comm': get_prox_comm(myt),
+            'prox_comm': utils.get_prox_comm(myt),
             'initial_position': myt.initial_position,
             'position': myt.position,
             'angle': myt.angle,
@@ -154,7 +154,7 @@ class GenerateSimulationData:
         :return dictionary
         """
         myt.dictionary['prox_values'] = myt.prox_values
-        myt.dictionary['prox_comm'] = get_prox_comm(myt)
+        myt.dictionary['prox_comm'] = utils.get_prox_comm(myt)
         myt.dictionary['position'] = myt.position
         myt.dictionary['angle'] = myt.angle
         myt.dictionary['motor_left_target'] = myt.motor_left_target
@@ -324,7 +324,7 @@ class GenerateSimulationData:
         runs = pd.read_pickle(pickle_file)
 
         for run in runs:
-            extract_input_output(run, input_, output_, net_input, 'motor_left_target')
+            utils.extract_input_output(run, input_, output_, net_input, 'motor_left_target')
 
         #  Generate a scatter plot to check the conformity of the dataset
         title = 'Dataset %s' % dataset

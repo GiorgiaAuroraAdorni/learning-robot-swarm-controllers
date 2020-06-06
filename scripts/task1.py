@@ -41,6 +41,8 @@ def parse_args():
 
     parser.add_argument('--models-folder', default='models', type=str,
                         help='name of the directory containing the models (default: models)')
+    parser.add_argument('--model-type', default='distributed', type=str,
+                        help='name of the sub-directory containing the models (default: distributed)')
     parser.add_argument('--model', default='net1', type=str,
                         help='name of the model (default: net1)')
 
@@ -65,7 +67,7 @@ if __name__ == '__main__':
     if args.dataset == 'all':
         datasets = [f.path for f in os.scandir(args.dataset_folder) if f.is_dir()]
     else:
-        dataset = os.path.join(args.dataset_folder, args.dataset)
+        dataset = os.path.join(args.dataset_folder, args.net_input, args.dataset)
         datasets = [dataset]
 
     if args.controller == 'all':

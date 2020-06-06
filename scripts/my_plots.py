@@ -4,12 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.linear_model import LinearRegression
-
-from utils import extract_run_data, get_pos_sensing_control, extract_flatten_dataframe, extract_input
 
 sns.set(style="white")
-
+from sklearn.linear_model import LinearRegression
+import utils
 
 def make_space_above(axes, topmargin=1):
     """
@@ -56,9 +54,10 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename, net_input):
     """
     distance_from_goal = []
 
-    time_steps, _, _, _, _, mean_distance_from_goal, std_distance_from_goal = get_pos_sensing_control(runs_dir,
-                                                                                                      net_input,
-                                                                                                      distance_from_goal)
+    time_steps, _, _, _, _, \
+    mean_distance_from_goal, std_distance_from_goal = utils.get_pos_sensing_control(runs_dir,
+                                                                                    net_input,
+                                                                                    distance_from_goal)
 
     plt.figure()
     plt.xlabel('timestep', fontsize=11)
@@ -94,17 +93,20 @@ def plot_compared_distance_from_goal(runs_dir_omniscient, runs_dir_manual, runs_
     dist_from_goal_m = []
     dist_from_goal_l = []
 
-    time_steps_o, _, _, _, _, mean_dist_from_goal_o, std_dist_from_goal_o = get_pos_sensing_control(runs_dir_omniscient,
-                                                                                                    net_input,
-                                                                                                    dist_from_goal_o)
+    time_steps_o, _, _, _, _, \
+    mean_dist_from_goal_o, std_dist_from_goal_o = utils.get_pos_sensing_control(runs_dir_omniscient,
+                                                                                net_input,
+                                                                                dist_from_goal_o)
 
-    time_steps_m, _, _, _, _, mean_dist_from_goal_m, std_dist_from_goal_m = get_pos_sensing_control(runs_dir_manual,
-                                                                                                    net_input,
-                                                                                                    dist_from_goal_m)
+    time_steps_m, _, _, _, _, \
+    mean_dist_from_goal_m, std_dist_from_goal_m = utils.get_pos_sensing_control(runs_dir_manual,
+                                                                                net_input,
+                                                                                dist_from_goal_m)
 
-    time_steps_l, _, _, _, _, mean_dist_from_goal_l, std_dist_from_goal_l = get_pos_sensing_control(runs_dir_learned,
-                                                                                                    net_input,
-                                                                                                    dist_from_goal_l)
+    time_steps_l, _, _, _, _, \
+    mean_dist_from_goal_l, std_dist_from_goal_l = utils.get_pos_sensing_control(runs_dir_learned,
+                                                                                net_input,
+                                                                                dist_from_goal_l)
 
     plt.figure()
     plt.xlabel('timestep', fontsize=11)
@@ -153,7 +155,7 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     run = runs[simulation]
 
     time_steps = np.arange(len(run))
-    target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input)
+    target = utils.extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input)
 
     x_positions = np.array(x_positions[0])
     myt2_sensing = np.array(myt2_sensing[0])
@@ -215,8 +217,8 @@ def visualise_simulations_comparison_seaborn(img_dir, myt2_control, myt2_sensing
     """
 
     # Seaborn visualisation
-    df_x_positions, df_sensing, df_control = extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps,
-                                                                       x_positions)
+    df_x_positions, df_sensing, df_control = utils.extract_flatten_dataframe(myt2_control, myt2_sensing,
+                                                                             time_steps, x_positions)
 
     plt.figure()
     fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
@@ -261,7 +263,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input, seabor
     :param title
     :param seaborn
     """
-    time_steps, x_positions, myt2_sensing, myt2_control, target, _, _ = get_pos_sensing_control(runs_dir, net_input)
+    time_steps, x_positions, myt2_sensing, myt2_control, target, _, _ = utils.get_pos_sensing_control(runs_dir, net_input)
 
     mean_x_positions = np.nanmean(x_positions, axis=0)
     mean_myt2_control = np.nanmean(myt2_control, axis=0)
@@ -483,7 +485,7 @@ def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
 
     for run in runs:
         run_time_steps = np.arange(len(run)).tolist()
-        extract_input(run, sensing, net_input)
+        utils.extract_input(run, sensing, net_input)
 
         time_steps.append(run_time_steps)
 

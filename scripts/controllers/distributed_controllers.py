@@ -1,9 +1,7 @@
-from math import sin, cos
-
 import numpy as np
 
 from pid import PID
-from utils import get_input_sensing, signed_distance
+import utils
 
 
 class ManualController:
@@ -27,7 +25,7 @@ class ManualController:
         :param state
         :return back, front: response values of the rear and front sensors
         """
-        sensing = get_input_sensing(self.net_input, state, normalise=False)
+        sensing = utils.get_input_sensing(self.net_input, state, normalise=False)
 
         front = sensing[2]
         back = np.mean(np.array([sensing[5], sensing[6]]))
@@ -95,7 +93,7 @@ class OmniscientController:
         :param constant
         :return: clipped linear velocity
         """
-        velocity = constant * signed_distance(state)
+        velocity = constant * utils.signed_distance(state)
         return min(max(-16.6, velocity), 16.6)
 
     def move_to_goal(self, state):
@@ -152,7 +150,7 @@ class LearnedController:
         :param dt
         """
 
-        sensing = get_input_sensing(self.net_input, state)
+        sensing = utils.get_input_sensing(self.net_input, state)
 
         speed = float(self.net_controller(sensing)[0])
 

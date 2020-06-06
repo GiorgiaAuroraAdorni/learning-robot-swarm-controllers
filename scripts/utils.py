@@ -40,7 +40,7 @@ def directory_for_model(args):
     :param args:
     :return:
     """
-    model_dir = os.path.join(args.models_folder, args.model)
+    model_dir = os.path.join(args.models_folder, args.model_type, args.model)
 
     model_img_dir = os.path.join(model_dir, 'images')
     check_dir(model_img_dir)
@@ -83,16 +83,18 @@ def get_prox_comm(myt):
     return prox_comm
 
 
-def dataset_split(file_name, num_run=1000):
+def dataset_split(file_name, runs_dir, num_run=1000):
     """
 
     :param file_name:
+    :param runs_dir
     :param num_run:
     """
     x = np.arange(num_run)
     np.random.shuffle(x)
 
-    np.save(file_name, x)
+    path = os.path.join(runs_dir, file_name)
+    np.save(path, x)
 
 
 def get_input_sensing(in_label, myt, normalise=True):

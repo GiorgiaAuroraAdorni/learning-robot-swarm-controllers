@@ -280,3 +280,7 @@ dmypy.json
 .pyre/
 
 # End of https://www.gitignore.io/api/macos,python,pycharm,jetbrains
+*.png
+*.pdf
+*.json
+*.pkl
