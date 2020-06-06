@@ -112,11 +112,15 @@ class GenerateSimulationData:
             myt.goal_position = (goal_positions[i], 0)
 
     @classmethod
-    def generate_dict(cls, myt):
+    def generate_dict(cls, myt, n_sim, s):
         """
         Save data in a dictionary FIXME rename in state_dict
         :param myt
+        :param n_sim
+        :param s
         :return dictionary:
+            'run': n_sim,
+            'timestep': s,
             'name': myt.name,
             'index': myt.index,
             'prox_values': myt.prox_values,
@@ -130,6 +134,8 @@ class GenerateSimulationData:
             'motor_right_target': myt.motor_right_target
         """
         myt.dictionary = {
+            'run': n_sim,
+            'timestep': s,
             'name': myt.name,
             'index': myt.index,
             'prox_values': myt.prox_values,
@@ -147,12 +153,13 @@ class GenerateSimulationData:
         return dictionary
 
     @classmethod
-    def update_dict(cls, myt):
+    def update_dict(cls, myt, s):
         """
         Updated data in the dictionary instead of rewrite every field to optimise performances
         :param myt
         :return dictionary
         """
+        myt.dictionary['timestep'] = s,
         myt.dictionary['prox_values'] = myt.prox_values
         myt.dictionary['prox_comm'] = utils.get_prox_comm(myt)
         myt.dictionary['position'] = myt.position
@@ -192,15 +199,17 @@ class GenerateSimulationData:
             json.dump(complete_data, f, ensure_ascii=False, indent=4)
 
     @classmethod
-    def run(cls, myts, runs, complete_runs,
+    def run(cls, n_sim, myts, runs, complete_runs,
             world: pyenki.World, gui: bool = False, T: float = 2, dt: float = 0.1, tol: float = 0.1) -> None:
         """
         Run the simulation as fast as possible or using the real time GUI.
         Generate two different type of simulation data, one with all the thymios and the other without including the 2
         thymios at the ends, but only the ones that have to move.
         If all the robots have reached their target, stop the simulation.
-        :param myts
+        :param n_sim: index of the simulation
+        :param myts: number of thymios
         :param runs
+        :param complete_runs
         :param world
         :param gui
         :param T
@@ -232,9 +241,9 @@ class GenerateSimulationData:
                 if s > 0:
                     for i, myt in enumerate(myts):
                         if myt.dictionary is None:
-                            dictionary = cls.generate_dict(myt)
+                            dictionary = cls.generate_dict(myt, n_sim, s)
                         else:
-                            dictionary = cls.update_dict(myt)
+                            dictionary = cls.update_dict(myt, s)
 
                         # Do not include the 2 thymio at the ends, but only the ones that have to move.
                         if i != 0 and i != (myt_quantity - 1):
@@ -266,8 +275,7 @@ class GenerateSimulationData:
             complete_runs.append(complete_data)
 
     @classmethod
-    def generate_simulation(cls, run_dir, n_simulations, controller, myt_quantity, args, model_dir=None,
-                            model=None):
+    def generate_simulation(cls, run_dir, n_simulations, controller, myt_quantity, args, model_dir=None, model=None):
         """
 
         :param run_dir:
@@ -284,6 +292,7 @@ class GenerateSimulationData:
 
         elif controller == cls.OMNISCIENT_CONTROLLER:
             controller_factory = distributed_controllers.OmniscientController
+
         elif re.match(cls.LEARNED_CONTROLLER, controller):
             # controller_factory = lambda **kwargs: d_c.LearnedController(net=net, **kwargs)
             net = torch.load('%s/%s' % (model_dir, model))
@@ -297,10 +306,10 @@ class GenerateSimulationData:
 
         runs = []
         complete_runs = []
-        for _ in tqdm(range(n_simulations)):
+        for n_sim in tqdm(range(n_simulations)):
             try:
                 cls.init_positions(myts, args.net_input, args.avg_gap)
-                cls.run(myts, runs, complete_runs, world, args.gui)
+                cls.run(n_sim, myts, runs, complete_runs, world, args.gui)
             except Exception as e:
                 print('ERROR: ', e)
 
