@@ -346,25 +346,13 @@ class GenerateSimulationData:
         runs = utils.load_dataset(runs_dir, 'simulation.pkl')
         runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
-        inputs = ['prox_values', 'prox_comm', 'all_sensors']
-        inputs.remove(net_input)
-
-        runs_sub = runs_sub.drop(columns=inputs)
-
-        runs_sub = pd.concat([runs_sub.drop(net_input, axis=1),
-                              pd.DataFrame(runs_sub[net_input].to_list(),
-                                           columns=['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br'])
-        #                     .add_prefix('%s_' % net_input)
-                              ], axis=1)
+        x, y, _ = utils.extract_input_output(runs_sub, net_input)
 
         #  Generate a scatter plot to check the conformity of the dataset
         title = 'Dataset %s' % dataset
         file_name = 'dataset-scatterplot-%s' % dataset
 
-        runs_sub['x'] = runs_sub.apply(lambda row: row.fc - np.mean([row.bl, row.br]), axis=1)
-
         x_label = 'sensing (%s)' % net_input
         y_label = 'control'
 
-        my_scatterplot(np.divide(np.array(runs_sub.x), 1000).tolist(), runs_sub.motor_left_target, x_label, y_label,
-                       runs_img, title, file_name)
+        my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)

@@ -196,8 +196,6 @@ def get_input_sensing(in_label, myt, normalise=True):
     return sensing
 
 
-
-
 def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input, distance_from_goal=None,
                      run_time_steps=None):
     """
@@ -364,25 +362,34 @@ def get_key_value_of_nested_dict(nested_dict):
     return rv, values
 
 
-def extract_input_output(run, input_, output_, in_label, out_label):
+def extract_input_output(runs, in_label):
     """
-    The input is the prox_values, that are the response values of ​​the sensors [array of 7 floats],
-    they are normalised so that the average is around 1 or a constant (e.g. for all (dividing by 1000)).
+    Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
+    sensors [array of 7 floats].
+    The input is normalised so that the average is around 1 or a constant (e.g. for all (dividing by 1000)).
     The output is the speed of the wheels (which we assume equals left and right) [array of 1 float].
     There is no need to normalize the outputs.
-    :param run:
-    :param input_:
-    :param output_:
+    :param runs:
     :param in_label:
-    :param out_label:
     """
-    for step in run:
-        for myt in step:
-            sensing = get_input_sensing(in_label, myt)
-            input_.append(sensing)
+    inputs = ['prox_values', 'prox_comm', 'all_sensors']
+    inputs.remove(in_label)
 
-            speed = myt[out_label]
-            output_.append([speed])
+    runs = runs.drop(columns=inputs)
+
+    runs = pd.concat([runs.drop(in_label, axis=1),
+                      pd.DataFrame(runs[in_label].to_list(), columns=['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br'])
+                      # .add_prefix('%s_' % in_label)
+                      ], axis=1)
+
+    runs['x'] = runs.apply(lambda row: row.fc - np.mean([row.bl, row.br]), axis=1)
+    runs[['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br', 'x']] = runs[['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br', 'x']].div(1000)
+    # runs['x'] = runs.apply(lambda row: row.x / 1000, axis=1)
+
+    input_ = np.array(runs.x)
+    output_ = np.array(runs.motor_left_target)
+
+    return input_, output_, runs
 
 
 def extract_input(run, sensing, net_input):
