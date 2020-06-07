@@ -1,5 +1,6 @@
 import os
 from itertools import chain
+from operator import add
 
 import numpy as np
 import pandas as pd
@@ -108,6 +109,40 @@ def get_prox_comm(myt):
     return prox_comm
 
 
+def parse_prox_comm(prox_comm):
+    """
+
+    :param prox_comm:
+    :return prox_comm:
+    """
+
+    if len(prox_comm) == 0:
+        prox_comm = [0, 0, 0, 0, 0, 0, 0]
+    else:
+        _, values = get_key_value_of_nested_dict(prox_comm)
+        if len(prox_comm) == 1:
+            prox_comm = values[0]
+        else:
+            prox_comm = np.max(np.array(values), axis=0).tolist()
+
+    return prox_comm
+
+
+def get_all_sensors(prox_values, prox_comm):
+    """
+
+    :param prox_values:
+    :param prox_comm:
+    :return all_sensors:
+    """
+
+    prox_comm = parse_prox_comm(prox_comm)
+
+    all_sensors = list(map(add, prox_values, prox_comm))
+
+    return all_sensors
+
+
 def dataset_split(file_name, num_run=1000):
     """
 
@@ -126,7 +161,7 @@ def get_input_sensing(in_label, myt, normalise=True):
     :param in_label:
     :param myt:
     :param normalise
-    :return:
+    :return sensing:
     """
     if isinstance(myt, dict):
         myt = distributed.ThymioState(myt)
@@ -143,14 +178,7 @@ def get_input_sensing(in_label, myt, normalise=True):
     prox_values = getattr(myt, 'prox_values').copy()
     prox_comm = getattr(myt, 'prox_comm').copy()
 
-    if len(prox_comm) == 0:
-        prox_comm = [0, 0, 0, 0, 0, 0, 0]
-    else:
-        _, values = get_key_value_of_nested_dict(prox_comm)
-        if len(prox_comm) == 1:
-            prox_comm = values[0]
-        else:
-            prox_comm = np.max(np.array(values), axis=0).tolist()
+    prox_comm = parse_prox_comm(prox_comm)
 
     if normalise:
         prox_values = np.divide(np.array(prox_values), 1000).tolist()
@@ -166,6 +194,8 @@ def get_input_sensing(in_label, myt, normalise=True):
         raise ValueError("Invalid value for net_input")
 
     return sensing
+
+
 
 
 def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input, distance_from_goal=None,

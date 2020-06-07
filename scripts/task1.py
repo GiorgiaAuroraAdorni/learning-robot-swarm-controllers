@@ -116,7 +116,8 @@ if __name__ == '__main__':
                                         'distances-from-goal-%s' % c)
 
             if args.check_dataset:
-                print('\nChecking conformity of %s dataset…' % c)
+                from generate_simulation_data import GenerateSimulationData as sim
+                print('\nChecking conformity of %s %s dataset…' % (d, c))
                 sim.check_dataset_conformity(run_dir, run_img_dir, c, net_input=args.net_input)
 
             if args.train_net:

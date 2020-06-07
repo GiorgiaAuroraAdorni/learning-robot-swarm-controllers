@@ -124,29 +124,37 @@ class GenerateSimulationData:
             'name': myt.name,
             'index': myt.index,
             'prox_values': myt.prox_values,
-            'prox_comm': get_prox_comm(myt),
+            'prox_comm': utils.get_prox_comm(myt),
+            'all_sensors': utils.get_all_sensors(prox_values, prox_comm),
             'initial_position': myt.initial_position,
             'position': myt.position,
             'angle': myt.angle,
             'goal_position': myt.goal_position,
             'goal_angle': myt.goal_angle,
             'motor_left_target': myt.motor_left_target,
-            'motor_right_target': myt.motor_right_target
+            'motor_right_target': myt.motor_right_target,
+            'goal_position_distance': abs(myt.goal_position[0] - myt.position[0])
         """
+        prox_values = myt.prox_values
+        prox_comm = utils.get_prox_comm(myt)
+        all_sensors = utils.get_all_sensors(prox_values, prox_comm)
+
         myt.dictionary = {
             'run': n_sim,
             'timestep': s,
             'name': myt.name,
             'index': myt.index,
-            'prox_values': myt.prox_values,
-            'prox_comm': utils.get_prox_comm(myt),
+            'prox_values': prox_values,
+            'prox_comm': utils.parse_prox_comm(prox_comm),
+            'all_sensors': all_sensors,
             'initial_position': myt.initial_position,
             'position': myt.position,
             'angle': myt.angle,
             'goal_position': myt.goal_position,
             'goal_angle': myt.goal_angle,
             'motor_left_target': myt.motor_left_target,
-            'motor_right_target': myt.motor_right_target
+            'motor_right_target': myt.motor_right_target,
+            'goal_position_distance': abs(myt.goal_position[0] - myt.position[0])
         }
 
         dictionary = myt.dictionary.copy()
@@ -157,15 +165,22 @@ class GenerateSimulationData:
         """
         Updated data in the dictionary instead of rewrite every field to optimise performances
         :param myt
+        :param s
         :return dictionary
         """
-        myt.dictionary['timestep'] = s,
-        myt.dictionary['prox_values'] = myt.prox_values
-        myt.dictionary['prox_comm'] = utils.get_prox_comm(myt)
+        prox_values = myt.prox_values
+        prox_comm = utils.get_prox_comm(myt)
+        all_sensors = utils.get_all_sensors(prox_values, prox_comm)
+
+        myt.dictionary.update(timestep=s),
+        myt.dictionary['prox_values'] = prox_values
+        myt.dictionary['prox_comm'] = utils.parse_prox_comm(prox_comm)
+        myt.dictionary['all_sensors'] = all_sensors
         myt.dictionary['position'] = myt.position
         myt.dictionary['angle'] = myt.angle
         myt.dictionary['motor_left_target'] = myt.motor_left_target
-        myt.dictionary['motor_right_target'] = myt.motor_right_target
+        myt.dictionary['motor_right_target'] = myt.motor_right_target,
+        myt.dictionary['goal_position_distance'] = abs(myt.goal_position[0] - myt.position[0])
 
         dictionary = myt.dictionary.copy()
 
@@ -313,38 +328,43 @@ class GenerateSimulationData:
             except Exception as e:
                 print('ERROR: ', e)
 
+        print('Saving dataset…')
         cls.save_simulation(complete_runs, runs, run_dir)
 
     @classmethod
     def check_dataset_conformity(cls, runs_dir, runs_img, dataset, net_input):
         """
-        Generate a scatter plot to check the conformity of the dataset. The plot will show the distribution of the input
-        sensing, in particular, as the difference between the front sensor and the mean of the rear sensors,
-        with respect to the output control of the datasets.
+        Generate a scatter plot to check the conformity of the dataset.
+        The plot will show the distribution of the input sensing, in particular, as the difference between the front
+        sensor and the mean of the rear sensors, with respect to the output control of the datasets.
         :param runs_dir: directory containing the simulation
         :param runs_img: directory containing the simulation images
         :param dataset
         :param net_input
         """
-        input_ = []
-        output_ = []
 
-        pickle_file = os.path.join(runs_dir, 'simulation.pkl')
-        runs = pd.read_pickle(pickle_file)
+        runs = utils.load_dataset(runs_dir, 'simulation.pkl')
+        runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
-        for run in runs:
-            utils.extract_input_output(run, input_, output_, net_input, 'motor_left_target')
+        inputs = ['prox_values', 'prox_comm', 'all_sensors']
+        inputs.remove(net_input)
+
+        runs_sub = runs_sub.drop(columns=inputs)
+
+        runs_sub = pd.concat([runs_sub.drop(net_input, axis=1),
+                              pd.DataFrame(runs_sub[net_input].to_list(),
+                                           columns=['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br'])
+        #                     .add_prefix('%s_' % net_input)
+                              ], axis=1)
 
         #  Generate a scatter plot to check the conformity of the dataset
         title = 'Dataset %s' % dataset
         file_name = 'dataset-scatterplot-%s' % dataset
 
-        # runs_img = os.path.join(runs_img, net_input)
-        # check_dir(runs_img)
+        runs_sub['x'] = runs_sub.apply(lambda row: row.fc - np.mean([row.bl, row.br]), axis=1)
 
-        x = np.array(input_)[:, 2] - np.mean(np.array(input_)[:, 5:], axis=1)  # x: front sensor - mean(rear sensors)
-        y = np.array(output_).flatten()  # y: speed
         x_label = 'sensing (%s)' % net_input
         y_label = 'control'
 
-        my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)
+        my_scatterplot(np.divide(np.array(runs_sub.x), 1000).tolist(), runs_sub.motor_left_target, x_label, y_label,
+                       runs_img, title, file_name)
