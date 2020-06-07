@@ -9,6 +9,7 @@ sns.set(style="white")
 from sklearn.linear_model import LinearRegression
 import utils
 
+
 def make_space_above(axes, topmargin=1):
     """
     Increase figure size to make topmargin (in inches) space for titles, without changing the axes sizes
@@ -39,40 +40,69 @@ def save_visualisation(filename, img_dir, make_space=False, axes=None):
         make_space_above(axes, topmargin=1)
 
     plt.savefig(file)
-    plt.savefig(img)
+    plt.savefig(img, dpi=300, bbox_inches='tight')
     # plt.show()
     plt.close()
 
 
-def plot_distance_from_goal(runs_dir, img_dir, title, filename, net_input):
+def plot_distance_from_goal(runs_dir, img_dir, title, filename):
     """
     :param runs_dir:
     :param img_dir:
     :param title
     :param filename
-    :param net_input
     """
-    distance_from_goal = []
 
-    time_steps, _, _, _, _, \
-    mean_distance_from_goal, std_distance_from_goal = utils.get_pos_sensing_control(runs_dir,
-                                                                                    net_input,
-                                                                                    distance_from_goal)
+    runs = utils.load_dataset(runs_dir, 'simulation.pkl')
+    runs_sub = runs[['timestep', 'goal_position_distance', 'name', 'run']]
 
-    plt.figure()
-    plt.xlabel('timestep', fontsize=11)
-    plt.ylabel('distance from goal', fontsize=11)
-    plt.ylim(0, 4)
+    max_time_step = runs['timestep'].max()
+    time_steps = np.arange(max_time_step)
 
-    mean_distances = np.nanmean(mean_distance_from_goal, axis=0)
-    std_distances = np.nanstd(std_distance_from_goal, axis=0)
-    plt.plot(time_steps, mean_distances, label='mean')
-    plt.fill_between(time_steps, mean_distances - std_distances, mean_distances + std_distances, alpha=0.2,
-                     label='+/- 1 std')
+    # position_distances = runs_sub.groupby(['timestep', 'run',]).mean().reset_index()
 
-    plt.legend()
+    v = utils.cartesian_product(runs_sub.timestep.unique(), runs_sub.run.unique(), runs_sub.name.unique())
+    idx = pd.MultiIndex.from_arrays([v[:, 0], v[:, 1], v[:, 2]])
 
-    plt.title(title, weight='bold', fontsize=12)
+    position_distances = runs_sub.set_index(['timestep', 'run', 'name']).reindex(idx)
+    position_distances.index.names = ['timestep', 'run', 'name']
+    position_distances = position_distances.reset_index()
+    position_distances = position_distances.fillna(0).drop(columns='run')
+
+    myts = ['myt2', 'myt3', 'myt4']
+
+    fig, axes = plt.subplots(ncols=3, figsize=(12.8, 4.8), sharey='col', constrained_layout=True)
+    axes[0].set_ylabel('distance from goal', fontsize=11)
+
+    for idx, m in enumerate(myts):
+        myt = position_distances[position_distances['name'] == m].drop(columns='name')
+
+        # mean = myt.groupby(['timestep']).mean().squeeze()
+        # std = myt.groupby(['timestep']).std().squeeze()
+        #
+        # ln, = plt.plot(time_steps, mean, label='mean')
+        # plt.fill_between(time_steps, mean - std, mean + std, alpha=0.2, label='+/- 1 std',
+        #                  color=ln.get_color())
+
+        q1 = myt.groupby(['timestep']).quantile(0.25).squeeze()
+        q2 = myt.groupby(['timestep']).quantile(0.75).squeeze()
+        q3 = myt.groupby(['timestep']).quantile(0.10).squeeze()
+        q4 = myt.groupby(['timestep']).quantile(0.90).squeeze()
+        median = myt.groupby(['timestep']).median().squeeze()
+
+        ln, = axes[idx].plot(time_steps, median, label='median')
+        axes[idx].fill_between(time_steps, q1, q2, alpha=0.2, label='interquartile range', color=ln.get_color())
+        axes[idx].fill_between(time_steps, q3, q4, alpha=0.1, label='interdecile range', color=ln.get_color())
+        axes[idx].set_xlabel('timestep', fontsize=11)
+        axes[idx].set_ylim(top=10)
+        axes[idx].set_title(m, fontsize=12)
+
+    ax = fig.gca()
+    handles, labels = ax.get_legend_handles_labels()
+
+    fig.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.3), ncol=3,
+               bbox_transform=axes[1].transAxes)
+    fig.suptitle(title, weight='bold', fontsize=12)
     save_visualisation(filename, img_dir)
 
 

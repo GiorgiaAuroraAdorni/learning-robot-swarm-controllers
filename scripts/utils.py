@@ -53,6 +53,15 @@ def directory_for_model(args):
     return model_dir, model_img_dir, model_video_dir, metrics_path
 
 
+def cartesian_product(*arrays):
+    la = len(arrays)
+    dtype = np.result_type(*arrays)
+    arr = np.empty([len(a) for a in arrays] + [la], dtype=dtype)
+    for i, a in enumerate(np.ix_(*arrays)):
+        arr[...,i] = a
+    return arr.reshape(-1, la)
+
+
 def signed_distance(state):
     """
     :return: Signed distance between current and the goal position, along the current theta of the robot
@@ -61,6 +70,22 @@ def signed_distance(state):
     b = state.goal_position[0] * np.cos(state.angle) + state.goal_position[1] * np.sin(state.angle)
 
     return b - a
+
+
+def load_dataset(runs_dir, dataset):
+    """
+
+    :param runs_dir:
+    :param dataset:
+    :return dataframe:
+    """
+    pickle_file = os.path.join(runs_dir, dataset)
+    runs = pd.read_pickle(pickle_file)
+
+    flatten_runs = list(chain.from_iterable(list(chain.from_iterable(runs))))
+    dataframe = pd.DataFrame(flatten_runs)
+
+    return dataframe
 
 
 def get_prox_comm(myt):
@@ -213,39 +238,42 @@ def get_pos_sensing_control(runs_dir, net_input, distance_from_goal=None):
     mean_distances = None
     std_distances = None
 
-    pickle_file = os.path.join(runs_dir, 'complete-simulation.pkl')
-    runs = pd.read_pickle(pickle_file)
+    runs = load_dataset(runs_dir, 'complete-simulation.pkl')
+
+    # FIXME
 
     for run in runs:
         run_time_steps = np.arange(len(run)).tolist()
         target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input,
                                   distance_from_goal, run_time_steps)
 
-    length = max(map(len, time_steps))
-    time_steps = np.arange(length)
+    max_time_step = runs['timestep'].max()
+    time_steps = np.arange(max_time_step)
+
+    goal_p_dist_by_step = dataset_states.goal_position_distance.groupby('step')
 
     length2 = max(len(el) for el in list(chain(*x_positions)))
     for el1 in x_positions:
-        el1.extend([[]] * (length - len(el1)))
+        el1.extend([[]] * (max_time_step - len(el1)))
         for el2 in el1:
             el2.extend([np.nan] * (length2 - len(el2)))
     x_positions = np.array(x_positions)
 
     length3 = max(len(el) for el in list(chain(*myt2_sensing)))
     for el1 in myt2_sensing:
-        el1.extend([[]] * (length - len(el1)))
+        el1.extend([[]] * (max_time_step - len(el1)))
         for el2 in el1:
             el2.extend([np.nan] * (length3 - len(el2)))
     myt2_sensing = np.array(myt2_sensing)
 
     for el1 in myt2_control:
-        el1.extend([np.nan] * (length - len(el1)))
+        el1.extend([np.nan] * (max_time_step - len(el1)))
     myt2_control = np.array(myt2_control)
 
     if distance_from_goal is not None:
         length4 = max(len(el) for el in list(chain(*distance_from_goal)))
         for el1 in distance_from_goal:
-            el1.extend([[]] * (length - len(el1)))
+            el1.extend([[]] * (max_time_step - len(el1)))
             for el2 in el1:
                 el2.extend([np.nan] * (length4 - len(el2)))
         distance_from_goal = np.array(np.abs(distance_from_goal))

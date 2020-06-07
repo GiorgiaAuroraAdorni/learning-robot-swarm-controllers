@@ -29,6 +29,9 @@ def parse_args():
                         help='Generate the plots of regarding the dataset (default: False)')
     parser.add_argument('--check-dataset', action="store_true",
                         help='Generate the plots that check the dataset conformity (default: False)')
+    parser.add_argument('--compare-all', action="store_true",
+                        help='Generate plots that compare all the experiments in terms of distance from goal ('
+                             'default: False)')
 
     parser.add_argument('--controller', default='all', type=str,
                         help='Choose the controller for the current execution. Usually between all, learned, '
@@ -110,7 +113,7 @@ if __name__ == '__main__':
                                                      net_input=args.net_input)
 
                 plot_distance_from_goal(run_dir, run_img_dir, 'Robot distance from goal - %s' % c,
-                                        'distances-from-goal-%s' % c, net_input=args.net_input)
+                                        'distances-from-goal-%s' % c)
 
             if args.check_dataset:
                 print('\nChecking conformity of %s dataset…' % c)
@@ -131,8 +134,9 @@ if __name__ == '__main__':
                     if not args.net_input == 'all_sensors':
                         plot_sensing_timestep(runs_dir_omniscient, model_img_dir, net_input=args.net_input, model=args.model)
 
-    from my_plots import plot_compared_distance_from_goal
-    # Comparison among all datasets
-    runs_img_dir = os.path.join(datasets[0], 'images')
-    plot_compared_distance_from_goal(runs_dir_omniscient, runs_dir_manual, runs_dir_learned, runs_img_dir,
-                                     'Robot distances from goal', 'distances-from-goal', net_input=args.net_input)
+    if args.compare_all:
+        from my_plots import plot_compared_distance_from_goal
+        print('\nGenerating comparison plots among all datasets…')
+        runs_img_dir = os.path.join(datasets[0], 'images')
+        plot_compared_distance_from_goal(runs_dir_omniscient, runs_dir_manual, runs_dir_learned, runs_img_dir,
+                                         'Robot distances from goal', 'distances-from-goal', net_input=args.net_input)
