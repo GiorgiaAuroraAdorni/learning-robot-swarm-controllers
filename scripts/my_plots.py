@@ -328,8 +328,6 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
     plt.xlabel('epoch', fontsize=11)
     plt.ylabel('loss', fontsize=11)
 
-    plt.xticks(x)
-
     plt.plot(x, train_loss, label='train')
     plt.plot(x, valid_loss, label='validation')
     if scale is not None:

@@ -2,7 +2,6 @@ import os
 from typing import List, Tuple, Optional, AnyStr
 
 import numpy as np
-import pandas as pd
 import torch
 from torch.utils import data
 from torch.utils.data import TensorDataset
@@ -30,38 +29,22 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     :param net_input
     :return: train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input_, output_
     """
-    train_sample = []
-    valid_sample = []
-    test_sample = []
-    train_target = []
-    valid_target = []
-    test_target = []
 
-    input_ = []
-    output_ = []
+    runs = utils.load_dataset(runs_dir, 'simulation.pkl')
+    runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
-    indices = []
+    input_, output_, _ = utils.extract_input_output(runs_sub, net_input)
 
-    pickle_file = os.path.join(runs_dir, 'simulation.pkl')
-    runs = pd.read_pickle(pickle_file)
+    train_runs = runs_sub[runs_sub['run'].isin(train_indices)].reset_index()
+    valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
+    test_runs = runs_sub[runs_sub['run'].isin(test_indices)].reset_index()
 
-    for i, run in enumerate(runs):
+    train_sample, train_target, _ = utils.extract_input_output(train_runs, net_input)
+    valid_sample, valid_target, _ = utils.extract_input_output(valid_runs, net_input)
+    test_sample, test_target, _ = utils.extract_input_output(test_runs, net_input)
 
-        indices.append(i)
-
-        if i in train_indices:
-            input_ = train_sample
-            output_ = train_target
-        elif i in validation_indices:
-            input_ = valid_sample
-            output_ = valid_target
-        elif i in test_indices:
-            input_ = test_sample
-            output_ = test_target
-
-        utils.extract_input_output(run, input_, output_, net_input, 'motor_left_target')
-
-    return train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input_, output_
+    return train_sample[:, None], valid_sample[:, None], test_sample[:, None], \
+           train_target[:, None], valid_target[:, None], test_target[:, None], input_, output_
 
 
 def from_dataset_to_tensors(test_sample, test_target, train_sample, train_target, valid_sample, valid_target):
@@ -75,13 +58,13 @@ def from_dataset_to_tensors(test_sample, test_target, train_sample, train_target
     :param valid_target:
     :return d_test_set, d_train_set, d_valid_set, x_train, y_valid:
     """
-    x_train = torch.tensor(train_sample)
-    x_valid = torch.tensor(valid_sample)
-    x_test = torch.tensor(test_sample)
+    x_train = torch.tensor(train_sample, dtype=torch.float32)
+    x_valid = torch.tensor(valid_sample, dtype=torch.float32)
+    x_test = torch.tensor(test_sample, dtype=torch.float32)
 
-    y_train = torch.tensor(train_target)
-    y_valid = torch.tensor(valid_target)
-    y_test = torch.tensor(test_target)
+    y_train = torch.tensor(train_target, dtype=torch.float32)
+    y_valid = torch.tensor(valid_target, dtype=torch.float32)
+    y_test = torch.tensor(test_target, dtype=torch.float32)
 
     d_train_set = TensorDataset(x_train, y_train)
     d_valid_set = TensorDataset(x_valid, y_valid)
@@ -203,6 +186,7 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, batch_size, pad
     avg_loss = 0.0
 
     with torch.no_grad():
+        net.eval()
         for inputs, labels in valid_minibatch:
             t_output = net(inputs)
             # padded is used when in the simulations are different number of thymio
@@ -256,7 +240,7 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
 
     if not net_input == 'all_sensors':
         # Plot sensing histogram
-        title = 'Sensing Validation Set%s' % model
+        title = 'Sensing Validation Set %s' % model
         file_name = 'histogram-sensing-validation-%s' % model
 
         x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
@@ -474,6 +458,7 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     file_minibatch = os.path.join(model_dir, 'minibatch.npy')
 
     if train:
+        print('\nTraining %s…' % model)
         d_net = DistributedNet(x_train.shape[1])
         d_training_loss, d_validation_loss, d_testing_loss = [], [], []
 
@@ -494,6 +479,7 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
         d_net = torch.load('%s/%s' % (model_dir, model))
 
     if plots:
+        print('\nGenerating plots for %s…' % model)
         # Load the metrics
         training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
 
