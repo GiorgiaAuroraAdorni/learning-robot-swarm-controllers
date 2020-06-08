@@ -1,6 +1,6 @@
 import os
 from itertools import chain
-from operator import add
+from statistics import mean
 
 import numpy as np
 import pandas as pd
@@ -138,7 +138,7 @@ def get_all_sensors(prox_values, prox_comm):
 
     prox_comm = parse_prox_comm(prox_comm)
 
-    all_sensors = list(map(add, prox_values, prox_comm))
+    all_sensors = prox_values + prox_comm
 
     return all_sensors
 
@@ -197,68 +197,6 @@ def get_input_sensing(in_label, myt, normalise=True):
     return sensing
 
 
-def get_pos_sensing_control(runs_dir, net_input, distance_from_goal=None):
-    """
-
-    :param runs_dir:
-    :param net_input
-    :param distance_from_goal
-    :return time_steps, x_positions, myt2_sensing, myt2_control, target
-    """
-
-    time_steps = []
-    x_positions = []
-    myt2_sensing = []
-    myt2_control = []
-    target = None
-    mean_distances = None
-    std_distances = None
-
-    runs = load_dataset(runs_dir, 'complete-simulation.pkl')
-
-    # FIXME
-
-    for run in runs:
-        run_time_steps = np.arange(len(run)).tolist()
-        target = extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input,
-                                  distance_from_goal, run_time_steps)
-
-    max_time_step = runs['timestep'].max()
-    time_steps = np.arange(max_time_step)
-
-    goal_p_dist_by_step = dataset_states.goal_position_distance.groupby('step')
-
-    length2 = max(len(el) for el in list(chain(*x_positions)))
-    for el1 in x_positions:
-        el1.extend([[]] * (max_time_step - len(el1)))
-        for el2 in el1:
-            el2.extend([np.nan] * (length2 - len(el2)))
-    x_positions = np.array(x_positions)
-
-    length3 = max(len(el) for el in list(chain(*myt2_sensing)))
-    for el1 in myt2_sensing:
-        el1.extend([[]] * (max_time_step - len(el1)))
-        for el2 in el1:
-            el2.extend([np.nan] * (length3 - len(el2)))
-    myt2_sensing = np.array(myt2_sensing)
-
-    for el1 in myt2_control:
-        el1.extend([np.nan] * (max_time_step - len(el1)))
-    myt2_control = np.array(myt2_control)
-
-    if distance_from_goal is not None:
-        length4 = max(len(el) for el in list(chain(*distance_from_goal)))
-        for el1 in distance_from_goal:
-            el1.extend([[]] * (max_time_step - len(el1)))
-            for el2 in el1:
-                el2.extend([np.nan] * (length4 - len(el2)))
-        distance_from_goal = np.array(np.abs(distance_from_goal))
-        mean_distances = np.mean(distance_from_goal, axis=2)
-        std_distances = np.std(distance_from_goal, axis=2)
-
-    return time_steps, x_positions, myt2_sensing, myt2_control, target, mean_distances, std_distances
-
-
 def get_key_value_of_nested_dict(nested_dict):
     """
     Access a nested dictionary and return a list of tuples (rv) and values. Used to return the list of intensities
@@ -281,6 +219,21 @@ def get_key_value_of_nested_dict(nested_dict):
     return rv, values
 
 
+def get_input_columns(in_label):
+    """
+
+    :param in_label:
+    :return columns:
+    """
+    if in_label == 'all_sensors':
+        columns = ['pv_fll', 'pv_fl', 'pv_fc', 'pv_fr', 'pv_frr', 'pv_bl', 'pv_br',
+                   'pc_fll', 'pc_fl', 'pc_fc', 'pc_fr', 'pc_frr', 'pc_bl', 'pc_br']
+    else:
+        columns = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']\
+
+    return columns
+
+
 def extract_input_output(runs, in_label, input_combination=True):
     """
     Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
@@ -298,19 +251,26 @@ def extract_input_output(runs, in_label, input_combination=True):
 
     runs = runs.drop(columns=inputs)
 
+    columns = get_input_columns(in_label)
+
     runs = pd.concat([runs.drop(in_label, axis=1),
-                      pd.DataFrame(runs[in_label].to_list(), columns=['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br'])
+                      pd.DataFrame(runs[in_label].to_list(), columns=columns)
                       # .add_prefix('%s_' % in_label)
                       ], axis=1)
 
-    runs['x'] = runs.apply(lambda row: row.fc - np.mean([row.bl, row.br]), axis=1)
-    runs[['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br', 'x']] = runs[['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br', 'x']].div(1000)
-    # runs['x'] = runs.apply(lambda row: row.x / 1000, axis=1)
+    full_columns = columns + ['x']
+
+    if in_label == 'all_sensors':
+        runs['x'] = runs.apply(lambda row: mean([row.pv_fc - mean([row.pv_bl, row.pv_br]), row.pc_fc - mean([row.pc_bl, row.pc_br])]), axis=1)
+    else:
+        runs['x'] = runs.apply(lambda row: row.fc - mean([row.bl, row.br]), axis=1)
+
+    runs[full_columns] = runs[full_columns].div(1000)
 
     if input_combination:
         input_ = np.array(runs.x)
     else:
-        input_ = np.array(runs[['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']])
+        input_ = np.array(runs[columns])
     output_ = np.array(runs.motor_left_target)
 
-    return input_, output_, runs
+    return input_, output_, runs, columns

@@ -33,15 +33,15 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     runs = utils.load_dataset(runs_dir, 'simulation.pkl')
     runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
-    input_, output_, _ = utils.extract_input_output(runs_sub, net_input, input_combination=False)
+    input_, output_, _, _ = utils.extract_input_output(runs_sub, net_input, input_combination=False)
 
     train_runs = runs_sub[runs_sub['run'].isin(train_indices)].reset_index()
     valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
     test_runs = runs_sub[runs_sub['run'].isin(test_indices)].reset_index()
 
-    train_sample, train_target, _ = utils.extract_input_output(train_runs, net_input, input_combination=False)
-    valid_sample, valid_target, _ = utils.extract_input_output(valid_runs, net_input, input_combination=False)
-    test_sample, test_target, _ = utils.extract_input_output(test_runs, net_input, input_combination=False)
+    train_sample, train_target, _, _ = utils.extract_input_output(train_runs, net_input, input_combination=False)
+    valid_sample, valid_target, _, _ = utils.extract_input_output(valid_runs, net_input, input_combination=False)
+    test_sample, test_target, _, _ = utils.extract_input_output(test_runs, net_input, input_combination=False)
 
     return train_sample, valid_sample, test_sample, \
            train_target[:, None], valid_target[:, None], test_target[:, None], \

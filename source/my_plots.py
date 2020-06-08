@@ -193,10 +193,8 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     max_time_step = run['timestep'].max()
     time_steps = np.arange(max_time_step)
 
-    proximity_sensors = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
-
     run_myt2 = run[run['name'] == 'myt2'].drop(columns='name').reset_index()
-    _, myt2_control, run_myt2 = utils.extract_input_output(run_myt2, net_input)
+    _, myt2_control, run_myt2, proximity_sensors = utils.extract_input_output(run_myt2, net_input)
     myt2_sensing = run_myt2[proximity_sensors]
 
     plt.figure()
@@ -255,10 +253,8 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
 
     target = np.array(runs_sub[runs_sub['run'] == 0].apply(lambda row: list(row.goal_position)[0], axis=1))
 
-    proximity_sensors = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
-
     runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
-    _, _, runs_myt2 = utils.extract_input_output(runs_myt2, net_input)
+    _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input)
 
     plt.figure()
     fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
@@ -488,9 +484,7 @@ def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
     max_time_step = runs_sub['timestep'].max()
     time_steps = np.arange(max_time_step)
 
-    proximity_sensors = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
-
-    _, _, runs_ = utils.extract_input_output(runs_sub, net_input)
+    _, _, runs_, proximity_sensors = utils.extract_input_output(runs_sub, net_input)
 
     # Mean of the sensing of each run, among all the robots
     plt.figure(constrained_layout=True)

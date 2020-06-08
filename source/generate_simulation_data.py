@@ -114,7 +114,7 @@ class GenerateSimulationData:
     @classmethod
     def generate_dict(cls, myt, n_sim, s):
         """
-        Save data in a dictionary FIXME rename in state_dict
+        Save data in a dictionary
         :param myt
         :param n_sim
         :param s
@@ -346,7 +346,7 @@ class GenerateSimulationData:
         runs = utils.load_dataset(runs_dir, 'simulation.pkl')
         runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
-        x, y, _ = utils.extract_input_output(runs_sub, net_input)
+        x, y, _, _ = utils.extract_input_output(runs_sub, net_input)
 
         #  Generate a scatter plot to check the conformity of the dataset
         title = 'Dataset %s' % dataset
