@@ -293,8 +293,8 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
             prox_values = sample
             prox_comm = None
         elif net_input == 'all_sensors':
-            prox_values = sample[:7]
-            prox_comm = {'sender': {'intensities': sample[7:]}}
+            prox_values = sample
+            prox_comm = {'sender': {'intensities': sample}}
         else:
             raise AttributeError("Invalid value for net_input")
 

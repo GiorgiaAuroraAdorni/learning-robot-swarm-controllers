@@ -186,9 +186,8 @@ def get_input_sensing(in_label, myt, normalise=True):
     elif in_label == 'all_sensors':
         prox_values = getattr(myt, 'prox_values').copy()
         prox_comm = getattr(myt, 'prox_comm').copy()
-        prox_comm = parse_prox_comm(prox_comm)
 
-        sensing = prox_values + prox_comm
+        sensing = get_all_sensors(prox_values, prox_comm)
     else:
         raise ValueError("Invalid value for net_input")
 
@@ -258,35 +257,6 @@ def get_pos_sensing_control(runs_dir, net_input, distance_from_goal=None):
         std_distances = np.std(distance_from_goal, axis=2)
 
     return time_steps, x_positions, myt2_sensing, myt2_control, target, mean_distances, std_distances
-
-
-def extract_flatten_dataframe(myt2_control, myt2_sensing, time_steps, x_positions):
-    """
-
-    :param myt2_control:
-    :param myt2_sensing:
-    :param time_steps:
-    :param x_positions:
-    :return df_x_positions, df_sensing, df_control
-    """
-    df_control = {'timestep': np.array([time_steps] * 1000).flatten(),
-                  'myt2_control': myt2_control.flatten()}
-    df_control = pd.DataFrame(data=df_control)
-
-    flat_x_positions = x_positions.reshape(-1, x_positions.shape[-1])
-
-    df_x_positions = {'timestep': np.array([time_steps] * 1000).flatten()}
-    for i in range(flat_x_positions.shape[1]):
-        df_x_positions['myt%d_x_positions' % (i + 2)] = flat_x_positions[:, i]
-    df_x_positions = pd.DataFrame(data=df_x_positions)
-
-    flat_myt2_sensing = myt2_sensing.reshape(-1, myt2_sensing.shape[-1])
-    df_sensing = {'timestep': np.array([time_steps] * 1000).flatten()}
-    for i in range(flat_myt2_sensing.shape[1]):
-        df_sensing['myt2_sensor_%d' % (i + 1)] = flat_myt2_sensing[:, i]
-    df_sensing = pd.DataFrame(data=df_sensing)
-
-    return df_x_positions, df_sensing, df_control
 
 
 def get_key_value_of_nested_dict(nested_dict):
