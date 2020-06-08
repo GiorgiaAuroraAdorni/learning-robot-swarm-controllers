@@ -55,17 +55,10 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
 
     runs = utils.load_dataset(runs_dir, 'simulation.pkl')
     runs_sub = runs[['timestep', 'goal_position_distance', 'name', 'run']]
+    position_distances = get_position_distances(runs_sub)
 
     max_time_step = runs['timestep'].max()
     time_steps = np.arange(max_time_step)
-
-    v = utils.cartesian_product(runs_sub.timestep.unique(), runs_sub.run.unique(), runs_sub.name.unique())
-    idx = pd.MultiIndex.from_arrays([v[:, 0], v[:, 1], v[:, 2]])
-
-    position_distances = runs_sub.set_index(['timestep', 'run', 'name']).reindex(idx)
-    position_distances.index.names = ['timestep', 'run', 'name']
-    position_distances = position_distances.reset_index()
-    position_distances = position_distances.fillna(0).drop(columns='run')
 
     myts = ['myt2', 'myt3', 'myt4']
 
@@ -104,7 +97,17 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
     save_visualisation(filename, img_dir)
 
 
-def plot_compared_distance_from_goal(runs_dir_omniscient, runs_dir_manual, runs_dir_learned, img_dir, title, filename, net_input):
+def get_position_distances(runs_sub):
+    v = utils.cartesian_product(runs_sub.timestep.unique(), runs_sub.run.unique(), runs_sub.name.unique())
+    idx = pd.MultiIndex.from_arrays([v[:, 0], v[:, 1], v[:, 2]])
+    position_distances = runs_sub.set_index(['timestep', 'run', 'name']).reindex(idx)
+    position_distances.index.names = ['timestep', 'run', 'name']
+    position_distances = position_distances.reset_index()
+    position_distances = position_distances.fillna(0).drop(columns='run')
+    return position_distances
+
+
+def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename, net_input):
     """
 
     :param runs_dir_omniscient:
@@ -114,53 +117,60 @@ def plot_compared_distance_from_goal(runs_dir_omniscient, runs_dir_manual, runs_
     :param title:
     :param filename:
     :param net_input:
-    :return:
     """
 
-    dist_from_goal_o = []
-    dist_from_goal_m = []
-    dist_from_goal_l = []
+    utils.check_dir(img_dir)
+    datasets = ['omniscient', 'manual', 'learned']
 
-    time_steps_o, _, _, _, _, \
-    mean_dist_from_goal_o, std_dist_from_goal_o = utils.get_pos_sensing_control(runs_dir_omniscient,
-                                                                                net_input,
-                                                                                dist_from_goal_o)
+    positions = []
+    timesteps = []
 
-    time_steps_m, _, _, _, _, \
-    mean_dist_from_goal_m, std_dist_from_goal_m = utils.get_pos_sensing_control(runs_dir_manual,
-                                                                                net_input,
-                                                                                dist_from_goal_m)
+    for el in dataset_folders:
 
-    time_steps_l, _, _, _, _, \
-    mean_dist_from_goal_l, std_dist_from_goal_l = utils.get_pos_sensing_control(runs_dir_learned,
-                                                                                net_input,
-                                                                                dist_from_goal_l)
+        runs = utils.load_dataset(el, 'simulation.pkl')
+        runs_sub = runs[['timestep', 'goal_position_distance', 'name', 'run']]
+        position_distances = get_position_distances(runs_sub)
+        max_time_step = runs['timestep'].max()
+        time_steps = np.arange(max_time_step)
 
-    plt.figure()
-    plt.xlabel('timestep', fontsize=11)
-    plt.ylabel('distance from goal', fontsize=11)
-    plt.ylim(0, 4)
+        positions.append(position_distances)
+        timesteps.append(time_steps)
 
-    mean_dist_o = np.nanmean(mean_dist_from_goal_o, axis=0)
-    std_dist_o = np.nanstd(std_dist_from_goal_o, axis=0)
-    plt.plot(time_steps_o, mean_dist_o, label='omniscient mean')
-    plt.fill_between(time_steps_o, mean_dist_o - std_dist_o, mean_dist_o + std_dist_o, alpha=0.2,
-                     label='omniscient +/- 1 std')
+    myts = ['myt2', 'myt3', 'myt4']
 
-    mean_dist_m = np.nanmean(mean_dist_from_goal_m, axis=0)
-    std_dist_m = np.nanstd(std_dist_from_goal_m, axis=0)
-    plt.plot(time_steps_m, mean_dist_m, label='manual mean')
-    plt.fill_between(time_steps_m, mean_dist_m - std_dist_m, mean_dist_m + std_dist_m, alpha=0.2,
-                     label='manual +/- 1 std')
+    fig, axes = plt.subplots(ncols=3, figsize=(12.8, 4.8), sharey='col', constrained_layout=True)
+    axes[0].set_ylabel('distance from goal', fontsize=11)
 
-    mean_dist_l = np.nanmean(mean_dist_from_goal_l, axis=0)
-    std_dist_l = np.nanstd(std_dist_from_goal_l, axis=0)
-    plt.plot(time_steps_l, mean_dist_l, label='learned mean')
-    plt.fill_between(time_steps_l, mean_dist_l - std_dist_l, mean_dist_l + std_dist_l, alpha=0.2,
-                     label='learned +/- 1 std')
+    for idx, m in enumerate(myts):
+        for d_idx, d in enumerate(datasets):
+            position_distances = positions[d_idx]
+            time_steps = timesteps[d_idx]
 
-    plt.legend()
-    plt.title(title, weight='bold', fontsize=12)
+            myt = position_distances[position_distances['name'] == m].drop(columns='name')
+
+            q1 = myt.groupby(['timestep']).quantile(0.25).squeeze()
+            q2 = myt.groupby(['timestep']).quantile(0.75).squeeze()
+            q3 = myt.groupby(['timestep']).quantile(0.10).squeeze()
+            q4 = myt.groupby(['timestep']).quantile(0.90).squeeze()
+            median = myt.groupby(['timestep']).median().squeeze()
+
+            ln, = axes[idx].plot(time_steps, median, label='median (%s)' % d)
+            axes[idx].fill_between(time_steps, q1, q2, alpha=0.2, label='interquartile range (%s)' % d, color=ln.get_color())
+            axes[idx].fill_between(time_steps, q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
+
+            axes[idx].set_xlabel('timestep', fontsize=11)
+            axes[idx].set_ylim(top=10)
+            axes[idx].set_title(m, fontsize=12)
+
+    ax = fig.gca()
+    handles, labels = ax.get_legend_handles_labels()
+
+    handles = [handles[0], handles[1], handles[2], handles[3], handles[5], handles[7], handles[4], handles[6], handles[8]]
+    labels = [labels[0], labels[1], labels[2], labels[3], labels[5], labels[7], labels[4], labels[6], labels[8]]
+
+    fig.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.4), ncol=3,
+               bbox_transform=axes[1].transAxes)
+    fig.suptitle(title, weight='bold', fontsize=12)
     save_visualisation(filename, img_dir)
 
 
@@ -497,6 +507,7 @@ def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
                          mean_sensing - std_sensing,
                          mean_sensing + std_sensing,
                          alpha=0.2)
+
 
     plt.legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.3), ncol=len(proximity_sensors),
                title="proximity sensor")

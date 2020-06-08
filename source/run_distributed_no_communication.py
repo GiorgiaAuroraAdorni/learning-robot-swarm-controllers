@@ -135,7 +135,9 @@ if __name__ == '__main__':
 
     if args.compare_all:
         from my_plots import plot_compared_distance_from_goal
-        print('\nGenerating comparison plots among all datasets…')
+        print('\nGenerating comparison plots among all datasets of type %s avg-gap %s…' % (args.net_input, args.avg_gap))
         runs_img_dir = os.path.join(datasets[0], 'images')
-        plot_compared_distance_from_goal(runs_dir_omniscient, runs_dir_manual, runs_dir_learned, runs_img_dir,
+        dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned]
+
+        plot_compared_distance_from_goal(dataset_folders, runs_img_dir,
                                          'Robot distances from goal', 'distances-from-goal', net_input=args.net_input)
