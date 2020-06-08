@@ -9,7 +9,7 @@ def parse_args():
 
     :return args
     """
-    parser = argparse.ArgumentParser(description='Simulation of robot swarms for learning communication-aware coordination - Task 1')
+    parser = argparse.ArgumentParser(description='Imitation Learning - Distributed Controller No Communication')
 
     parser.add_argument('--gui', action="store_true",
                         help='Run simulation using the gui (default: False)')

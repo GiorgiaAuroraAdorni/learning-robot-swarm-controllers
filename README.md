@@ -32,47 +32,64 @@ $ pip install -r requirements.txt
 To receive help on how to run the script, execute:
 
 ```sh
-$ python scripts/task1.py --help
+$ python source/run_distributed_no_communication.py --help
 
-> usage: task1.py [-h] [--gui] [--myt-quantity N] [--simulations N]
-                  [--generate-dataset] [--plots-dataset] [--check-dataset]
-                  [--avg-gap N] [--controller {all,learned,manual,omniscient}]
-                  [--dataset-folder DATASET_FOLDER] [--train-net]
-                  [--model MODEL] [--generate-split]
-                  [--net-input {prox_values,prox_comm,all_sensors}]
-                  [--plots-net]
+> usage: run_distributed_no_communication.py [-h] [--gui] [--myt-quantity N]
+                                             [--n-simulations N] [--avg-gap N]
+                                             [--generate-dataset]
+                                             [--generate-split]
+                                             [--plots-dataset] [--check-dataset]
+                                             [--compare-all]
+                                             [--controller CONTROLLER]
+                                             [--dataset-folder DATASET_FOLDER]
+                                             [--dataset DATASET]
+                                             [--models-folder MODELS_FOLDER]
+                                             [--model-type MODEL_TYPE]
+                                             [--model MODEL] [--train-net]
+                                             [--net-input 			{prox_values,prox_comm,all_sensors}]
+                                             [--plots-net]
 
-Simulation of robot swarms for learning communication-aware coordination -
-Task 1
+Imitation Learning - Distributed Controller No Communication
 
 optional arguments:
   -h, --help            show this help message and exit
-  --gui                 run simulation using the gui (default: False)
-  --myt-quantity N      number of thymios for the simulation (default: 5)
-  --simulations N       number of runs for each simulation (default: 1000)
-  --generate-dataset    generate the dataset containing the simulations
+  --gui                 Run simulation using the gui (default: False)
+  --myt-quantity N      Number of thymios for the simulation (default: 5)
+  --n-simulations N     Number of runs for each simulation (default: 1000)
+  --avg-gap N           Average gap distance between thymios (default: 8)
+  --generate-dataset    Generate the dataset containing the simulations
                         (default: False)
-  --plots-dataset       generate the plots of regarding the dataset (default:
+  --generate-split      Generate the indices for the split of the dataset
+                        (default: False)
+  --plots-dataset       Generate the plots of regarding the dataset (default:
                         False)
-  --check-dataset       generate the plots that check the dataset conformity
+  --check-dataset       Generate the plots that check the dataset conformity
                         (default: False)
-  --avg-gap N           average gap distance between thymios (default: 8)
-  --controller {all,learned,manual,omniscient}
-                        choose the controller for the current execution
-                        between all, learned, manual and omniscient (default:
-                        all)
+  --compare-all         Generate plots that compare all the experiments in
+                        terms of distance from goal (default: False)
+  --controller CONTROLLER
+                        Choose the controller for the current execution.
+                        Usually between all, learned, manual and omniscient
+                        (default: all)
   --dataset-folder DATASET_FOLDER
-                        name of the directory containing the datasets
-                        (default: datasets/)
-  --train-net           train the model (default: False)
-  --model MODEL         name of the model (default: net1)
-  --generate-split      generate the indices for the split of the dataset
-                        (default: False)
+                        Name of the directory containing the datasets
+                        (default: datasets)
+  --dataset DATASET     Choose the datasets to use in the current execution
+                        (default: all)
+  --models-folder MODELS_FOLDER
+                        Name of the directory containing the models (default:
+                        models)
+  --model-type MODEL_TYPE
+                        Name of the sub-directory containing the models
+                        (default: distributed)
+  --model MODEL         Name of the model (default: net1)
+  --train-net           Train the model (default: False)
   --net-input {prox_values,prox_comm,all_sensors}
-                        choose the input of the net between prox_values and
+                        Choose the input of the net between prox_values and
                         prox_comm_events (default: prox_values)
-  --plots-net           generate the plots of regarding the model (default:
+  --plots-net           Generate the plots of regarding the model (default:
                         False)
+
 ```
 
 ##### 
