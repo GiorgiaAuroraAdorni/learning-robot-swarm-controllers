@@ -468,10 +468,10 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
 
         prediction = d_net(torch.FloatTensor(x_valid))
 
-        # network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid)
+        network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid)
 
         # Evaluate prediction of the distributed controller with the omniscient groundtruth
-        # evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
+        evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
 
         if not net_input == 'all_sensors':
             # Evaluate the learned controller by passing a specific input sensing configuration

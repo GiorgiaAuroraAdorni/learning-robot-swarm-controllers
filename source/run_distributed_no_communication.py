@@ -15,11 +15,12 @@ def parse_args():
                         help='Run simulation using the gui (default: False)')
     parser.add_argument('--myt-quantity', type=int, default=5, metavar='N',
                         help='Number of thymios for the simulation (default: 5)')
+    parser.add_argument('--n-simulations', type=int, default=1000, metavar='N',
+                        help='Number of runs for each simulation (default: 1000)')
+
     parser.add_argument('--avg-gap', type=int, default=8, metavar='N',
                         help='Average gap distance between thymios (default: 8)')
 
-    parser.add_argument('--n-simulations', type=int, default=1000, metavar='N',
-                        help='Number of runs for each simulation (default: 1000)')
     parser.add_argument('--generate-dataset', action="store_true",
                         help='Generate the dataset containing the simulations (default: False)')
     parser.add_argument('--generate-split', action="store_true",
