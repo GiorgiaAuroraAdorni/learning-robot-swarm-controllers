@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from controllers import distributed_controllers
 from generate_simulation_data import GenerateSimulationData as g
-from my_plots import plot_regressor, plot_response, my_histogram, plot_losses
+from my_plots import plot_regressor, plot_response, my_histogram, plot_losses, plot_target_distribution
 from networks.distributed_network import DistributedNet
 import utils
 
@@ -33,44 +33,45 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     runs = utils.load_dataset(runs_dir, 'simulation.pkl')
     runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
-    input_, output_, _ = utils.extract_input_output(runs_sub, net_input)
+    input_, output_, _ = utils.extract_input_output(runs_sub, net_input, input_combination=False)
 
     train_runs = runs_sub[runs_sub['run'].isin(train_indices)].reset_index()
     valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
     test_runs = runs_sub[runs_sub['run'].isin(test_indices)].reset_index()
 
-    train_sample, train_target, _ = utils.extract_input_output(train_runs, net_input)
-    valid_sample, valid_target, _ = utils.extract_input_output(valid_runs, net_input)
-    test_sample, test_target, _ = utils.extract_input_output(test_runs, net_input)
+    train_sample, train_target, _ = utils.extract_input_output(train_runs, net_input, input_combination=False)
+    valid_sample, valid_target, _ = utils.extract_input_output(valid_runs, net_input, input_combination=False)
+    test_sample, test_target, _ = utils.extract_input_output(test_runs, net_input, input_combination=False)
 
-    return train_sample[:, None], valid_sample[:, None], test_sample[:, None], \
-           train_target[:, None], valid_target[:, None], test_target[:, None], input_, output_
+    return train_sample, valid_sample, test_sample, \
+           train_target[:, None], valid_target[:, None], test_target[:, None], \
+           input_, output_[:, None]
 
 
-def from_dataset_to_tensors(test_sample, test_target, train_sample, train_target, valid_sample, valid_target):
+def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_target, test_sample, test_target):
     """
 
-    :param test_sample:
-    :param test_target:
     :param train_sample:
     :param train_target:
     :param valid_sample:
     :param valid_target:
-    :return d_test_set, d_train_set, d_valid_set, x_train, y_valid:
+    :param test_sample:
+    :param test_target:
+    :return t_d_test, t_d_train, t_d_valid:
     """
-    x_train = torch.tensor(train_sample, dtype=torch.float32)
-    x_valid = torch.tensor(valid_sample, dtype=torch.float32)
-    x_test = torch.tensor(test_sample, dtype=torch.float32)
+    x_train_tensor = torch.tensor(train_sample, dtype=torch.float32)
+    x_valid_tensor = torch.tensor(valid_sample, dtype=torch.float32)
+    x_test_tensor = torch.tensor(test_sample, dtype=torch.float32)
 
-    y_train = torch.tensor(train_target, dtype=torch.float32)
-    y_valid = torch.tensor(valid_target, dtype=torch.float32)
-    y_test = torch.tensor(test_target, dtype=torch.float32)
+    y_train_tensor = torch.tensor(train_target, dtype=torch.float32)
+    y_valid_tensor = torch.tensor(valid_target, dtype=torch.float32)
+    y_test_tensor = torch.tensor(test_target, dtype=torch.float32)
 
-    d_train_set = TensorDataset(x_train, y_train)
-    d_valid_set = TensorDataset(x_valid, y_valid)
-    d_test_set = TensorDataset(x_test, y_test)
+    t_d_train = TensorDataset(x_train_tensor, y_train_tensor)
+    t_d_valid = TensorDataset(x_valid_tensor, y_valid_tensor)
+    t_d_test = TensorDataset(x_test_tensor, y_test_tensor)
 
-    return d_test_set, d_train_set, d_valid_set, x_train, y_valid
+    return t_d_test, t_d_train, t_d_valid
 
 
 def unmask(label):
@@ -88,8 +89,7 @@ def unmask(label):
     return torch.stack(new_label)
 
 
-def train_net(file: AnyStr,
-              epochs: int,
+def train_net(epochs: int,
               train_dataset: data.TensorDataset,
               valid_dataset: data.TensorDataset,
               test_dataset: data.TensorDataset,
@@ -103,7 +103,6 @@ def train_net(file: AnyStr,
               padded=False
               ) -> Tuple[List[float], List[float], List[float]]:
     """
-    :param file:
     :param epochs:
     :param train_dataset:
     :param valid_dataset:
@@ -123,7 +122,6 @@ def train_net(file: AnyStr,
     train_minibatch = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     valid_minibatch = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
     test_minibatch = data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    np.save(file, [train_minibatch, valid_minibatch, test_minibatch])
 
     optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
     optimizer.zero_grad()
@@ -203,40 +201,30 @@ def validate_net(n_valid, net, valid_minibatch, validation_loss, batch_size, pad
         validation_loss.append(avg_loss / n_valid)
 
 
-def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid,
-                  groundtruth):
+def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid):
     """
     :param model_img
     :param dataset:
     :param model
     :param net_input
-    :param prediction:
+    :param y_p:
     :param training_loss:
     :param validation_loss:
     :param x_train:
     :param y_valid:
-    :param groundtruth:
     """
-    y = np.array(groundtruth).flatten()  # y: speed
+    y_p = prediction.squeeze().tolist()
+    y_g = y_valid.squeeze().tolist()
 
     # Plot train and validation losses
     title = 'Loss %s' % model
     file_name = 'loss-%s' % model
     plot_losses(training_loss, validation_loss, model_img, title, file_name)
 
-    # file_name = 'loss-rescaled-%s' % dataset
-    # plot_losses(training_loss, validation_loss, model_img, title, file_name, scale=min(validation_loss) * 10)
-
-    # Plot groundtruth histogram
-    title = 'Groundtruth Validation Set %s' % model
-    file_name = 'histogram-groundtruth-validation-%s' % model
-    my_histogram(y, 'groundtruth', model_img, title, file_name)
-
-    # Plot prediction histogram
-    title = 'Prediction Validation Set %s' % model
-    file_name = 'histogram-prediction-validation-%s' % model
-    prediction = torch.flatten(prediction).tolist()
-    my_histogram(prediction, 'prediction', model_img, title, file_name)
+    # Plot target distribution
+    title = 'Distribution Target Validation Set %s' % model
+    file_name = 'distribution-target-validation-%s' %model
+    plot_target_distribution(y_g, y_p, model_img, title, file_name)
 
     if not net_input == 'all_sensors':
         # Plot sensing histogram
@@ -253,10 +241,9 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
     title = 'Regression %s vs %s' % (model, dataset)
     file_name = 'regression-%s-vs-%s' % (model, dataset)
 
-    y_valid = np.array(y_valid).flatten()
     x_label = 'groundtruth'
     y_label = 'prediction'
-    plot_regressor(y_valid, prediction, x_label, y_label, model_img, title, file_name)
+    plot_regressor(y_g, y_p, x_label, y_label, model_img, title, file_name)
 
 
 def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction):
@@ -445,28 +432,24 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
                                                       dataset[n_validation:]
 
     # Split the dataset also defining input and output, using the indices
-    train_sample, valid_sample, test_sample, \
-    train_target, valid_target, test_target, \
+    x_train, x_valid, x_test, \
+    y_train, y_valid, y_test, \
     sensing, groundtruth = from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input)
 
     # Generate the tensors
-    d_test_set, d_train_set, d_valid_set, x_train, y_valid = from_dataset_to_tensors(test_sample, test_target,
-                                                                                     train_sample, train_target,
-                                                                                     valid_sample, valid_target)
+    t_d_test, t_d_train, t_d_valid = from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test)
 
     file_losses = os.path.join(model_dir, 'losses.npy')
-    file_minibatch = os.path.join(model_dir, 'minibatch.npy')
 
     if train:
         print('\nTraining %s…' % model)
         d_net = DistributedNet(x_train.shape[1])
         d_training_loss, d_validation_loss, d_testing_loss = [], [], []
 
-        training_loss, validation_loss, testing_loss = train_net(file=file_minibatch,
-                                                                 epochs=50,
-                                                                 train_dataset=d_train_set,
-                                                                 valid_dataset=d_valid_set,
-                                                                 test_dataset=d_test_set,
+        training_loss, validation_loss, testing_loss = train_net(epochs=50,
+                                                                 train_dataset=t_d_train,
+                                                                 valid_dataset=t_d_valid,
+                                                                 test_dataset=t_d_test,
                                                                  net=d_net,
                                                                  training_loss=d_training_loss,
                                                                  validation_loss=d_validation_loss,
@@ -483,13 +466,12 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
         # Load the metrics
         training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
 
-        prediction = d_net(torch.FloatTensor(valid_sample))
+        prediction = d_net(torch.FloatTensor(x_valid))
 
-        network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, train_sample,
-                      valid_target, groundtruth)
+        # network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid)
 
         # Evaluate prediction of the distributed controller with the omniscient groundtruth
-        evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
+        # evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
 
         if not net_input == 'all_sensors':
             # Evaluate the learned controller by passing a specific input sensing configuration

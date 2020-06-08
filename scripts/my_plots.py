@@ -59,8 +59,6 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
     max_time_step = runs['timestep'].max()
     time_steps = np.arange(max_time_step)
 
-    # position_distances = runs_sub.groupby(['timestep', 'run',]).mean().reset_index()
-
     v = utils.cartesian_product(runs_sub.timestep.unique(), runs_sub.run.unique(), runs_sub.name.unique())
     idx = pd.MultiIndex.from_arrays([v[:, 0], v[:, 1], v[:, 2]])
 
@@ -330,10 +328,8 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
 
     plt.plot(x, train_loss, label='train')
     plt.plot(x, valid_loss, label='validation')
-    if scale is not None:
-        plt.ylim(0, scale)
 
-    plt.yscale('log')
+    plt.ylim(0, max(min(train_loss), min(valid_loss)) + 50)
 
     plt.legend()
     plt.title(title, weight='bold', fontsize=12)
@@ -372,7 +368,7 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
     :param filename:
     :param label:
     """
-    plt.figure()
+    plt.figure(constrained_layout=True)
 
     plt.yscale('log')
     plt.xlabel(x_label, fontsize=11)
@@ -380,12 +376,34 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
     plt.title(title, weight='bold', fontsize=12)
 
     if label is None:
-        plt.hist(prediction, bins=50)
+        plt.hist(prediction)
     else:
         plt.hist(prediction, label=label)
-        plt.legend(loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=len(label),
+        plt.legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.32), ncol=len(label),
                    title="proximity sensor", title_fontsize=11, markerscale=0.2)
-        plt.tight_layout()
+
+    save_visualisation(filename, img_dir)
+
+
+def plot_target_distribution(y_g, y_p, img_dir, title, filename):
+    """
+    
+    :param y_g:
+    :param y_p:
+    :param img_dir:
+    :param title
+    :param filename:
+    """
+    labels = ['groundtruth', 'prediction']
+
+    plt.figure(constrained_layout=True)
+    plt.yscale('log')
+
+    y = np.array([y_g, y_p]).reshape(-1, 2)
+    plt.hist(y, bins=50, label=labels)
+    plt.legend()
+
+    plt.title(title, weight='bold', fontsize=12)
 
     save_visualisation(filename, img_dir)
 
@@ -449,66 +467,43 @@ def plot_response(x, y, x_label, img_dir, title, filename, index=None):
 def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
     """
 
-    :param x
-    :param y
-    :param x_label
+    :param runs_dir
     :param img_dir
-    :param title
-    :param filename
-    :param index: this parameter is different from None only when x is the input sensing, otherwise, x is a 1D vector
+    :param net_input
+    :param model
     """
-    # FIXME
-    time_steps = []
-    sensing = []
+    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['timestep', 'run', 'prox_values', 'prox_comm', 'all_sensors', 'motor_left_target']]
 
-    pickle_file = os.path.join(runs_dir, 'complete-simulation.pkl')
-    runs = pd.read_pickle(pickle_file)
-
-    for run in runs:
-        run_time_steps = np.arange(len(run)).tolist()
-        utils.extract_input(run, sensing, net_input)
-
-        time_steps.append(run_time_steps)
-
-    length = max(map(len, time_steps))
-    time_steps = np.arange(length)
-
-    length2 = len(sensing[0][0])
-    length3 = len(sensing[0][0][0])
-
-    for el1 in sensing:
-        el1.extend([[[]]] * (length - len(el1)))
-        for el2 in el1:
-            el2.extend([[]] * (length2 - len(el2)))
-            for el3 in el2:
-                el3.extend([np.nan] * (length3 - len(el3)))
-
-    sensing = np.array(sensing)
-
-    # Mean of the sensing of each run, among all the robots
-    mean_sensing = np.nanmean(np.nanmean(sensing, axis=0), axis=1)
-    std_sensing = np.nanstd(np.nanstd(sensing, axis=0), axis=1)
+    max_time_step = runs_sub['timestep'].max()
+    time_steps = np.arange(max_time_step)
 
     proximity_sensors = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
-    plt.figure()
+
+    _, _, runs_ = utils.extract_input_output(runs_sub, net_input)
+
+    # Mean of the sensing of each run, among all the robots
+    plt.figure(constrained_layout=True)
 
     # Plot the evolution of the sensing over time
     plt.ylabel('sensing (%s)' % net_input, fontsize=11)
 
-    for i in range(np.shape(mean_sensing)[1]):
-        plt.plot(time_steps, mean_sensing[:, i], label=proximity_sensors[i])  # , color='black')
+    for s in proximity_sensors:
+        mean_sensing = np.array(runs_.groupby('timestep')[s].mean())
+        std_sensing = np.array(runs_.groupby('timestep')[s].std())
+
+        plt.plot(time_steps, mean_sensing, label=s)
         plt.fill_between(time_steps,
-                         mean_sensing[:, i] - std_sensing[:, i],
-                         mean_sensing[:, i] + std_sensing[:, i],
+                         mean_sensing - std_sensing,
+                         mean_sensing + std_sensing,
                          alpha=0.2)
-    plt.legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.5), ncol=np.shape(mean_sensing)[1],
+
+    plt.legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.3), ncol=len(proximity_sensors),
                title="proximity sensor")
 
     plt.xlabel('timestep', fontsize=11)
     title = 'Response Sensing %s' % model
     plt.title(title, weight='bold', fontsize=12)
-
-    plt.tight_layout()
 
     file_name = 'response-sensing-%s' % model
     save_visualisation(file_name, img_dir)

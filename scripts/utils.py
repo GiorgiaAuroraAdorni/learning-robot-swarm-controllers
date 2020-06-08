@@ -175,78 +175,27 @@ def get_input_sensing(in_label, myt, normalise=True):
                       'prox_values': myt.prox_values, 'prox_comm': prox_comm}
         myt = distributed.ThymioState(state_dict)
 
-    prox_values = getattr(myt, 'prox_values').copy()
-    prox_comm = getattr(myt, 'prox_comm').copy()
-
-    prox_comm = parse_prox_comm(prox_comm)
-
-    if normalise:
-        prox_values = np.divide(np.array(prox_values), 1000).tolist()
-        prox_comm = np.divide(np.array(prox_comm), 1000).tolist()
-
     if in_label == 'prox_values':
+        prox_values = getattr(myt, 'prox_values').copy()
         sensing = prox_values
     elif in_label == 'prox_comm':
+        prox_comm = getattr(myt, 'prox_comm').copy()
+        prox_comm = parse_prox_comm(prox_comm)
+
         sensing = prox_comm
     elif in_label == 'all_sensors':
+        prox_values = getattr(myt, 'prox_values').copy()
+        prox_comm = getattr(myt, 'prox_comm').copy()
+        prox_comm = parse_prox_comm(prox_comm)
+
         sensing = prox_values + prox_comm
     else:
         raise ValueError("Invalid value for net_input")
 
+    if normalise:
+        sensing = np.divide(np.array(sensing), 1000).tolist()
+
     return sensing
-
-
-def extract_run_data(myt2_control, myt2_sensing, run, time_steps, x_positions, net_input, distance_from_goal=None,
-                     run_time_steps=None):
-    """
-
-    :param myt2_control:
-    :param myt2_sensing:
-    :param run:
-    :param time_steps:
-    :param x_positions:
-    :param net_input
-    :param distance_from_goal
-    :param run_time_steps:
-    """
-    run_x_positions = []
-    run_myt2_sensing = []
-    run_myt2_control = []
-
-    target = []
-
-    counter = 0
-    for step in run:
-        x_pos = []
-        for myt in step:
-            x_position = myt['position'][0]
-            x_pos.append(x_position)
-
-            # Append goal_position just one time
-            if counter == 0:
-                x_t = myt['goal_position'][0]
-                target.append(x_t)
-
-            if myt['name'] == 'myt2':
-                sensing = get_input_sensing(net_input, myt)
-                control = myt['motor_left_target']
-
-                run_myt2_sensing.append(sensing)
-                run_myt2_control.append(control)
-
-        counter += 1
-        run_x_positions.append(x_pos)
-
-    if run_time_steps is not None:
-        time_steps.append(run_time_steps)
-    x_positions.append(run_x_positions)
-    myt2_sensing.append(run_myt2_sensing)
-    myt2_control.append(run_myt2_control)
-
-    if distance_from_goal is not None:
-        distance_from_goal.append((np.array(run_x_positions) - np.array(target)).tolist())
-
-    return target
 
 
 def get_pos_sensing_control(runs_dir, net_input, distance_from_goal=None):
@@ -362,7 +311,7 @@ def get_key_value_of_nested_dict(nested_dict):
     return rv, values
 
 
-def extract_input_output(runs, in_label):
+def extract_input_output(runs, in_label, input_combination=True):
     """
     Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
     sensors [array of 7 floats].
@@ -371,6 +320,8 @@ def extract_input_output(runs, in_label):
     There is no need to normalize the outputs.
     :param runs:
     :param in_label:
+    :param input_combination
+    :return input_, output_, runs
     """
     inputs = ['prox_values', 'prox_comm', 'all_sensors']
     inputs.remove(in_label)
@@ -386,27 +337,10 @@ def extract_input_output(runs, in_label):
     runs[['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br', 'x']] = runs[['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br', 'x']].div(1000)
     # runs['x'] = runs.apply(lambda row: row.x / 1000, axis=1)
 
-    input_ = np.array(runs.x)
+    if input_combination:
+        input_ = np.array(runs.x)
+    else:
+        input_ = np.array(runs[['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']])
     output_ = np.array(runs.motor_left_target)
 
     return input_, output_, runs
-
-
-def extract_input(run, sensing, net_input):
-    """
-
-    :param run:
-    :param sensing:
-    :param net_input:
-    """
-    run_sensing = []
-
-    for step in run:
-        step_sensing = []
-        for myt in step:
-            s = get_input_sensing(net_input, myt)
-            step_sensing.append(s)
-        run_sensing.append(step_sensing)
-
-    sensing.append(run_sensing)
-

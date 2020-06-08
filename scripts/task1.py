@@ -106,9 +106,9 @@ if __name__ == '__main__':
                 print('Generating plots for %s %s controller…' % (d, c))
 
                 if not args.net_input == 'all_sensors':
-                    for i in range(5):
-                        visualise_simulation(run_dir, run_img_dir, i, 'Distribution simulation %d - %s' % (i, c),
-                                             net_input=args.net_input)
+                    # for i in range(5):
+                    #     visualise_simulation(run_dir, run_img_dir, i, 'Distribution simulation %d - %s' % (i, c),
+                    #                          net_input=args.net_input)
                     visualise_simulations_comparison(run_dir, run_img_dir, 'Distribution of all simulations - %s' % c,
                                                      net_input=args.net_input)
 

@@ -25,6 +25,7 @@ class ManualController:
         :param state
         :return back, front: response values of the rear and front sensors
         """
+        # FIXME
         sensing = utils.get_input_sensing(self.net_input, state, normalise=False)
 
         front = sensing[2]
