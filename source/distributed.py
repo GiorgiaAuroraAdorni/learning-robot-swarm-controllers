@@ -1,17 +1,19 @@
 import os
-from typing import List, Tuple, Optional, AnyStr
+from typing import AnyStr
 
 import numpy as np
+import pandas as pd
 import torch
+import tqdm
 from torch.utils import data
 from torch.utils.data import TensorDataset
-from tqdm import tqdm
 
+import utils
 from controllers import distributed_controllers
 from generate_simulation_data import GenerateSimulationData as g
 from my_plots import plot_regressor, plot_response, my_histogram, plot_losses, plot_target_distribution
 from networks.distributed_network import DistributedNet
-import utils
+from networks.metrics import StreamingMean, NetMetrics
 
 
 class ThymioState:
@@ -94,27 +96,21 @@ def train_net(epochs: int,
               valid_dataset: data.TensorDataset,
               test_dataset: data.TensorDataset,
               net: torch.nn.Module,
+              metrics_path: AnyStr,
               batch_size: int = 100,
               learning_rate: float = 0.01,
-              training_loss: Optional[List[float]] = None,
-              validation_loss: Optional[List[float]] = None,
-              testing_loss: Optional[List[float]] = None,
-              criterion=torch.nn.MSELoss(),
-              padded=False
-              ) -> Tuple[List[float], List[float], List[float]]:
+              criterion=torch.nn.MSELoss()
+              ) -> NetMetrics:
     """
     :param epochs:
     :param train_dataset:
     :param valid_dataset:
     :param test_dataset:
     :param net:
+    :param metrics_path:
     :param batch_size:
     :param learning_rate:
-    :param training_loss:
-    :param validation_loss:
-    :param testing_loss:
     :param criterion:
-    :param padded:
     :return training_loss, validation_loss, testing_loss:
 
     """
@@ -126,79 +122,61 @@ def train_net(epochs: int,
     optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
     optimizer.zero_grad()
 
-    if training_loss is None:
-        training_loss = []
+    # Support objects for metrics and validation
+    training_loss = StreamingMean()
 
-    if validation_loss is None:
-        validation_loss = []
+    t = tqdm.trange(epochs, unit='epoch')
+    metrics = NetMetrics(t, metrics_path)
 
-    if testing_loss is None:
-        testing_loss = []
-
-    n_train = len(train_dataset)
-    n_valid = len(valid_dataset)
-    n_test = len(test_dataset)
-
-    for _ in tqdm(range(epochs)):
-        avg_loss = 0.0
+    for _ in tqdm.tqdm(range(epochs)):
+        # Re-enable training mode, which is disabled by the evaluation
+        # Turns on dropout, batch normalization updates, …
+        net.train()
+        training_loss.reset()
 
         for n, (inputs, labels) in enumerate(train_minibatch):
             output = net(inputs)
-            # padded is used when in the simulations are different number of thymio
-            if padded:
-                losses = []
-                for out, label in zip(output, labels):
-                    label = unmask(label)
-                    loss = criterion(out, label)
-                    losses.append(loss)
-                loss = torch.mean(torch.stack(losses))
-            else:
-                loss = criterion(output, labels)
+
+            loss = criterion(output, labels)
 
             loss.backward()
 
-            avg_loss += float(loss) * batch_size
             optimizer.step()
             optimizer.zero_grad()
 
-        training_loss.append(avg_loss / n_train)
-        print(avg_loss / n_train)
+            # Accumulate metrics across batches
+            training_loss.update(loss, inputs.shape[0])
 
-        validate_net(n_valid, net, valid_minibatch, validation_loss, batch_size, padded, criterion)
+        validation_loss = validate_net(net, valid_minibatch, criterion)
 
-    return training_loss, validation_loss, testing_loss
+        # Record the metrics for the current epoch
+        metrics.update(training_loss.mean, validation_loss)
+
+    return metrics
 
 
-def validate_net(n_valid, net, valid_minibatch, validation_loss, batch_size, padded=False,
-                 criterion=torch.nn.MSELoss()):
+def validate_net(net, valid_minibatch, criterion=torch.nn.MSELoss()):
     """
-    :param n_valid:
     :param net:
     :param valid_minibatch:
-    :param validation_loss:
-    :param batch_size
-    :param padded:
     :param criterion:
-    :return outputs:
+    :return validation_loss.mean:
     """
-    avg_loss = 0.0
+
+    # Support objects for metrics and validation
+    validation_loss = StreamingMean()
 
     with torch.no_grad():
         net.eval()
+        validation_loss.reset()
+
         for inputs, labels in valid_minibatch:
             t_output = net(inputs)
-            # padded is used when in the simulations are different number of thymio
-            if padded:
-                losses = []
-                for out, label in zip(inputs, labels):
-                    label = unmask(label)
-                    loss = criterion(out, label)
-                    losses.append(loss)
-                loss = torch.mean(torch.stack(losses))
-            else:
-                loss = criterion(t_output, labels)
-            avg_loss += float(loss) * batch_size
-        validation_loss.append(avg_loss / n_valid)
+
+            loss = criterion(t_output, labels)
+            validation_loss.update(loss, inputs.shape[0])
+
+    return validation_loss.mean
 
 
 def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid):
@@ -389,7 +367,7 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
     x = np.linspace(0, range, num=simulations)
     control_predictions = []
 
-    for simulation in tqdm(x):
+    for simulation in tqdm.tqdm(x):
         g.init_positions(myts, net_input, avg_gap, variate_pose=True, x=simulation)
 
         world.step(dt=0.1)
@@ -446,25 +424,25 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
         d_net = DistributedNet(x_train.shape[1])
         d_training_loss, d_validation_loss, d_testing_loss = [], [], []
 
-        training_loss, validation_loss, testing_loss = train_net(epochs=50,
-                                                                 train_dataset=t_d_train,
-                                                                 valid_dataset=t_d_valid,
-                                                                 test_dataset=t_d_test,
-                                                                 net=d_net,
-                                                                 training_loss=d_training_loss,
-                                                                 validation_loss=d_validation_loss,
-                                                                 testing_loss=d_testing_loss)
-
-        np.save(file_losses, [training_loss, validation_loss, testing_loss])
+        metrics = train_net(epochs=50,
+                            train_dataset=t_d_train,
+                            valid_dataset=t_d_valid,
+                            test_dataset=t_d_test,
+                            net=d_net,
+                            metrics_path=file_losses)
 
         torch.save(d_net, '%s/%s' % (model_dir, model))
+        # FIXME
+        metrics.finalize()
     else:
         d_net = torch.load('%s/%s' % (model_dir, model))
 
     if plots:
         print('\nGenerating plots for %s…' % model)
         # Load the metrics
-        training_loss, validation_loss, testing_loss = np.load(file_losses, allow_pickle=True)
+        losses = pd.read_pickle(file_losses)
+        training_loss = losses.loc[:, 't. loss']
+        validation_loss = losses.loc[:, 'v. loss']
 
         prediction = d_net(torch.FloatTensor(x_valid))
 

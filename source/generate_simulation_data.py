@@ -332,13 +332,14 @@ class GenerateSimulationData:
         cls.save_simulation(complete_runs, runs, run_dir)
 
     @classmethod
-    def check_dataset_conformity(cls, runs_dir, runs_img, dataset, net_input):
+    def check_dataset_conformity(cls, runs_dir, runs_img, title, dataset, net_input):
         """
         Generate a scatter plot to check the conformity of the dataset.
         The plot will show the distribution of the input sensing, in particular, as the difference between the front
         sensor and the mean of the rear sensors, with respect to the output control of the datasets.
         :param runs_dir: directory containing the simulation
         :param runs_img: directory containing the simulation images
+        :param title:
         :param dataset
         :param net_input
         """
@@ -349,7 +350,6 @@ class GenerateSimulationData:
         x, y, _, _ = utils.extract_input_output(runs_sub, net_input)
 
         #  Generate a scatter plot to check the conformity of the dataset
-        title = 'Dataset %s' % dataset
         file_name = 'dataset-scatterplot-%s' % dataset
 
         x_label = 'sensing (%s)' % net_input

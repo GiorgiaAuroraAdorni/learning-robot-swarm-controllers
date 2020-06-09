@@ -108,18 +108,23 @@ if __name__ == '__main__':
 
                 if not args.net_input == 'all_sensors':
                     for i in range(5):
-                        visualise_simulation(run_dir, run_img_dir, i, 'Distribution simulation %d - %s' % (i, c),
+                        visualise_simulation(run_dir, run_img_dir, i,
+                                             'Simulation run %d - %s avg_gap-%s %s' % (i, args.net_input, args.avg_gap, c),
                                              net_input=args.net_input)
-                    visualise_simulations_comparison(run_dir, run_img_dir, 'Distribution of all simulations - %s' % c,
+                    visualise_simulations_comparison(run_dir, run_img_dir,
+                                                     'All simulation run - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
                                                      net_input=args.net_input)
 
-                plot_distance_from_goal(run_dir, run_img_dir, 'Robot distance from goal - %s' % c,
+                plot_distance_from_goal(run_dir, run_img_dir,
+                                        'Distance from goal - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
                                         'distances-from-goal-%s' % c)
 
             if args.check_dataset:
                 from generate_simulation_data import GenerateSimulationData as sim
                 print('\nChecking conformity of %s %s dataset…' % (d, c))
-                sim.check_dataset_conformity(run_dir, run_img_dir, c, net_input=args.net_input)
+                sim.check_dataset_conformity(run_dir, run_img_dir,
+                                             'Dataset - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
+                                             c, net_input=args.net_input)
 
             if args.train_net or args.plots_net:
                 from distributed import run_distributed
