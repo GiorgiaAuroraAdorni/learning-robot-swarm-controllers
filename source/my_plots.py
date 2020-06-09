@@ -107,16 +107,13 @@ def get_position_distances(runs_sub):
     return position_distances
 
 
-def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename, net_input):
+def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename):
     """
 
-    :param runs_dir_omniscient:
-    :param runs_dir_manual:
-    :param runs_dir_learned:
+    :param dataset_folders:
     :param img_dir:
     :param title:
     :param filename:
-    :param net_input:
     """
 
     utils.check_dir(img_dir)

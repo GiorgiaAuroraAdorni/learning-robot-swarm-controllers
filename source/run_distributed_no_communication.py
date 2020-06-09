@@ -145,4 +145,5 @@ if __name__ == '__main__':
         dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned]
 
         plot_compared_distance_from_goal(dataset_folders, runs_img_dir,
-                                         'Robot distances from goal', 'distances-from-goal', net_input=args.net_input)
+                                         'Robot distances from goal - %s avg_gap-%s' % (args.net_input, args.avg_gap),
+                                         'distances-from-goal')
