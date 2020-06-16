@@ -1,5 +1,9 @@
-from tqdm import tqdm
+# metrics.py
+# © 2020 Giorgia Adorni and Elia Cereda
+# Adapted from https://github.com/GiorgiaAuroraAdorni/learning-relative-interactions-through-imitation
+
 import pandas as pd
+from tqdm import tqdm
 
 
 class StreamingMean:
@@ -25,6 +29,9 @@ class StreamingMean:
         self._mean += weight / self._weights * (sample - self._mean)
 
     def reset(self):
+        """
+
+        """
         self._weights = 0.0
         self._mean = 0.0
 

@@ -422,7 +422,6 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     if train:
         print('\nTraining %s…' % model)
         d_net = DistributedNet(x_train.shape[1])
-        d_training_loss, d_validation_loss, d_testing_loss = [], [], []
 
         metrics = train_net(epochs=50,
                             train_dataset=t_d_train,
@@ -432,7 +431,6 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
                             metrics_path=file_losses)
 
         torch.save(d_net, '%s/%s' % (model_dir, model))
-        # FIXME
         metrics.finalize()
     else:
         d_net = torch.load('%s/%s' % (model_dir, model))

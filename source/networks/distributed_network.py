@@ -1,7 +1,6 @@
 from typing import TypeVar, Callable, Tuple, Sequence
 
 import torch
-import torch.nn.functional as nn_funct
 
 State = TypeVar('State')
 Sensing = TypeVar('Sensing')
@@ -16,24 +15,26 @@ class DistributedNet(torch.nn.Module):
 
     def __init__(self, input_size):
         super(DistributedNet, self).__init__()
-        self.l1 = torch.nn.Linear(input_size, 64)
-        self.l2 = torch.nn.Linear(64, 1)
+        self.fc1 = torch.nn.Linear(input_size, 42)
+        self.relu = torch.nn.ReLU()
+        self.fc2 = torch.nn.Linear(42, 1)
 
     def forward(self, xs):
         """
 
         :param xs:
-        :return:
+        :return output
         """
-        # ys = nn_funct.torch.tanh(self.l1(xs))
-        ys = nn_funct.torch.sigmoid(self.l1(xs))
-        # ys2 = nn_funct.torch.linear(self.l2(ys))
-        return self.l2(ys)
+        hidden = self.fc1(xs)
+        relu = self.relu(hidden)
+        output = self.fc2(relu)
+
+        return output
 
     def controller(self) -> Controller:
         """
 
-        :return:
+        :return f
         """
 
         def f(sensing: Sequence[Sensing]) -> Tuple[Sequence[Control]]:

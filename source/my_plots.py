@@ -1,13 +1,15 @@
+import math
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.linear_model import LinearRegression
+
+import utils
 
 sns.set(style="white")
-from sklearn.linear_model import LinearRegression
-import utils
 
 
 def make_space_above(axes, topmargin=1):
@@ -98,12 +100,19 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
 
 
 def get_position_distances(runs_sub):
+    """
+
+    :param runs_sub:
+    :return position_distances:
+    """
     v = utils.cartesian_product(runs_sub.timestep.unique(), runs_sub.run.unique(), runs_sub.name.unique())
     idx = pd.MultiIndex.from_arrays([v[:, 0], v[:, 1], v[:, 2]])
+
     position_distances = runs_sub.set_index(['timestep', 'run', 'name']).reindex(idx)
     position_distances.index.names = ['timestep', 'run', 'name']
     position_distances = position_distances.reset_index()
     position_distances = position_distances.fillna(0).drop(columns='run')
+
     return position_distances
 
 
@@ -233,6 +242,58 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     save_visualisation(filename, img_dir, make_space=True, axes=axes)
 
 
+def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_input):
+    """
+
+    :param runs_dir:
+    :param img_dir:
+    :param simulation:
+    :param title:
+    :param net_input:
+    """
+    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
+                     'prox_comm', 'all_sensors']]
+
+    run = runs_sub[runs_sub['run'] == simulation]
+    target = np.array(run.apply(lambda row: list(row.goal_position)[0], axis=1))
+
+    max_time_step = run['timestep'].max()
+    time_steps = np.arange(max_time_step)
+
+    run_myt2 = run[run['name'] == 'myt2'].drop(columns='name').reset_index()
+    _, myt2_control, run_myt2, proximity_sensors = utils.extract_input_output(run_myt2, net_input)
+
+    plt.figure(constrained_layout=True)
+    fig, axes = plt.subplots(nrows=2, figsize=(6, 7), sharex=True)
+
+    # Plot the evolution of the positions of all robots over time
+    axes[0].set_ylabel('x position', fontsize=11)
+    axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
+    for i, name in enumerate(run.name.unique()):
+        x = np.array(run[run['name'] == name].apply(lambda row: list(row.position)[0], axis=1))
+        axes[0].plot(time_steps, x, label='myt%d' % (i + 1))
+    axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23),
+                   ncol=len(run.name.unique()), title="robot")
+    axes[0].set_yticks(target)
+    axes[0].grid()
+
+    # Plot, for a given robot, the evolution of control over time
+    axes[1].set_ylabel('control', fontsize=11)
+    axes[1].set_title('Thymio 2 Control', weight='bold', fontsize=12)
+    axes[1].plot(time_steps, myt2_control, color='black')
+    axes[1].grid()
+
+    fig.tight_layout()
+    fig.subplots_adjust(hspace=0.4)
+
+    plt.xlabel('timestep', fontsize=11)
+    fig.suptitle(title, fontsize=14, weight='bold')
+
+    filename = 'plot-simulation-%d' % simulation
+    save_visualisation(filename, img_dir, make_space=True, axes=axes)
+
+
 def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     """
     :param runs_dir:
@@ -254,7 +315,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input)
 
     plt.figure()
-    fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
+    fig, axes = plt.subplots(nrows=3, sharex=True)
 
     # Plot the evolution of the positions of all robots over time
     axes[0].set_ylabel('x position', fontsize=11)
@@ -313,6 +374,70 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     save_visualisation(filename, img_dir, make_space=True, axes=axes)
 
 
+def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_input):
+    """
+    :param runs_dir:
+    :param img_dir:
+    :param title
+    :param net_input:
+    """
+    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
+                     'prox_comm', 'all_sensors']]
+    runs['x_position'] = runs.apply(lambda row: list(row.position)[0], axis=1)
+
+    max_time_step = runs_sub['timestep'].max()
+    time_steps = np.arange(max_time_step)
+
+    target = np.array(runs_sub[runs_sub['run'] == 0].apply(lambda row: list(row.goal_position)[0], axis=1))
+
+    runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
+    _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input)
+
+    plt.figure(constrained_layout=True)
+    fig, axes = plt.subplots(nrows=2, figsize=(6, 7), sharex=True)
+
+    # Plot the evolution of the positions of all robots over time
+    axes[0].set_ylabel('x position', fontsize=11)
+    axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
+    for name in runs.name.unique():
+        runs_myt = runs[runs['name'] == name].reset_index()
+        mean_x_positions = np.array(runs_myt.groupby('timestep').x_position.mean())
+        std_x_positions = np.array(runs_myt.groupby('timestep').x_position.std())
+
+        axes[0].plot(time_steps, mean_x_positions, label=name)
+        axes[0].fill_between(time_steps, mean_x_positions - std_x_positions,
+                             mean_x_positions + std_x_positions, alpha=0.2)
+
+    axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23),
+                   ncol=len(runs.name.unique()), title="robot")
+    axes[0].set_yticks(target)
+    axes[0].grid()
+
+    # Plot, for a given robot, the evolution of control over time
+    axes[1].set_ylabel('control', fontsize=11)
+    axes[1].set_title('Thymio 2 Control', weight='bold', fontsize=12)
+
+    mean_myt2_control = np.array(runs_myt2.groupby('timestep').motor_left_target.mean())
+    std_myt2_control = np.array(runs_myt2.groupby('timestep').motor_left_target.std())
+
+    axes[1].plot(time_steps, mean_myt2_control, color='black')
+    axes[1].fill_between(time_steps,
+                         mean_myt2_control - std_myt2_control,
+                         mean_myt2_control + std_myt2_control,
+                         alpha=0.2)
+    axes[1].grid()
+
+    plt.xlabel('timestep', fontsize=11)
+    fig.suptitle(title, fontsize=14, weight='bold')
+
+    fig.tight_layout()
+    fig.subplots_adjust(hspace=0.4)
+
+    filename = 'compare-simulation'
+    save_visualisation(filename, img_dir, make_space=True, axes=axes)
+
+
 def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
     """
 
@@ -333,6 +458,9 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
     plt.plot(x, valid_loss, label='validation')
 
     plt.ylim(0, max(min(train_loss), min(valid_loss)) + 50)
+
+    xint = range(0, math.ceil(max(x)) + 1, 5)
+    plt.xticks(xint)
 
     plt.legend()
     plt.title(title, weight='bold', fontsize=12)

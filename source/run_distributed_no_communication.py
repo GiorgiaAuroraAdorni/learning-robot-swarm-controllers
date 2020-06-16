@@ -103,7 +103,9 @@ if __name__ == '__main__':
                                             myt_quantity=myt_quantity, args=args)
 
             if args.plots_dataset:
-                from my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal
+                from my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal, \
+                                     visualise_simulation_all_sensors, visualise_simulations_comparison_all_sensors
+
                 print('Generating plots for %s %s controller…' % (d, c))
 
                 if not args.net_input == 'all_sensors':
@@ -114,6 +116,14 @@ if __name__ == '__main__':
                     visualise_simulations_comparison(run_dir, run_img_dir,
                                                      'All simulation run - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
                                                      net_input=args.net_input)
+                else:
+                    for i in range(5):
+                        visualise_simulation_all_sensors(run_dir, run_img_dir, i,
+                                                         'Simulation run %d - %s avg_gap-%s %s' % (i, args.net_input, args.avg_gap, c),
+                                                         net_input=args.net_input)
+                    visualise_simulations_comparison_all_sensors(run_dir, run_img_dir,
+                                                                 'All simulation run - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
+                                                                 net_input=args.net_input)
 
                 plot_distance_from_goal(run_dir, run_img_dir,
                                         'Distance from goal - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),

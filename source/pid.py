@@ -1,3 +1,8 @@
+# pid.py
+# © 2020 Alessandro Giusti
+# Adapted from https://github.com/alessandro-giusti/teaching-notebooks/blob/master/robotics/04%20closedloopcontrol.ipynb
+
+
 class PID:
     def __init__(self, Kp, Ki, Kd, min_out=-float("inf"), max_out=float("inf")):
         self.Kp = Kp
