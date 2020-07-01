@@ -35,56 +35,8 @@ class SNet(nn.Module):
         self.l1 = nn.Linear(4, 10)
         self.l2 = nn.Linear(10, 2)
 
-    def forward(self, input):
-        ys = F.torch.tanh(self.l1(input))
-        return self.l2(ys)
-
-
-class SNetL(nn.Module):
-    def __init__(self):
-        super(SNetL, self).__init__()
-        self.l1 = nn.Linear(4, 10)
-        self.l2 = nn.Linear(10, 2)
-        self.out = torch.nn.Sigmoid()
-
-    def forward(self, input):
-        ys = F.torch.tanh(self.l1(input))
-        ys2 = self.out(self.l2(ys))
-        return ys2
-
-
-class SNetLnoSensing(nn.Module):
-    def __init__(self):
-        super(SNetLnoSensing, self).__init__()
-        self.l1 = nn.Linear(2, 10)
-        self.l2 = nn.Linear(10, 2)
-        self.out = torch.nn.Sigmoid()
-
-    def forward(self, input):
-        ys = F.torch.tanh(self.l1(input))
-        ys2 = self.out(self.l2(ys))
-        return ys2
-
-
-class S2Net(nn.Module):
-    def __init__(self):
-        super(S2Net, self).__init__()
-        self.l1 = nn.Linear(4, 10)
-        self.l2 = nn.Linear(10, 3)
-
-    def forward(self, input):
-        ys = F.torch.tanh(self.l1(input))
-        return self.l2(ys)
-
-
-class SNetLeft(nn.Module):
-    def __init__(self):
-        super(SNetLeft, self).__init__()
-        self.l1 = nn.Linear(2, 10)
-        self.l2 = nn.Linear(10, 2)
-
-    def forward(self, input):
-        ys = F.torch.tanh(self.l1(input))
+    def forward(self, input_):
+        ys = F.torch.tanh(self.l1(input_))
         return self.l2(ys)
 
 
