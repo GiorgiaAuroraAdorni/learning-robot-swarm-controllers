@@ -41,7 +41,7 @@ def directory_for_model(args):
     :param args:
     :return:
     """
-    model_dir = os.path.join(args.models_folder, args.model_type, args.model)
+    model_dir = os.path.join(args.models_folder, args.task, args.model_type, args.model)
 
     model_img_dir = os.path.join(model_dir, 'images')
     check_dir(model_img_dir)
