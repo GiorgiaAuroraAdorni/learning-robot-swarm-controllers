@@ -5,7 +5,7 @@ from statistics import mean
 import numpy as np
 import pandas as pd
 
-import distributed
+import train_distributed
 from distributed_thymio import DistributedThymio2
 
 
@@ -164,7 +164,7 @@ def get_input_sensing(in_label, myt, normalise=True):
     :return sensing:
     """
     if isinstance(myt, dict):
-        myt = distributed.ThymioState(myt)
+        myt = train_distributed.ThymioState(myt)
     elif isinstance(myt, DistributedThymio2):
         if len(myt.prox_comm_events) == 0:
             prox_comm = {'sender': {'intensities': [0, 0, 0, 0, 0, 0, 0]}}
@@ -173,7 +173,7 @@ def get_input_sensing(in_label, myt, normalise=True):
 
         state_dict = {'initial_position': myt.initial_position, 'goal_position': myt.goal_position,
                       'prox_values': myt.prox_values, 'prox_comm': prox_comm}
-        myt = distributed.ThymioState(state_dict)
+        myt = train_distributed.ThymioState(state_dict)
 
     if in_label == 'prox_values':
         prox_values = getattr(myt, 'prox_values').copy()
