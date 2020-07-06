@@ -351,8 +351,8 @@ def run_communication(file, runs_dir, model_dir, model_img, model, ds, ds_eval, 
 
     if train:
         print('\nTraining %s…' % model)
-        c_net = CommunicationNet(myt_quantity=3, sync=Sync.sequential)
-        # c_net = ComNet(input, N=5, sync=Sync.sync)
+        c_net = CommunicationNet(myt_quantity=3, sync=Sync.sync)
+        # c_net = ComNet(myt_quantity=3, sync=Sync.sequential)
 
         metrics = train_net(epochs=200,
                             train_dataset=t_c_train,

@@ -48,7 +48,7 @@ class SingleNet(nn.Module):
         #
         self.fc1 = torch.nn.Linear(9, 22)
         self.relu = torch.nn.ReLU()
-        self.fc2 = torch.nn.Linear(22, 1)
+        self.fc2 = torch.nn.Linear(22, 2)
 
     def forward(self, input_):
         """
@@ -89,9 +89,9 @@ def input_from(ss, comm, i):
     :param i:
     :return:
     """
-    return torch.cat((ss[i], comm[i], comm[i + 2]), 0)
-    # FIXME
-    # return torch.cat((ss[i], comm[i:i+1], comm[i+2:i+3]), 0)
+    input_ = torch.cat((ss[i], comm[i].view(1), comm[i + 2].view(1)), 0)
+
+    return input_
 
 
 class CommunicationNet(nn.Module):
@@ -121,8 +121,8 @@ class CommunicationNet(nn.Module):
         if sync == Sync.sync:
             input = torch.stack([self.input_fn(xs, comm, i) for i in range(self.myt_quantity)], 0)
             output = self.single_net(input)
+
             control = output[:, 0]
-            # TODO vedi la matricina
             comm[1:-1] = output[:, 1]
         else:
             # random_sequential

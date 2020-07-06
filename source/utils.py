@@ -342,7 +342,7 @@ def extract_input_output(runs, in_label, input_combination=True, communication=F
             timesteps = np.sum(tmp) - tmp.shape[0]
 
             input_ = np.empty(shape=(timesteps, 2, 3, 7), dtype='float32')
-            output_ = np.empty(shape=(timesteps, 2, 3, 1), dtype='float32')
+            output_ = np.empty(shape=(timesteps, 2, 3), dtype='float32')
 
             init_counter = 0
             for i in simulations:
@@ -351,7 +351,7 @@ def extract_input_output(runs, in_label, input_combination=True, communication=F
                 in_run_ = np.array(run[columns])
                 in_run_ = in_run_.reshape([-1, 3, 7])
                 out_run_ = np.array(run.motor_left_target)
-                out_run_ = out_run_.reshape([-1, 3, 1])
+                out_run_ = out_run_.reshape([-1, 3])
 
                 size = in_run_.shape[0] - 1
                 final_counter = init_counter + size
@@ -360,7 +360,7 @@ def extract_input_output(runs, in_label, input_combination=True, communication=F
                 in_array[:, 0, ...] = in_run_[:-1, ...]
                 in_array[:, 1, ...] = in_run_[1:, ...]
 
-                out_array = np.empty(shape=(size, 2, 3, 1), dtype='float32')
+                out_array = np.empty(shape=(size, 2, 3), dtype='float32')
                 out_array[:, 0, ...] = out_run_[:-1, ...]
                 out_array[:, 1, ...] = out_run_[1:, ...]
 
