@@ -459,7 +459,7 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
 
     plt.ylim(0, max(min(train_loss), min(valid_loss)) + 50)
 
-    xint = range(0, math.ceil(max(x)) + 1, 5)
+    xint = range(0, math.ceil(max(x)) + 1, max(x)//10)
     plt.xticks(xint)
 
     plt.legend()
@@ -588,7 +588,7 @@ def plot_response(x, y, x_label, img_dir, title, filename, index=None):
     plt.xlabel(x_label, fontsize=11)
     plt.ylabel('control', fontsize=11)
 
-    plt.plot(x, y)
+    plt.plot(x.tolist(), y)
 
     plt.title(title, weight='bold', fontsize=12)
 

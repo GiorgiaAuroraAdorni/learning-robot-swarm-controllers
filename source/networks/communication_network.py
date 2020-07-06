@@ -119,7 +119,7 @@ class CommunicationNet(nn.Module):
         :return control:
         """
         if sync == Sync.sync:
-            input = torch.stack([self.input_fn(xs, comm, i) for i in range(self.myt_quantity)], 0)
+            input = torch.stack([self.input_fn(xs, comm, i) for i in range(xs.shape[0])], 0)
             output = self.single_net(input)
 
             control = output[:, 0]
@@ -190,6 +190,7 @@ class CommunicationNet(nn.Module):
             :return:
             """
             with torch.no_grad():
+                sensing = [sensing]
                 sensing = torch.FloatTensor(sensing)
                 control = self.step(sensing, comm, sync=sync).numpy()
                 return control, comm[1:-1].clone().numpy().flatten()

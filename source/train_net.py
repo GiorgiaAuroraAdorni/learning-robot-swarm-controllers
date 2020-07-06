@@ -111,13 +111,12 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     :param communication
     :param net_input
     """
-    train_indices, validation_indices, test_indices = indices
+    train_indices, validation_indices, test_indices = indices[1]
 
     # Split the dataset also defining input and output, using the indices
     x_train, x_valid, x_test, \
-    y_train, y_valid, y_test, \
-    sensing, groundtruth = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
-                                                         test_indices, net_input, communication)
+    y_train, y_valid, y_test = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
+                                                             test_indices, net_input, communication)
 
     # Generate the tensors
     test, train, valid = utils.from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test)

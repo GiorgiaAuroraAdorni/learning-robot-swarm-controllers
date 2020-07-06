@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
             if args.model_type == 'communication':
                 communication = True
-            elif args.model_type == 'distributes':
+            elif args.model_type == 'distributed':
                 communication = False
             else:
                 raise ValueError('Invalid value for model_type')

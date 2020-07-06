@@ -9,6 +9,7 @@ from torch.utils.data import TensorDataset
 
 import train_net
 from distributed_thymio import DistributedThymio2
+from evaluate_net import ThymioState
 
 
 def check_dir(directory):
@@ -166,7 +167,7 @@ def get_input_sensing(in_label, myt, normalise=True):
     :return sensing:
     """
     if isinstance(myt, dict):
-        myt = train_net.ThymioState(myt)
+        myt = ThymioState(myt)
     elif isinstance(myt, DistributedThymio2):
         if len(myt.prox_comm_events) == 0:
             prox_comm = {'sender': {'intensities': [0, 0, 0, 0, 0, 0, 0]}}
@@ -175,7 +176,7 @@ def get_input_sensing(in_label, myt, normalise=True):
 
         state_dict = {'initial_position': myt.initial_position, 'goal_position': myt.goal_position,
                       'prox_values': myt.prox_values, 'prox_comm': prox_comm}
-        myt = train_net.ThymioState(state_dict)
+        myt = ThymioState(state_dict)
 
     if in_label == 'prox_values':
         prox_values = getattr(myt, 'prox_values').copy()
@@ -253,29 +254,25 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     :param test_indices
     :param net_input
     :param communication
-    :return: train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input_, output_
+    :return: train_sample, valid_sample, test_sample, train_target, valid_target, test_target
     """
 
     runs = load_dataset(runs_dir, 'simulation.pkl')
 
     if communication:
         runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
-        input_, output_ = [], []
     else:
         runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
-        input_, output_, _, _ = extract_input_output(runs_sub, net_input, input_combination=False, communication=True)
 
     train_runs = runs_sub[runs_sub['run'].isin(train_indices)].reset_index()
     valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
     test_runs = runs_sub[runs_sub['run'].isin(test_indices)].reset_index()
 
-    train_sample, train_target, _, _ = extract_input_output(train_runs, net_input, input_combination=False, communication=True)
-    valid_sample, valid_target, _, _ = extract_input_output(valid_runs, net_input, input_combination=False, communication=True)
-    test_sample, test_target, _, _ = extract_input_output(test_runs, net_input, input_combination=False, communication=True)
+    train_sample, train_target, _, _ = extract_input_output(train_runs, net_input, communication, input_combination=False)
+    valid_sample, valid_target, _, _ = extract_input_output(valid_runs, net_input, communication, input_combination=False)
+    test_sample, test_target, _, _ = extract_input_output(test_runs, net_input, communication, input_combination=False)
 
-    return train_sample, valid_sample, test_sample, \
-           train_target, valid_target, test_target, \
-           input_, output_
+    return train_sample, valid_sample, test_sample, train_target, valid_target, test_target
 
 
 def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_target, test_sample, test_target):
@@ -319,7 +316,7 @@ def get_input_columns(in_label):
     return columns
 
 
-def extract_input_output(runs, in_label, input_combination=True, communication=False):
+def extract_input_output(runs, in_label, communication=False, input_combination=True):
     """
     Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
     sensors [array of 7 floats].

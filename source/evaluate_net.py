@@ -15,7 +15,8 @@ class ThymioState:
             setattr(self, k, v)
 
 
-def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid):
+def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid,
+                  communication):
     """
     :param model_img
     :param dataset:
@@ -26,6 +27,7 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
     :param validation_loss:
     :param x_train:
     :param y_valid:
+    :param communication
     """
     y_p = prediction.squeeze().tolist()
     y_g = y_valid.squeeze().tolist()
@@ -45,22 +47,30 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
         title = 'Sensing Validation Set %s' % model
         file_name = 'histogram-sensing-validation-%s' % model
 
-        x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
+        if communication:
+            x_train = x_train.reshape(-1, 7)
+            x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
+        else:
+            x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
+
         label = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
         my_histogram(x, 'sensing (%s)' % net_input, model_img, title, file_name, label)
 
     # Evaluate prediction of the learned controller to the omniscient groundtruth
     # Plot R^2 of the regressor between prediction and ground truth on the validation set
-    # title = 'Regression learned %s vs %s' % dataset
     title = 'Regression %s vs %s' % (model, dataset)
     file_name = 'regression-%s-vs-%s' % (model, dataset)
 
     x_label = 'groundtruth'
     y_label = 'prediction'
+    if communication:
+        y_g = np.reshape(np.array(y_g).flat, [-1])
+        y_p = np.reshape(np.array(y_p).flat, [-1])
+
     plot_regressor(y_g, y_p, x_label, y_label, model_img, title, file_name)
 
 
-def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction):
+def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction, communication):
     """
 
     :param model_dir
@@ -76,14 +86,16 @@ def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction):
     title = 'Regression %s vs %s' % (ds_eval, ds)
     file_name = 'regression-%svs%s' % (ds_eval, ds)
 
-    groundtruth = np.array(groundtruth).flatten()
-    prediction = np.array(prediction).flatten()
+    if not communication:
+        groundtruth = np.array(groundtruth).flatten()
+        prediction = np.array(prediction).flatten()
+
     x_label = 'groundtruth'
     y_label = 'prediction'
     plot_regressor(groundtruth, prediction, x_label, y_label, model_img, title, file_name)
 
 
-def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input):
+def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input, communication):
     """
 
     :param model_dir:
@@ -92,7 +104,12 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
     :param groundtruth:
     :param sensing: used to obtain the prediction
     :param net_input
+    :param communication
     """
+    if communication:
+        groundtruth = np.reshape(np.array(groundtruth).flat, [-1])
+        sensing = np.reshape(np.array(sensing).flat, [-1, 7])
+
     controller_predictions = []
     controller = distributed_controllers.ManualController(net_input=net_input)
 
@@ -121,7 +138,7 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
 
         controller_predictions.append(control)
 
-    controller_plots(model_dir, ds, ds_eval, groundtruth, controller_predictions)
+    controller_plots(model_dir, ds, ds_eval, groundtruth, controller_predictions, communication)
 
 
 def generate_sensing():
@@ -237,12 +254,11 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     print('\nGenerating plots for %s…' % model)
     net = torch.load('%s/%s' % (model_dir, model))
 
-    train_indices, validation_indices, test_indices = indices
+    train_indices, validation_indices, test_indices = indices[1]
 
     x_train, x_valid, x_test, \
-    y_train, y_valid, y_test, \
-    sensing, groundtruth = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
-                                                         test_indices, net_input, communication)
+    y_train, y_valid, y_test = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
+                                                             test_indices, net_input, communication)
 
     # Load the metrics
     losses = pd.read_pickle(file_losses)
@@ -251,24 +267,26 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
 
     prediction = net(torch.FloatTensor(x_valid))
 
-    network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid)
+    # FIXME
+    # network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication)
 
     # Evaluate prediction of the distributed controller with the omniscient groundtruth
-    evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
+    # evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication)
 
-    if not net_input == 'all_sensors':
-        # Evaluate the learned controller by passing a specific input sensing configuration
-        x, s = generate_sensing()
-        sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
-        index = 2
+    if not communication:
+        if not net_input == 'all_sensors':
+            # Evaluate the learned controller by passing a specific input sensing configuration
+            x, s = generate_sensing()
+            sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
+            index = 2
+    
+            evaluate_net(model_img, model, net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
+                         'center proximity sensor')
 
-        evaluate_net(model_img, model, net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
-                     'center proximity sensor')
+            index = -1
+            sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
+            evaluate_net(model_img, model, net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
+                         'rear proximity sensors')
 
-        index = -1
-        sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
-        evaluate_net(model_img, model, net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
-                     'rear proximity sensors')
-
-    # Evaluate the learned controller by passing a specific initial position configuration
-    test_controller_given_init_positions(model_img, net, model, net_input, avg_gap)
+        # Evaluate the learned controller by passing a specific initial position configuration
+        test_controller_given_init_positions(model_img, net, model, net_input, avg_gap)
