@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 from torch.utils.data import TensorDataset
 
-import train_distributed
+import train_net
 from distributed_thymio import DistributedThymio2
 
 
@@ -166,7 +166,7 @@ def get_input_sensing(in_label, myt, normalise=True):
     :return sensing:
     """
     if isinstance(myt, dict):
-        myt = train_distributed.ThymioState(myt)
+        myt = train_net.ThymioState(myt)
     elif isinstance(myt, DistributedThymio2):
         if len(myt.prox_comm_events) == 0:
             prox_comm = {'sender': {'intensities': [0, 0, 0, 0, 0, 0, 0]}}
@@ -175,7 +175,7 @@ def get_input_sensing(in_label, myt, normalise=True):
 
         state_dict = {'initial_position': myt.initial_position, 'goal_position': myt.goal_position,
                       'prox_values': myt.prox_values, 'prox_comm': prox_comm}
-        myt = train_distributed.ThymioState(state_dict)
+        myt = train_net.ThymioState(state_dict)
 
     if in_label == 'prox_values':
         prox_values = getattr(myt, 'prox_values').copy()
@@ -219,6 +219,30 @@ def get_key_value_of_nested_dict(nested_dict):
             rv.append((outer_key, value))
             values.append(value)
     return rv, values
+
+
+def prepare_dataset(run_dir, split):
+    """
+    :param run_dir
+    :param split
+    :return file, indices
+    """
+    file = os.path.join(run_dir, 'dataset_split.npy')
+    # Uncomment the following line to generate a new dataset split
+
+    if split:
+        dataset_split(file)
+
+    # Load the indices
+    dataset = np.load(file)
+    n_train = 600
+    n_validation = 800
+    train_indices, validation_indices, test_indices = dataset[:n_train], dataset[n_train:n_validation], \
+                                                      dataset[n_validation:]
+
+    indices = [train_indices, validation_indices, test_indices]
+
+    return file, indices
 
 
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False):

@@ -1,18 +1,12 @@
-import os
-from typing import AnyStr
-
 import numpy as np
 import pandas as pd
 import torch
 import tqdm
-from torch.utils import data
 
 import utils
 from controllers import distributed_controllers
 from generate_simulation_data import GenerateSimulationData as g
 from my_plots import plot_regressor, plot_response, my_histogram, plot_losses, plot_target_distribution
-from networks.communication_network import Sync, CommunicationNet
-from networks.metrics import StreamingMean, NetMetrics
 
 
 class ThymioState:
@@ -21,101 +15,13 @@ class ThymioState:
             setattr(self, k, v)
 
 
-def train_net(epochs: int,
-              train_dataset: data.TensorDataset,
-              valid_dataset: data.TensorDataset,
-              test_dataset: data.TensorDataset,
-              net: torch.nn.Module,
-              metrics_path: AnyStr,
-              batch_size: int = 100,
-              learning_rate: float = 0.001,
-              criterion=torch.nn.MSELoss()
-              ) -> NetMetrics:
-    """
-    :param epochs:
-    :param train_dataset:
-    :param valid_dataset:
-    :param test_dataset:
-    :param net:
-    :param metrics_path:
-    :param batch_size:
-    :param learning_rate:
-    :param criterion:
-    :return training_loss, validation_loss, testing_loss:
-
-    """
-
-    train_minibatch = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    valid_minibatch = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
-    test_minibatch = data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
-    optimizer.zero_grad()
-
-    # Support objects for metrics and validation
-    training_loss = StreamingMean()
-
-    t = tqdm.trange(epochs, unit='epoch')
-    metrics = NetMetrics(t, metrics_path)
-
-    for _ in tqdm.tqdm(range(epochs)):
-        # Re-enable training mode, which is disabled by the evaluation
-        # Turns on dropout, batch normalization updates, …
-        net.train()
-        training_loss.reset()
-
-        for n, (inputs, labels) in enumerate(train_minibatch):
-            output = net(inputs)
-
-            loss = criterion(output, labels)
-
-            loss.backward()
-
-            optimizer.step()
-            optimizer.zero_grad()
-
-            # Accumulate metrics across batches
-            training_loss.update(loss, inputs.shape[0])
-
-        validation_loss = validate_net(net, valid_minibatch, criterion)
-
-        # Record the metrics for the current epoch
-        metrics.update(training_loss.mean, validation_loss)
-
-    return metrics
-
-
-def validate_net(net, valid_minibatch, criterion=torch.nn.MSELoss()):
-    """
-    :param net:
-    :param valid_minibatch:
-    :param criterion:
-    :return validation_loss.mean:
-    """
-
-    # Support objects for metrics and validation
-    validation_loss = StreamingMean()
-
-    with torch.no_grad():
-        net.eval()
-        validation_loss.reset()
-
-        for inputs, labels in valid_minibatch:
-            t_output = net(inputs)
-
-            loss = criterion(t_output, labels)
-            validation_loss.update(loss, inputs.shape[0])
-
-    return validation_loss.mean
-
-
 def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid):
     """
     :param model_img
     :param dataset:
     :param model
     :param net_input
-    :param y_p:
+    :param prediction:
     :param training_loss:
     :param validation_loss:
     :param x_train:
@@ -312,89 +218,57 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
     plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
-def run_communication(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split, plots,
-                      net_input, avg_gap):
+def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication, net_input, avg_gap):
     """
-    :param file: file containing the defined indices for the split
+
+    :param indices:
+    :param file_losses:
     :param runs_dir:
-    :param model_dir: directory containing the network data
-    :param model_img: directory containing the images related to network
-    :param model
-    :param ds
-    :param ds_eval
-    :param train
-    :param generate_split
-    :param plots
-    :param net_input
-    :param avg_gap
+    :param model_dir:
+    :param model:
+    :param model_img:
+    :param ds:
+    :param ds_eval:
+    :param communication:
+    :param net_input:
+    :param avg_gap:
+    :return:
     """
-    # Uncomment the following line to generate a new dataset split
-    if generate_split:
-        utils.dataset_split(file)
+    print('\nGenerating plots for %s…' % model)
+    net = torch.load('%s/%s' % (model_dir, model))
 
-    # Load the indices
-    dataset = np.load(file)
-    n_train = 600
-    n_validation = 800
-    train_indices, validation_indices, test_indices = dataset[:n_train], dataset[n_train:n_validation], \
-                                                      dataset[n_validation:]
+    train_indices, validation_indices, test_indices = indices
 
-    # Split the dataset also defining input and output, using the indices
     x_train, x_valid, x_test, \
     y_train, y_valid, y_test, \
-    _, _ = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=True)
+    sensing, groundtruth = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
+                                                         test_indices, net_input, communication)
 
-    # Generate the tensors
-    t_c_test, t_c_train, t_c_valid = utils.from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test)
+    # Load the metrics
+    losses = pd.read_pickle(file_losses)
+    training_loss = losses.loc[:, 't. loss']
+    validation_loss = losses.loc[:, 'v. loss']
 
-    file_losses = os.path.join(model_dir, 'losses.npy')
+    prediction = net(torch.FloatTensor(x_valid))
 
-    if train:
-        print('\nTraining %s…' % model)
-        c_net = CommunicationNet(myt_quantity=3, sync=Sync.sync)
-        # c_net = ComNet(myt_quantity=3, sync=Sync.sequential)
+    network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid)
 
-        metrics = train_net(epochs=200,
-                            train_dataset=t_c_train,
-                            valid_dataset=t_c_valid,
-                            test_dataset=t_c_test,
-                            batch_size=10,
-                            learning_rate=0.0001,
-                            net=c_net,
-                            metrics_path=file_losses)
+    # Evaluate prediction of the distributed controller with the omniscient groundtruth
+    evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
 
-        torch.save(c_net, '%s/%s' % (model_dir, model))
-        metrics.finalize()
-    else:
-        d_net = torch.load('%s/%s' % (model_dir, model))
+    if not net_input == 'all_sensors':
+        # Evaluate the learned controller by passing a specific input sensing configuration
+        x, s = generate_sensing()
+        sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
+        index = 2
 
-    if plots:
-        print('\nGenerating plots for %s…' % model)
-        # Load the metrics
-        losses = pd.read_pickle(file_losses)
-        training_loss = losses.loc[:, 't. loss']
-        validation_loss = losses.loc[:, 'v. loss']
+        evaluate_net(model_img, model, net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
+                     'center proximity sensor')
 
-        prediction = d_net(torch.FloatTensor(x_valid))
+        index = -1
+        sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
+        evaluate_net(model_img, model, net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
+                     'rear proximity sensors')
 
-        network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid)
-
-        # Evaluate prediction of the distributed controller with the omniscient groundtruth
-        # evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
-
-        if not net_input == 'all_sensors':
-            # Evaluate the learned controller by passing a specific input sensing configuration
-            x, s = generate_sensing()
-            sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
-            index = 2
-
-            evaluate_net(model_img, model, d_net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
-                         'center proximity sensor')
-
-            index = -1
-            sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
-            evaluate_net(model_img, model, d_net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
-                         'rear proximity sensors')
-
-        # Evaluate the learned controller by passing a specific initial position configuration
-        test_controller_given_init_positions(model_img, d_net, model, net_input, avg_gap)
+    # Evaluate the learned controller by passing a specific initial position configuration
+    test_controller_given_init_positions(model_img, net, model, net_input, avg_gap)

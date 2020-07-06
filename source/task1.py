@@ -134,24 +134,30 @@ if __name__ == '__main__':
                                          c, net_input=args.net_input)
 
         if args.train_net or args.plots_net:
-            from train_distributed import run_distributed
-            from train_communication import run_communication
-            file = os.path.join(run_dir, 'dataset_split.npy')
+            import utils
+            indices = utils.prepare_dataset(run_dir, args.generate_split)
+            file_losses = os.path.join(model_dir, 'losses.npy')
 
-            if args.model_type == 'distributed':
-                run_distributed(file, runs_dir_omniscient, model_dir, model_img_dir, args.model, 'omniscient', 'manual',
-                                train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
-                                net_input=args.net_input, avg_gap=args.avg_gap)
-            elif args.model_type == 'communication':
-                run_communication(file, runs_dir_omniscient, model_dir, model_img_dir, args.model, 'omniscient', 'manual',
-                                train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
-                                net_input=args.net_input, avg_gap=args.avg_gap)
+            if args.model_type == 'communication':
+                communication = True
+            elif args.model_type == 'distributes':
+                communication = False
             else:
-                raise ValueError('Invalid value for model_type.')
+                raise ValueError('Invalid value for model_type')
 
-            if args.plots_net and not args.net_input == 'all_sensors':
-                from my_plots import plot_sensing_timestep
-                plot_sensing_timestep(runs_dir_omniscient, model_img_dir, net_input=args.net_input, model=args.model)
+            if args.train_net:
+                from train_net import network_train
+                network_train(indices, file_losses, runs_dir_omniscient, model_dir, args.model, communication,
+                              net_input=args.net_input)
+
+            if args.plots_net:
+                from evaluate_net import network_evaluation
+                network_evaluation(indices, file_losses, runs_dir_omniscient, model_dir, args.model, model_img_dir,
+                                   'omniscient', 'manual', communication, net_input=args.net_input, avg_gap=args.avg_gap)
+
+                if not args.net_input == 'all_sensors':
+                    from my_plots import plot_sensing_timestep
+                    plot_sensing_timestep(runs_dir_omniscient, model_img_dir, net_input=args.net_input, model=args.model)
 
     if args.compare_all:
         from my_plots import plot_compared_distance_from_goal
