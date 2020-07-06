@@ -234,7 +234,7 @@ def get_input_columns(in_label):
     return columns
 
 
-def extract_input_output(runs, in_label, input_combination=True):
+def extract_input_output(runs, in_label, input_combination=True, communication=False):
     """
     Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
     sensors [array of 7 floats].
@@ -244,7 +244,8 @@ def extract_input_output(runs, in_label, input_combination=True):
     :param runs:
     :param in_label:
     :param input_combination
-    :return input_, output_, runs
+    :param communication
+    :return input_, output_, runs, columns
     """
     inputs = ['prox_values', 'prox_comm', 'all_sensors']
     inputs.remove(in_label)
@@ -260,17 +261,54 @@ def extract_input_output(runs, in_label, input_combination=True):
 
     full_columns = columns + ['x']
 
-    if in_label == 'all_sensors':
-        runs['x'] = runs.apply(lambda row: mean([row.pv_fc - mean([row.pv_bl, row.pv_br]), row.pc_fc - mean([row.pc_bl, row.pc_br])]), axis=1)
-    else:
-        runs['x'] = runs.apply(lambda row: row.fc - mean([row.bl, row.br]), axis=1)
-
-    runs[full_columns] = runs[full_columns].div(1000)
-
     if input_combination:
+        if in_label == 'all_sensors':
+            runs['x'] = runs.apply(lambda row: mean([row.pv_fc - mean([row.pv_bl, row.pv_br]), row.pc_fc - mean([row.pc_bl, row.pc_br])]), axis=1)
+        else:
+            runs['x'] = runs.apply(lambda row: row.fc - mean([row.bl, row.br]), axis=1)
+
+        runs[full_columns] = runs[full_columns].div(1000)
+
         input_ = np.array(runs.x)
+        output_ = np.array(runs.motor_left_target)
     else:
-        input_ = np.array(runs[columns])
-    output_ = np.array(runs.motor_left_target)
+        runs[columns] = runs[columns].div(1000)
+
+        if communication:
+            simulations = runs['run'].unique()
+
+            tmp = np.array(runs[['run', 'timestep']].drop_duplicates().groupby(['run']).max()).squeeze()
+            timesteps = np.sum(tmp) - tmp.shape[0]
+
+            input_ = np.empty(shape=(timesteps, 2, 3, 7), dtype='float32')
+            output_ = np.empty(shape=(timesteps, 2, 3, 1), dtype='float32')
+
+            init_counter = 0
+            for i in simulations:
+                run = runs[runs['run'] == i]
+
+                in_run_ = np.array(run[columns])
+                in_run_ = in_run_.reshape([-1, 3, 7])
+                out_run_ = np.array(run.motor_left_target)
+                out_run_ = out_run_.reshape([-1, 3, 1])
+
+                size = in_run_.shape[0] - 1
+                final_counter = init_counter + size
+
+                in_array = np.empty(shape=(size, 2, 3, 7), dtype='float32')
+                in_array[:, 0, ...] = in_run_[:-1, ...]
+                in_array[:, 1, ...] = in_run_[1:, ...]
+
+                out_array = np.empty(shape=(size, 2, 3, 1), dtype='float32')
+                out_array[:, 0, ...] = out_run_[:-1, ...]
+                out_array[:, 1, ...] = out_run_[1:, ...]
+
+                input_[init_counter:final_counter] = in_array
+                output_[init_counter:final_counter] = out_array
+
+                init_counter = final_counter
+        else:
+            input_ = np.array(runs[columns])
+            output_ = np.array(runs.motor_left_target)
 
     return input_, output_, runs, columns

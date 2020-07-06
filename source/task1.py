@@ -135,11 +135,19 @@ if __name__ == '__main__':
 
         if args.train_net or args.plots_net:
             from train_distributed import run_distributed
+            from train_communication import run_communication
             file = os.path.join(run_dir, 'dataset_split.npy')
 
-            run_distributed(file, runs_dir_omniscient, model_dir, model_img_dir, args.model, 'omniscient', 'manual',
-                            train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
-                            net_input=args.net_input, avg_gap=args.avg_gap)
+            if args.model_type == 'distributed':
+                run_distributed(file, runs_dir_omniscient, model_dir, model_img_dir, args.model, 'omniscient', 'manual',
+                                train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
+                                net_input=args.net_input, avg_gap=args.avg_gap)
+            elif args.model_type == 'communication':
+                run_communication(file, runs_dir_omniscient, model_dir, model_img_dir, args.model, 'omniscient', 'manual',
+                                train=args.train_net, generate_split=args.generate_split, plots=args.plots_net,
+                                net_input=args.net_input, avg_gap=args.avg_gap)
+            else:
+                raise ValueError('Invalid value for model_type.')
 
             if args.plots_net and not args.net_input == 'all_sensors':
                 from my_plots import plot_sensing_timestep

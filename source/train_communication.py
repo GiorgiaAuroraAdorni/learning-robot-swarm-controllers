@@ -22,32 +22,36 @@ class ThymioState:
             setattr(self, k, v)
 
 
-def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input):
+def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False):
     """
     :param runs_dir: directory containing the simulations
     :param train_indices
     :param validation_indices
     :param test_indices
     :param net_input
+    :param communication
     :return: train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input_, output_
     """
 
     runs = utils.load_dataset(runs_dir, 'simulation.pkl')
-    runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
+    runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
-    input_, output_, _, _ = utils.extract_input_output(runs_sub, net_input, input_combination=False)
+    if communication:
+        input_, output_ = [], []
+    else:
+        input_, output_, _, _ = utils.extract_input_output(runs_sub, net_input, input_combination=False, communication=True)
 
     train_runs = runs_sub[runs_sub['run'].isin(train_indices)].reset_index()
     valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
     test_runs = runs_sub[runs_sub['run'].isin(test_indices)].reset_index()
 
-    train_sample, train_target, _, _ = utils.extract_input_output(train_runs, net_input, input_combination=False)
-    valid_sample, valid_target, _, _ = utils.extract_input_output(valid_runs, net_input, input_combination=False)
-    test_sample, test_target, _, _ = utils.extract_input_output(test_runs, net_input, input_combination=False)
+    train_sample, train_target, _, _ = utils.extract_input_output(train_runs, net_input, input_combination=False, communication=True)
+    valid_sample, valid_target, _, _ = utils.extract_input_output(valid_runs, net_input, input_combination=False, communication=True)
+    test_sample, test_target, _, _ = utils.extract_input_output(test_runs, net_input, input_combination=False, communication=True)
 
     return train_sample, valid_sample, test_sample, \
-           train_target[:, None], valid_target[:, None], test_target[:, None], \
-           input_, output_[:, None]
+           train_target, valid_target, test_target, \
+           input_, output_
 
 
 def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_target, test_sample, test_target):
@@ -76,21 +80,6 @@ def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_targ
     return t_d_test, t_d_train, t_d_valid
 
 
-def unmask(label):
-    """
-
-    :param label:
-    :return: torch.stack(new_label)
-    """
-    new_label = []
-
-    for i in range(label.shape[0]):
-        indices = np.where(label[i] < 0)
-        new_label.append(np.delete(label[i], indices, axis=0))
-
-    return torch.stack(new_label)
-
-
 def train_net(epochs: int,
               train_dataset: data.TensorDataset,
               valid_dataset: data.TensorDataset,
@@ -98,7 +87,7 @@ def train_net(epochs: int,
               net: torch.nn.Module,
               metrics_path: AnyStr,
               batch_size: int = 100,
-              learning_rate: float = 0.01,
+              learning_rate: float = 0.001,
               criterion=torch.nn.MSELoss()
               ) -> NetMetrics:
     """
@@ -382,8 +371,8 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
     plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
-def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split, plots,
-                    net_input, avg_gap):
+def run_communication(file, runs_dir, model_dir, model_img, model, ds, ds_eval, train, generate_split, plots,
+                      net_input, avg_gap):
     """
     :param file: file containing the defined indices for the split
     :param runs_dir:
@@ -412,40 +401,26 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
     # Split the dataset also defining input and output, using the indices
     x_train, x_valid, x_test, \
     y_train, y_valid, y_test, \
-    sensing, groundtruth = from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input)
+    _, _ = from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=True)
 
     # Generate the tensors
-    # FIXME
-    # c_training_set = create_dataset(sim, n_simulation, 'com', steps=2, comm_size=comm_size)
-    # c_test_set = create_dataset(sim, n_simulation // 5, 'com', steps=2, comm_size=comm_size)
-    # :::::
-    # trace_len = n_simulation*net_inputs[0].shape[0]
-    #
-    # traces = []
-    # seq_length = trace_len // n_simulation
-    # for j in range(n_simulation):
-    #     ##### COMMM
-    #     # trace = Trace( np.arange(seq_length), t_input[j*seq_length:j*seq_length+seq_length,:,0], np.zeros(seq_length), t_input[j*seq_length:j*seq_length+seq_length,:,3:],t_output[j*seq_length:j*seq_length+seq_length],t_errors[j*seq_length:j*seq_length+seq_length])
-    #     trace = Trace(np.arange(seq_length), t_input[j * seq_length:j * seq_length + seq_length, :, 0],
-    #                   np.zeros((seq_length, comm_size)), t_input[j * seq_length:j * seq_length + seq_length, :, 3:],
-    #                   t_output[j * seq_length:j * seq_length + seq_length],
-    #                   t_errors[j * seq_length:j * seq_length + seq_length])
-    #     traces.append(trace)
-    # dataset = SequenceDataset([tensors_from_trace(prepare(trace, steps, padding= False)) for trace in traces])
-
-    t_d_test, t_d_train, t_d_valid = from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test)
+    t_c_test, t_c_train, t_c_valid = from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test)
 
     file_losses = os.path.join(model_dir, 'losses.npy')
 
     if train:
         print('\nTraining %s…' % model)
         # FIXME
+        #  input
         c_net = ComNet(N=5, sync=Sync.sequential)
+        # c_net = ComNet(input, N=5, sync=Sync.sync)
 
-        metrics = train_net(epochs=50,
-                            train_dataset=t_d_train,
-                            valid_dataset=t_d_valid,
-                            test_dataset=t_d_test,
+        metrics = train_net(epochs=200,
+                            train_dataset=t_c_train,
+                            valid_dataset=t_c_valid,
+                            test_dataset=t_c_test,
+                            batch_size=10,
+                            learning_rate=0.0001,
                             net=c_net,
                             metrics_path=file_losses)
 
@@ -466,7 +441,7 @@ def run_distributed(file, runs_dir, model_dir, model_img, model, ds, ds_eval, tr
         network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid)
 
         # Evaluate prediction of the distributed controller with the omniscient groundtruth
-        evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
+        # evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input)
 
         if not net_input == 'all_sensors':
             # Evaluate the learned controller by passing a specific input sensing configuration

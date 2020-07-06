@@ -76,21 +76,6 @@ def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_targ
     return t_d_test, t_d_train, t_d_valid
 
 
-def unmask(label):
-    """
-
-    :param label:
-    :return: torch.stack(new_label)
-    """
-    new_label = []
-
-    for i in range(label.shape[0]):
-        indices = np.where(label[i] < 0)
-        new_label.append(np.delete(label[i], indices, axis=0))
-
-    return torch.stack(new_label)
-
-
 def train_net(epochs: int,
               train_dataset: data.TensorDataset,
               valid_dataset: data.TensorDataset,
