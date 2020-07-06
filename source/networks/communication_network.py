@@ -1,3 +1,9 @@
+# communication_network.py
+# © 2019-2020 Marco Verna
+# © 2020 Giorgia Adorni
+# Adapted from https://github.com/MarcoVernaUSI/distributed/blob/Refactored/com_network.py
+
+
 import random
 from enum import Enum
 from random import shuffle
@@ -5,7 +11,6 @@ from typing import Sequence, Tuple, TypeVar, Callable
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.autograd import Variable
 
 State = TypeVar('State')
@@ -32,14 +37,18 @@ class Sync(Enum):
     random_sequential = 4
 
 
-class SNet(nn.Module):
+class SingleNet(nn.Module):
     def __init__(self):
         """
 
         """
-        super(SNet, self).__init__()
-        self.l1 = nn.Linear(4, 10)  # nn.Linear(7+2, 10)
-        self.l2 = nn.Linear(10, 2)
+        super(SingleNet, self).__init__()
+        # self.l1 = nn.Linear(9, 10)  # nn.Linear(7+2, 10)
+        # self.l2 = nn.Linear(10, 2)
+        #
+        self.fc1 = torch.nn.Linear(9, 22)
+        self.relu = torch.nn.ReLU()
+        self.fc2 = torch.nn.Linear(22, 1)
 
     def forward(self, input_):
         """
@@ -47,8 +56,11 @@ class SNet(nn.Module):
         :param input_:
         :return:
         """
-        ys = F.torch.tanh(self.l1(input_))
-        return self.l2(ys)
+        hidden = self.fc1(input_)
+        relu = self.relu(hidden)
+        output = self.fc2(relu)
+
+        return output
 
 
 # def input_from(ss, comm, i):
@@ -68,6 +80,7 @@ def init_comm(N: int):
 
     return Variable(torch.Tensor(ls))
 
+
 def input_from(ss, comm, i):
     """
 
@@ -81,18 +94,18 @@ def input_from(ss, comm, i):
     # return torch.cat((ss[i], comm[i:i+1], comm[i+2:i+3]), 0)
 
 
-class ComNet(nn.Module):
-    def __init__(self, N: int, sync: Sync = Sync.sequential, module: nn.Module = SNet, input_fn=input_from) -> None:
+class CommunicationNet(nn.Module):
+    def __init__(self, myt_quantity: int, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from) -> None:
         """
 
-        :param N:
+        :param myt_quantity:
         :param sync:
         :param module:
         :param input_fn:
         """
-        super(ComNet, self).__init__()
+        super(CommunicationNet, self).__init__()
         self.single_net = module()
-        self.N = N
+        self.myt_quantity = myt_quantity
         self.sync = sync
         self.input_fn = input_fn
         self.tmp_indices = None
@@ -106,7 +119,7 @@ class ComNet(nn.Module):
         :return control:
         """
         if sync == Sync.sync:
-            input = torch.stack([self.input_fn(xs, comm, i) for i in range(self.N)], 0)
+            input = torch.stack([self.input_fn(xs, comm, i) for i in range(self.myt_quantity)], 0)
             output = self.single_net(input)
             control = output[:, 0]
             # TODO vedi la matricina
@@ -120,7 +133,7 @@ class ComNet(nn.Module):
             # sequential
             else:
                 # re-create the sorted indices list
-                indices = list(range(self.N))
+                indices = list(range(self.myt_quantity))
             # random
             # shuffle for each timestep
             if sync == Sync.random:
@@ -144,9 +157,9 @@ class ComNet(nn.Module):
         rs = []
         # for each sequence in batch
         for run in runs:
-            comm = init_comm(self.N)
+            comm = init_comm(self.myt_quantity)
             controls = []
-            tmp = list(range(self.N))
+            tmp = list(range(self.myt_quantity))
             shuffle(tmp)
             self.tmp_indices = tmp
 
@@ -162,13 +175,13 @@ class ComNet(nn.Module):
         :param sync:
         :return:
         """
-        N = self.N
+        myt_quantity = self.myt_quantity
         if sync == None:
             sync = self.sync
-        tmp = list(range(self.N))
+        tmp = list(range(self.myt_quantity))
         shuffle(tmp)
         self.tmp_indices = tmp
-        comm = init_comm(N)
+        comm = init_comm(myt_quantity)
         print("initial comm = ", comm)
 
         def f(sensing: Sequence[Sensing]) -> Tuple[Sequence[Control], Sequence[float]]:

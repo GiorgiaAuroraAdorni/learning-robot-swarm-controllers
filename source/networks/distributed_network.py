@@ -1,3 +1,9 @@
+# distributed_network.py
+# © 2019-2020 Marco Verna
+# © 2020 Giorgia Adorni
+# Adapted from https://github.com/MarcoVernaUSI/distributed/blob/Refactored/network.py
+
+
 from typing import TypeVar, Callable, Tuple, Sequence
 
 import torch

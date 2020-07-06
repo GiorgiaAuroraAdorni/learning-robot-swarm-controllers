@@ -11,7 +11,7 @@ import utils
 from controllers import distributed_controllers
 from generate_simulation_data import GenerateSimulationData as g
 from my_plots import plot_regressor, plot_response, my_histogram, plot_losses, plot_target_distribution
-from networks.communication_network import Sync, ComNet
+from networks.communication_network import Sync, CommunicationNet
 from networks.metrics import StreamingMean, NetMetrics
 
 
@@ -351,7 +351,7 @@ def run_communication(file, runs_dir, model_dir, model_img, model, ds, ds_eval, 
 
     if train:
         print('\nTraining %s…' % model)
-        c_net = ComNet(N=3, sync=Sync.sequential)
+        c_net = CommunicationNet(myt_quantity=3, sync=Sync.sequential)
         # c_net = ComNet(input, N=5, sync=Sync.sync)
 
         metrics = train_net(epochs=200,

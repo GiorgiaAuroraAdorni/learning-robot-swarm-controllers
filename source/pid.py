@@ -1,5 +1,6 @@
 # pid.py
 # © 2020 Alessandro Giusti
+# © 2020 Giorgia Adorni
 # Adapted from https://github.com/alessandro-giusti/teaching-notebooks/blob/master/robotics/04%20closedloopcontrol.ipynb
 
 
