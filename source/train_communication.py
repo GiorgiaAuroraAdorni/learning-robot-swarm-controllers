@@ -6,7 +6,6 @@ import pandas as pd
 import torch
 import tqdm
 from torch.utils import data
-from torch.utils.data import TensorDataset
 
 import utils
 from controllers import distributed_controllers
@@ -20,64 +19,6 @@ class ThymioState:
     def __init__(self, state_dict):
         for k, v in state_dict.items():
             setattr(self, k, v)
-
-
-def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False):
-    """
-    :param runs_dir: directory containing the simulations
-    :param train_indices
-    :param validation_indices
-    :param test_indices
-    :param net_input
-    :param communication
-    :return: train_sample, valid_sample, test_sample, train_target, valid_target, test_target, input_, output_
-    """
-
-    runs = utils.load_dataset(runs_dir, 'simulation.pkl')
-    runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
-
-    if communication:
-        input_, output_ = [], []
-    else:
-        input_, output_, _, _ = utils.extract_input_output(runs_sub, net_input, input_combination=False, communication=True)
-
-    train_runs = runs_sub[runs_sub['run'].isin(train_indices)].reset_index()
-    valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
-    test_runs = runs_sub[runs_sub['run'].isin(test_indices)].reset_index()
-
-    train_sample, train_target, _, _ = utils.extract_input_output(train_runs, net_input, input_combination=False, communication=True)
-    valid_sample, valid_target, _, _ = utils.extract_input_output(valid_runs, net_input, input_combination=False, communication=True)
-    test_sample, test_target, _, _ = utils.extract_input_output(test_runs, net_input, input_combination=False, communication=True)
-
-    return train_sample, valid_sample, test_sample, \
-           train_target, valid_target, test_target, \
-           input_, output_
-
-
-def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_target, test_sample, test_target):
-    """
-
-    :param train_sample:
-    :param train_target:
-    :param valid_sample:
-    :param valid_target:
-    :param test_sample:
-    :param test_target:
-    :return t_d_test, t_d_train, t_d_valid:
-    """
-    x_train_tensor = torch.tensor(train_sample, dtype=torch.float32)
-    x_valid_tensor = torch.tensor(valid_sample, dtype=torch.float32)
-    x_test_tensor = torch.tensor(test_sample, dtype=torch.float32)
-
-    y_train_tensor = torch.tensor(train_target, dtype=torch.float32)
-    y_valid_tensor = torch.tensor(valid_target, dtype=torch.float32)
-    y_test_tensor = torch.tensor(test_target, dtype=torch.float32)
-
-    t_d_train = TensorDataset(x_train_tensor, y_train_tensor)
-    t_d_valid = TensorDataset(x_valid_tensor, y_valid_tensor)
-    t_d_test = TensorDataset(x_test_tensor, y_test_tensor)
-
-    return t_d_test, t_d_train, t_d_valid
 
 
 def train_net(epochs: int,
@@ -401,18 +342,16 @@ def run_communication(file, runs_dir, model_dir, model_img, model, ds, ds_eval, 
     # Split the dataset also defining input and output, using the indices
     x_train, x_valid, x_test, \
     y_train, y_valid, y_test, \
-    _, _ = from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=True)
+    _, _ = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=True)
 
     # Generate the tensors
-    t_c_test, t_c_train, t_c_valid = from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test)
+    t_c_test, t_c_train, t_c_valid = utils.from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test)
 
     file_losses = os.path.join(model_dir, 'losses.npy')
 
     if train:
         print('\nTraining %s…' % model)
-        # FIXME
-        #  input
-        c_net = ComNet(N=5, sync=Sync.sequential)
+        c_net = ComNet(N=3, sync=Sync.sequential)
         # c_net = ComNet(input, N=5, sync=Sync.sync)
 
         metrics = train_net(epochs=200,
