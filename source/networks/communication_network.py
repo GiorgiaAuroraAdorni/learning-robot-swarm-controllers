@@ -13,18 +13,12 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-State = TypeVar('State')
 Sensing = TypeVar('Sensing')
 Control = TypeVar('Control')
 Communication = TypeVar('Communication')
-MState = Sequence[State]
-MSensing = Sequence[Sensing]
-MControl = Sequence[Control]
 
-Dynamic = Callable[[Sequence[State], Sequence[Control]], MState]
-Sensor = Callable[[MState], MSensing]
 ControlOutput = Tuple[Sequence[Control], Sequence[Communication]]
-Controller = Callable[[Sequence[State], Sequence[Sensing]], ControlOutput]
+Controller = Callable[[Sequence[Sensing]], ControlOutput]
 
 
 class Sync(Enum):
@@ -43,12 +37,10 @@ class SingleNet(nn.Module):
 
         """
         super(SingleNet, self).__init__()
-        # self.l1 = nn.Linear(9, 10)  # nn.Linear(7+2, 10)
-        # self.l2 = nn.Linear(10, 2)
-        #
         self.fc1 = torch.nn.Linear(9, 22)
         self.relu = torch.nn.ReLU()
         self.fc2 = torch.nn.Linear(22, 2)
+        self.sigmoid = torch.nn.Sigmoid()
 
     def forward(self, input_):
         """
@@ -60,11 +52,16 @@ class SingleNet(nn.Module):
         relu = self.relu(hidden)
         output = self.fc2(relu)
 
+        # Convert the communication in values between 0 and 1 using the Sigmoid activation function
+        speed = output[:, 0, None]
+        communication = output[:, 1, None]
+
+        communication = self.sigmoid(communication)
+
+        output[:, 0, None] = speed
+        output[:, 1, None] = communication
+
         return output
-
-
-# def input_from(ss, comm, i):
-#     return torch.cat((ss[i], comm[i:i + 1], comm[i + 2:i + 3]), 0)
 
 
 def init_comm(N: int):
@@ -95,7 +92,7 @@ def input_from(ss, comm, i):
 
 
 class CommunicationNet(nn.Module):
-    def __init__(self, myt_quantity: int, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from) -> None:
+    def __init__(self, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from) -> None:
         """
 
         :param myt_quantity:
@@ -105,7 +102,6 @@ class CommunicationNet(nn.Module):
         """
         super(CommunicationNet, self).__init__()
         self.single_net = module()
-        self.myt_quantity = myt_quantity
         self.sync = sync
         self.input_fn = input_fn
         self.tmp_indices = None
@@ -133,7 +129,7 @@ class CommunicationNet(nn.Module):
             # sequential
             else:
                 # re-create the sorted indices list
-                indices = list(range(self.myt_quantity))
+                indices = list(range(xs.shape[0]))
             # random
             # shuffle for each timestep
             if sync == Sync.random:
@@ -157,9 +153,10 @@ class CommunicationNet(nn.Module):
         rs = []
         # for each sequence in batch
         for run in runs:
-            comm = init_comm(self.myt_quantity)
+            # FIXME
+            comm = init_comm(run[0].shape[0])
             controls = []
-            tmp = list(range(self.myt_quantity))
+            tmp = list(range(run[0].shape[0]))
             shuffle(tmp)
             self.tmp_indices = tmp
 
@@ -167,21 +164,23 @@ class CommunicationNet(nn.Module):
             for xs in run:
                 controls.append(self.step(xs, comm, self.sync))
             rs.append(torch.stack(controls))
+
         return torch.stack(rs)
 
-    def controller(self, sync: Sync = Sync.sync) -> Controller:
+    def controller(self, N=1, sync: Sync = Sync.sync) -> Controller:
         """
 
         :param sync:
         :return:
         """
-        myt_quantity = self.myt_quantity
         if sync == None:
             sync = self.sync
-        tmp = list(range(self.myt_quantity))
-        shuffle(tmp)
-        self.tmp_indices = tmp
-        comm = init_comm(myt_quantity)
+
+        # tmp = list(range(N))
+        # shuffle(tmp)
+        # self.tmp_indices = tmp
+        self.tmp_indices = [N]
+        comm = init_comm(N)
         print("initial comm = ", comm)
 
         def f(sensing: Sequence[Sensing]) -> Tuple[Sequence[Control], Sequence[float]]:
