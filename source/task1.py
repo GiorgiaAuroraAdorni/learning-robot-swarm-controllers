@@ -87,6 +87,13 @@ if __name__ == '__main__':
 
         myt_quantity = args.myt_quantity
 
+        if args.model_type == 'communication':
+            communication = True
+        elif args.model_type == 'distributed':
+            communication = False
+        else:
+            raise ValueError('Invalid value for model_type')
+
         if args.generate_dataset:
             from generate_simulation_data import GenerateSimulationData as sim
 
@@ -94,10 +101,11 @@ if __name__ == '__main__':
 
             if c == 'learned':
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=myt_quantity, args=args, model_dir=model_dir, model=args.model)
+                                        myt_quantity=myt_quantity, args=args, model_dir=model_dir, model=args.model,
+                                        communication=communication)
             else:
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=myt_quantity, args=args)
+                                        myt_quantity=myt_quantity, args=args, communication=communication)
 
         if args.plots_dataset:
             from my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal, \
@@ -137,13 +145,6 @@ if __name__ == '__main__':
             import utils
             indices = utils.prepare_dataset(run_dir, args.generate_split)
             file_losses = os.path.join(model_dir, 'losses.npy')
-
-            if args.model_type == 'communication':
-                communication = True
-            elif args.model_type == 'distributed':
-                communication = False
-            else:
-                raise ValueError('Invalid value for model_type')
 
             if args.train_net:
                 from train_net import network_train

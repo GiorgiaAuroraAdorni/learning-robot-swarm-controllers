@@ -34,9 +34,9 @@ class DistributedThymio2(pyenki.Thymio2):
         :param dt: control step duration
         """
         self.prox_comm_enable = True
-        self.prox_comm_tx = self.index
-
-        speed = self.controller.perform_control(self, dt)
+        speed, communication = self.controller.perform_control(self, dt)
 
         self.motor_left_target = speed
         self.motor_right_target = speed
+
+        self.prox_comm_tx = communication

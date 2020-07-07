@@ -123,7 +123,7 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
 
     print('\nTraining %s…' % model)
     if communication:
-        net = CommunicationNet(myt_quantity=3, sync=Sync.sync)
+        net = CommunicationNet(sync=Sync.sync)
 
         metrics = train_net(epochs=200,
                             train_dataset=train,

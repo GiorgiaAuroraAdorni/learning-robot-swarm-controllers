@@ -5,12 +5,11 @@ import re
 from math import pi
 
 import numpy as np
-import pandas as pd
 import pyenki
 import torch
 from tqdm import tqdm
 
-from controllers import distributed_controllers
+from controllers import controllers
 from distributed_thymio import DistributedThymio2
 from my_plots import my_scatterplot
 import utils
@@ -290,7 +289,7 @@ class GenerateSimulationData:
             complete_runs.append(complete_data)
 
     @classmethod
-    def generate_simulation(cls, run_dir, n_simulations, controller, myt_quantity, args, model_dir=None, model=None):
+    def generate_simulation(cls, run_dir, n_simulations, controller, myt_quantity, args, model_dir=None, model=None, communication=False):
         """
 
         :param run_dir:
@@ -300,20 +299,21 @@ class GenerateSimulationData:
         :param myt_quantity:
         :param args:
         :param model:
+        :param communication
         """
         if controller == cls.MANUAL_CONTROLLER:
             def controller_factory(**kwargs):
-                return distributed_controllers.ManualController(net_input=args.net_input, **kwargs)
+                return controllers.ManualController(net_input=args.net_input, **kwargs)
 
         elif controller == cls.OMNISCIENT_CONTROLLER:
-            controller_factory = distributed_controllers.OmniscientController
+            controller_factory = controllers.OmniscientController
 
         elif re.match(cls.LEARNED_CONTROLLER, controller):
             # controller_factory = lambda **kwargs: d_c.LearnedController(net=net, **kwargs)
             net = torch.load('%s/%s' % (model_dir, model))
 
             def controller_factory(**kwargs):
-                return distributed_controllers.LearnedController(net=net, net_input=args.net_input, **kwargs)
+                return controllers.LearnedController(net=net, net_input=args.net_input, communication=communication, **kwargs)
         else:
             raise ValueError("Invalid value for controller")
 
