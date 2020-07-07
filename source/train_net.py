@@ -1,7 +1,5 @@
-import os
 from typing import AnyStr
 
-import numpy as np
 
 import torch
 import tqdm

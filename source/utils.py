@@ -7,8 +7,7 @@ import pandas as pd
 import torch
 from torch.utils.data import TensorDataset
 
-import train_net
-from distributed_thymio import DistributedThymio2
+
 from evaluate_net import ThymioState
 
 
@@ -166,6 +165,8 @@ def get_input_sensing(in_label, myt, normalise=True):
     :param normalise
     :return sensing:
     """
+    from distributed_thymio import DistributedThymio2
+    
     if isinstance(myt, dict):
         myt = ThymioState(myt)
     elif isinstance(myt, DistributedThymio2):

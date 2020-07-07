@@ -4,7 +4,7 @@ import torch
 import tqdm
 
 import utils
-from controllers import distributed_controllers
+from controllers import controllers
 from generate_simulation_data import GenerateSimulationData as g
 from my_plots import plot_regressor, plot_response, my_histogram, plot_losses, plot_target_distribution
 
