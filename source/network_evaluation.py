@@ -111,7 +111,7 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input,
         sensing = np.reshape(np.array(sensing).flat, [-1, 7])
 
     controller_predictions = []
-    controller = distributed_controllers.ManualController(net_input=net_input)
+    controller = controllers.ManualController(net_input=net_input)
 
     for sample in sensing:
         # Rescale the values of the sensor
@@ -165,7 +165,7 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     :param x_label:
     """
     controller_predictions = []
-    controller = distributed_controllers.LearnedController(net=net, net_input=net_input)
+    controller = controllers.LearnedController(net=net, net_input=net_input)
 
     for sample in sensing:
         # Rescale the values of the sensor
@@ -185,7 +185,7 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
 
         state = ThymioState(state_dict)
 
-        control = controller.perform_control(state, dt=0.1)
+        control, _ = controller.perform_control(state, dt=0.1)
 
         controller_predictions.append(control)
 
@@ -208,7 +208,7 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
     myt_quantity = 3
 
     def controller_factory(**kwargs):
-        return distributed_controllers.LearnedController(net=net, net_input=net_input, **kwargs)
+        return controllers.LearnedController(net=net, net_input=net_input, **kwargs)
 
     # FIXME do not use simulation
     world, myts = g.setup(controller_factory, myt_quantity)
@@ -253,6 +253,8 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     """
     print('\nGenerating plots for %s…' % model)
     net = torch.load('%s/%s' % (model_dir, model), map_location='cpu')
+    # Ensure that the network is loaded in evaluation mode by default.
+    net.eval()
 
     train_indices, validation_indices, test_indices = indices[1]
 
@@ -267,11 +269,10 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
 
     prediction = net(torch.FloatTensor(x_valid))
 
-    # FIXME
-    # network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication)
+    network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication)
 
     # Evaluate prediction of the distributed controller with the omniscient groundtruth
-    # evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication)
+    evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication)
 
     if not communication:
         if not net_input == 'all_sensors':

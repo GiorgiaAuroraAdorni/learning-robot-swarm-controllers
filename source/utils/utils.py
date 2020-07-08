@@ -111,6 +111,25 @@ def get_prox_comm(myt):
     return prox_comm
 
 
+def get_prox_comm_communication(myt):
+    """
+    Create a dictionary containing all the senders as key and the corresponding intensities as value.
+    :param myt
+    :return prox_comm
+    """
+    prox_comm = {}
+
+    prox_comm_events = myt.prox_comm_events
+
+    for idx, _ in enumerate(prox_comm_events):
+        sender = prox_comm_events[idx].rx + 1
+        intensities = prox_comm_events[idx].intensities
+
+        prox_comm['myt%d' % sender] = {'intensities': intensities}
+
+    return prox_comm
+
+
 def parse_prox_comm(prox_comm):
     """
 
@@ -344,6 +363,7 @@ def extract_input_output(runs, in_label, communication=False, input_combination=
 
     full_columns = columns + ['x']
 
+    # FIXME
     if input_combination:
         if in_label == 'all_sensors':
             runs['x'] = runs.apply(lambda row: mean([row.pv_fc - mean([row.pv_bl, row.pv_br]), row.pc_fc - mean([row.pc_bl, row.pc_br])]), axis=1)
@@ -363,7 +383,7 @@ def extract_input_output(runs, in_label, communication=False, input_combination=
             tmp = np.array(runs[['run', 'timestep']].drop_duplicates().groupby(['run']).max()).squeeze()
             timesteps = np.sum(tmp) - tmp.shape[0]
 
-            input_ = np.empty(shape=(timesteps, 2, 3, 7), dtype='float32')
+            input_ = np.empty(shape=(timesteps, 2, 3, runs[columns].shape[1]), dtype='float32')
             output_ = np.empty(shape=(timesteps, 2, 3), dtype='float32')
 
             init_counter = 0
@@ -371,14 +391,14 @@ def extract_input_output(runs, in_label, communication=False, input_combination=
                 run = runs[runs['run'] == i]
 
                 in_run_ = np.array(run[columns])
-                in_run_ = in_run_.reshape([-1, 3, 7])
+                in_run_ = in_run_.reshape([-1, 3, run[columns].shape[1]])
                 out_run_ = np.array(run.motor_left_target)
                 out_run_ = out_run_.reshape([-1, 3])
 
                 size = in_run_.shape[0] - 1
                 final_counter = init_counter + size
 
-                in_array = np.empty(shape=(size, 2, 3, 7), dtype='float32')
+                in_array = np.empty(shape=(size, 2, 3, run[columns].shape[1]), dtype='float32')
                 in_array[:, 0, ...] = in_run_[:-1, ...]
                 in_array[:, 1, ...] = in_run_[1:, ...]
 
