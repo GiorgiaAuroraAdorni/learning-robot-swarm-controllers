@@ -4,7 +4,7 @@ from math import pi
 import numpy as np
 import pyenki
 
-from pid import PID
+from controllers.pid import PID
 
 
 # Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.

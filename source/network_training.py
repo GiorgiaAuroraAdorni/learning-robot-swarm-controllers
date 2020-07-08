@@ -5,7 +5,7 @@ import torch
 import tqdm
 from torch.utils import data
 
-import utils
+from utils import utils
 from networks.communication_network import Sync, CommunicationNet
 from networks.distributed_network import DistributedNet
 from networks.metrics import StreamingMean, NetMetrics

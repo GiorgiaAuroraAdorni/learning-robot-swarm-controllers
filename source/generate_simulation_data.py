@@ -10,9 +10,8 @@ import torch
 from tqdm import tqdm
 
 from controllers import controllers
-from distributed_thymio import DistributedThymio2
-from my_plots import my_scatterplot
-import utils
+from thymio import DistributedThymio2
+from utils import utils
 
 
 class GenerateSimulationData:
@@ -355,4 +354,4 @@ class GenerateSimulationData:
         x_label = 'sensing (%s)' % net_input
         y_label = 'control'
 
-        my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)
+        utils.my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)

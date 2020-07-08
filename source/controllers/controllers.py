@@ -1,7 +1,7 @@
 import numpy as np
 
-from pid import PID
-import utils
+from controllers.pid import PID
+from utils import utils
 
 
 class ManualController:

@@ -3,11 +3,9 @@ import pandas as pd
 import torch
 import tqdm
 
-import utils
+from utils import utils
 from controllers import controllers
 from generate_simulation_data import GenerateSimulationData as g
-from my_plots import plot_regressor, plot_response, my_histogram, plot_losses, plot_target_distribution
-
 
 class ThymioState:
     def __init__(self, state_dict):
@@ -35,12 +33,12 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
     # Plot train and validation losses
     title = 'Loss %s' % model
     file_name = 'loss-%s' % model
-    plot_losses(training_loss, validation_loss, model_img, title, file_name)
+    utils.plot_losses(training_loss, validation_loss, model_img, title, file_name)
 
     # Plot target distribution
     title = 'Distribution Target Validation Set %s' % model
     file_name = 'distribution-target-validation-%s' %model
-    plot_target_distribution(y_g, y_p, model_img, title, file_name)
+    utils.plot_target_distribution(y_g, y_p, model_img, title, file_name)
 
     if not net_input == 'all_sensors':
         # Plot sensing histogram
@@ -54,7 +52,7 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
             x = [x_train[0], x_train[1], x_train[2], x_train[3], x_train[4], x_train[5], x_train[6]]
 
         label = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
-        my_histogram(x, 'sensing (%s)' % net_input, model_img, title, file_name, label)
+        utils.my_histogram(x, 'sensing (%s)' % net_input, model_img, title, file_name, label)
 
     # Evaluate prediction of the learned controller to the omniscient groundtruth
     # Plot R^2 of the regressor between prediction and ground truth on the validation set
@@ -67,7 +65,7 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
         y_g = np.reshape(np.array(y_g).flat, [-1])
         y_p = np.reshape(np.array(y_p).flat, [-1])
 
-    plot_regressor(y_g, y_p, x_label, y_label, model_img, title, file_name)
+    utils.plot_regressor(y_g, y_p, x_label, y_label, model_img, title, file_name)
 
 
 def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction, communication):
@@ -92,7 +90,7 @@ def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction, communicat
 
     x_label = 'groundtruth'
     y_label = 'prediction'
-    plot_regressor(groundtruth, prediction, x_label, y_label, model_img, title, file_name)
+    utils.plot_regressor(groundtruth, prediction, x_label, y_label, model_img, title, file_name)
 
 
 def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input, communication):
@@ -193,7 +191,7 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     file_name = 'response-%s-%s' % (model, net_title)
 
     # Plot the output of the network
-    plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
+    utils.plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
 
 
 def test_controller_given_init_positions(model_img, net, model, net_input, avg_gap):
@@ -232,7 +230,7 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
     file_name = 'response-%s-varying_init_position' % model
 
     # Plot the output of the network
-    plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
+    utils.plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
 def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication, net_input, avg_gap):

@@ -7,7 +7,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
 
-import utils
+from utils import utils
 
 sns.set(style="white")
 

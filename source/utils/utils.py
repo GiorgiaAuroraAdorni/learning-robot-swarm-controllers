@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import TensorDataset
 
 
-from evaluate_net import ThymioState
+from network_evaluation import ThymioState
 
 
 def check_dir(directory):
@@ -184,7 +184,7 @@ def get_input_sensing(in_label, myt, normalise=True):
     :param normalise
     :return sensing:
     """
-    from distributed_thymio import DistributedThymio2
+    from thymio import DistributedThymio2
 
     if isinstance(myt, dict):
         myt = ThymioState(myt)
