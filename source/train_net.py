@@ -17,6 +17,7 @@ def train_net(epochs: int,
               test_dataset: data.TensorDataset,
               net: torch.nn.Module,
               metrics_path: AnyStr,
+              device,
               batch_size: int = 100,
               learning_rate: float = 0.01,
               criterion=torch.nn.MSELoss()
@@ -67,7 +68,7 @@ def train_net(epochs: int,
             # Accumulate metrics across batches
             training_loss.update(loss, inputs.shape[0])
 
-        validation_loss = validate_net(net, valid_minibatch, criterion)
+        validation_loss = validate_net(net, device, valid_minibatch, criterion)
 
         # Record the metrics for the current epoch
         metrics.update(training_loss.mean, validation_loss)
@@ -75,7 +76,7 @@ def train_net(epochs: int,
     return metrics
 
 
-def validate_net(net, valid_minibatch, criterion=torch.nn.MSELoss()):
+def validate_net(net, device, valid_minibatch, criterion=torch.nn.MSELoss()):
     """
     :param net:
     :param valid_minibatch:
@@ -90,7 +91,8 @@ def validate_net(net, valid_minibatch, criterion=torch.nn.MSELoss()):
         net.eval()
         validation_loss.reset()
 
-        for inputs, labels in valid_minibatch:
+        for batch in valid_minibatch:
+            inputs, labels = (tensor.to(device) for tensor in batch)
             t_output = net(inputs)
 
             loss = criterion(t_output, labels)
@@ -134,7 +136,8 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
                             batch_size=10,
                             learning_rate=0.0001,
                             net=net,
-                            metrics_path=file_losses)
+                            metrics_path=file_losses,
+                            device=device)
 
     else:
         net = DistributedNet(x_train.shape[1])
@@ -145,7 +148,8 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
                             valid_dataset=valid,
                             test_dataset=test,
                             net=net,
-                            metrics_path=file_losses)
+                            metrics_path=file_losses,
+                            device=device)
 
     torch.save(net, '%s/%s' % (model_dir, model))
     metrics.finalize()
