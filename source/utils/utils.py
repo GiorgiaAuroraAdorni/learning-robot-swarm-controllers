@@ -7,7 +7,6 @@ import pandas as pd
 import torch
 from torch.utils.data import TensorDataset
 
-
 from network_evaluation import ThymioState
 
 

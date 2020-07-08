@@ -108,7 +108,7 @@ if __name__ == '__main__':
                                         myt_quantity=myt_quantity, args=args, communication=communication)
 
         if args.plots_dataset:
-            from utils.utils import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal, \
+            from utils.my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal, \
                                  visualise_simulation_all_sensors, visualise_simulations_comparison_all_sensors
 
             print('Generating plots for %s %s controller…' % (d, c))
@@ -142,9 +142,9 @@ if __name__ == '__main__':
                                          c, net_input=args.net_input)
 
         if args.train_net or args.plots_net:
-            from utils import utils
+            from utils.utils import prepare_dataset
 
-            indices = utils.prepare_dataset(run_dir, args.generate_split)
+            indices = prepare_dataset(run_dir, args.generate_split)
             file_losses = os.path.join(model_dir, 'losses.npy')
 
             if args.train_net:
@@ -158,11 +158,11 @@ if __name__ == '__main__':
                                    'omniscient', 'manual', communication, net_input=args.net_input, avg_gap=args.avg_gap)
 
                 if not args.net_input == 'all_sensors':
-                    from utils.utils import plot_sensing_timestep
+                    from utils.my_plots import plot_sensing_timestep
                     plot_sensing_timestep(runs_dir_omniscient, model_img_dir, net_input=args.net_input, model=args.model)
 
     if args.compare_all:
-        from utils.utils import plot_compared_distance_from_goal
+        from utils.my_plots import plot_compared_distance_from_goal
         print('\nGenerating comparison plots among all datasets of type %s avg-gap %s…' % (args.net_input, args.avg_gap))
         runs_img_dir = os.path.join(d, 'images')
         dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned]
