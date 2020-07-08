@@ -312,7 +312,8 @@ class GenerateSimulationData:
             net = torch.load('%s/%s' % (model_dir, model))
 
             def controller_factory(**kwargs):
-                return controllers.LearnedController(net=net, net_input=args.net_input, communication=communication, **kwargs)
+                return controllers.LearnedController(net=net, net_input=args.net_input, communication=communication,
+                                                     N=myt_quantity, **kwargs)
         else:
             raise ValueError("Invalid value for controller")
 
@@ -326,6 +327,7 @@ class GenerateSimulationData:
                 cls.run(n_sim, myts, runs, complete_runs, world, args.gui)
             except Exception as e:
                 print('ERROR: ', e)
+                print(e.with_traceback())
 
         print('Saving dataset…')
         cls.save_simulation(complete_runs, runs, run_dir)

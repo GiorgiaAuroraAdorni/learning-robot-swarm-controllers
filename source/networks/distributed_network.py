@@ -37,7 +37,7 @@ class DistributedNet(torch.nn.Module):
 
         return output
 
-    def controller(self, N=1) -> Controller:
+    def controller(self, thymio) -> Controller:
         """
 
         :return f

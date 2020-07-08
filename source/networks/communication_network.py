@@ -4,11 +4,11 @@
 # Adapted from https://github.com/MarcoVernaUSI/distributed/blob/Refactored/com_network.py
 
 
-import random
 from enum import Enum
 from random import shuffle
 from typing import Sequence, Tuple, TypeVar, Callable
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -21,9 +21,6 @@ Controller = Callable[[Sequence[Sensing]], ControlOutput]
 
 
 class Sync(Enum):
-    """
-
-    """
     random = 1
     sequential = 2
     sync = 3
@@ -33,7 +30,7 @@ class Sync(Enum):
 class SingleNet(nn.Module, ):
     def __init__(self, input_size):
         """
-
+        :param input_size: dimension of the sensing vector
         """
         super(SingleNet, self).__init__()
         self.fc1 = torch.nn.Linear(input_size + 2, 22)  # (7 + 2) or (14 + 2)
@@ -43,9 +40,9 @@ class SingleNet(nn.Module, ):
 
     def forward(self, input_):
         """
-
-        :param input_:
-        :return:
+        :param input_: input of the network, vector containing the sensting and the messages received by the robot
+                       (can be multidimensional, that means a row for each robot)
+        :return output: output of the network containing the control and the message to communicate (shape: 1 x 2)
         """
         hidden = self.fc1(input_)
         relu = self.relu(hidden)
@@ -63,30 +60,32 @@ class SingleNet(nn.Module, ):
         return output
 
 
-def init_comm(N: int, device):
+def init_comm(thymio: int, device):
     """
     Initialise the communication vector (for the initial timestep of each sequence)
-    :param N: thymio quantity
+    :param thymio: thymio quantity
     :param device
     :return: communication vector
     """
-    ls = [0.0]
-    for i in range(N):
-        ls.append(random.uniform(0, 1))
-    ls.append(0.0)
+    out = np.zeros(thymio + 2)
+    out[1:-1] = np.random.uniform(0, 1, thymio)
 
-    return torch.Tensor(ls, device=device)
+    return torch.Tensor(out, device=device)
 
 
-def input_from(ss, comm, i):
+def input_from(ss, comm, i, sim=False):
     """
 
-    :param ss:
-    :param comm:
-    :param i:
-    :return:
+    :param ss: sensing
+    :param comm: communication vector
+    :param i: index of the thymio in the row
+    :param sim: boolean True if executed in simulation, False otherwise
+    :return input_
     """
-    input_ = torch.cat((ss[i], comm[i].view(1), comm[i + 2].view(1)), 0)
+    if sim:
+        input_ = torch.cat((ss, comm[i].view(1), comm[i+2].view(1)), 0)
+    else:
+        input_ = torch.cat((ss[i], comm[i].view(1), comm[i + 2].view(1)), 0)
 
     return input_
 
@@ -95,10 +94,11 @@ class CommunicationNet(nn.Module):
     def __init__(self, input_size, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from) -> None:
         """
 
-        :param input_size:
-        :param sync:
-        :param module:
-        :param input_fn:
+        :param input_size: dimension of the sensing vector (can be 7 or 14)
+        :param device
+        :param sync
+        :param module
+        :param input_fn
         """
         super(CommunicationNet, self).__init__()
         self.input_size = input_size
@@ -108,21 +108,40 @@ class CommunicationNet(nn.Module):
         self.input_fn = input_fn
         self.tmp_indices = None
 
-    def step(self, xs, comm, sync: Sync):
+    def step(self, xs, comm, sync: Sync, sim=False, i=None):
         """
 
-        :param xs: 1 x N x sensing
-        :param comm: 1 X N
+        :param xs: input sensing of a certain timestep (shape: 1 x N x sensing)
+        :param comm: communication vector (shape: 1 X N)
         :param sync:
-        :return control:
+        :param sim: boolean true if step executed in simulation
+        :param i: index of the thymio in the row
+        :return control
         """
         if sync == Sync.sync:
-            input = torch.stack([self.input_fn(xs, comm, i) for i in range(xs.shape[0])], 0)
+            if sim:
+                # if i == 0:
+                #     comm[0] = 0
+                # elif i == self.thymio - 1:
+                #     comm[1] = 0
+
+                input = self.input_fn(xs, comm, i, sim=True)
+                input = input.unsqueeze(0)
+            else:
+                input = torch.stack([self.input_fn(xs, comm, i) for i in range(xs.shape[0])], 0)
+
             output = self.single_net(input)
 
             control = output[:, 0]
-            comm[1:-1] = output[:, 1]
+
+            if sim:
+                comm[i + 1] = output[:, 1]
+            else:
+                comm[1:-1] = output[:, 1]
         else:
+            # FIXME
+            #  not working in simulation
+
             # random_sequential
             # shuffle for each sequence
             if sync == Sync.random_sequential:
@@ -146,55 +165,66 @@ class CommunicationNet(nn.Module):
 
         return control
 
-    def forward(self, runs):
+    def forward(self, batch):
         """
 
-        :param runs:
-        :return:
+        :param batch:
+        :return: rd
         """
         rs = []
-        # for each sequence in batch
-        for run in runs:
+        for sequence in batch:
             # FIXME
-            comm = init_comm(run[0].shape[0], device=self.device)
+            comm = init_comm(sequence[0].shape[0], device=self.device)
             controls = []
-            tmp = list(range(run[0].shape[0]))
+            tmp = list(range(sequence[0].shape[0]))
             shuffle(tmp)
             self.tmp_indices = tmp
 
-            #  for each timestep in sequence
-            for xs in run:
+            #  xs is the timestep
+            for xs in sequence:
                 controls.append(self.step(xs, comm, self.sync))
             rs.append(torch.stack(controls))
 
         return torch.stack(rs)
 
-    def controller(self, N=1, sync: Sync = Sync.sync) -> Controller:
+    def controller(self, thymio, sync: Sync = Sync.sync) -> Controller:
         """
-        
-        :param N:
+
+        :param thymio: number of thymio in the simulation
         :param sync:
-        :return:
+        :return f
         """
         if sync == None:
             sync = self.sync
 
-        # tmp = list(range(N))
-        # shuffle(tmp)
-        # self.tmp_indices = tmp
-        self.tmp_indices = [N]
-        comm = init_comm(N, device=self.device)
-        print("initial comm = ", comm)
+        self.thymio = thymio
 
-        def f(sensing: Sequence[Sensing]) -> Tuple[Sequence[Control], Sequence[float]]:
+        tmp = list(range(self.thymio))
+        shuffle(tmp)
+        self.tmp_indices = tmp
+
+        comm = init_comm(self.thymio, sim=True, device=self.device)
+
+        def f(sensing: Sequence[Sensing], communication, i) -> Tuple[Sequence[Control], Sequence[float]]:
             """
             :param sensing:
-            :return:
+            :param communication: array containing the communication received by the thymio from left and right
+            :param i: index of the robot in the row
+            :return control, new communication vector
             """
+            nonlocal comm
+            
             with torch.no_grad():
-                sensing = [sensing]
                 sensing = torch.FloatTensor(sensing)
-                control = self.step(sensing, comm, sync=sync).numpy()
+                if communication is not None:
+                    comm[i] = communication[0]
+                    comm[i + 2] = communication[1]
+                control = self.step(sensing, comm, sync=sync, sim=True, i=i).numpy()
+
+                print("comm = ", comm)
+                print("comm subset = ", comm[1:-1])
+                print()
+
                 return control, comm[1:-1].clone().numpy().flatten()
 
         return f

@@ -12,6 +12,11 @@ class ManualController:
     """
 
     def __init__(self, net_input, **kwargs):
+        """
+
+        :param net_input:
+        :param kwargs:
+        """
         super().__init__(**kwargs)
 
         self.p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
@@ -126,14 +131,24 @@ class LearnedController:
     The robots can be moved following a controller learned by a neural network.
     """
 
-    def __init__(self, net, net_input, **kwargs):
+    def __init__(self, net, net_input, communication, N, **kwargs):
+        """
+
+        :param net:
+        :param net_input:
+        :param communication:
+        :param N:
+        :param kwargs:
+        """
         super().__init__(**kwargs)
 
         self.net = net
         if self.net is None:
             raise ValueError("Value for net not provided")
 
-        self.net_controller = net.controller()
+        self.communication = communication
+        self.N = N
+        self.net_controller = net.controller(thymio=self.N)
         self.net_input = net_input
 
     def perform_control(self, state, dt):
@@ -153,9 +168,21 @@ class LearnedController:
 
         sensing = utils.get_input_sensing(self.net_input, state)
 
-        speed = float(self.net_controller(sensing)[0])
+        if len(state.prox_comm_events) == 0:
+            communication = None
+        else:
+            communication = utils.get_prox_comm_communication(state)
+
+        if self.communication:
+            speed, comm = self.net_controller(sensing, communication, state.index)
+            speed = float(speed)
+        else:
+            speed = float(self.net_controller(sensing)[0])
+            comm = state.idx
 
         if state.initial_position[0] != state.goal_position[0]:
-            return speed
+            # convert communication into an int of between 0 and 10 bit
+            comm = int(comm[state.index] * (2 ** 10))
+            return speed, comm
         else:
-            return 0
+            return 0, 0

@@ -115,19 +115,23 @@ def get_prox_comm_communication(myt):
     """
     Create a dictionary containing all the senders as key and the corresponding intensities as value.
     :param myt
-    :return prox_comm
+    :return communication: the communication received
     """
-    prox_comm = {}
+    communication = [0, 0]
 
     prox_comm_events = myt.prox_comm_events
 
     for idx, _ in enumerate(prox_comm_events):
-        sender = prox_comm_events[idx].rx + 1
-        intensities = prox_comm_events[idx].intensities
+        message = prox_comm_events[idx].rx
+        message = float(message / (2 ** 10))
+        # FIXME for all sensors
+        if mean([prox_comm_events[idx].intensities[5], prox_comm_events[idx].intensities[6]]) != 0:
 
-        prox_comm['myt%d' % sender] = {'intensities': intensities}
+            communication[0] = message
+        else:
+            communication[1] = message
 
-    return prox_comm
+    return communication
 
 
 def parse_prox_comm(prox_comm):
