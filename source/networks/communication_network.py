@@ -11,7 +11,6 @@ from typing import Sequence, Tuple, TypeVar, Callable
 
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
 Sensing = TypeVar('Sensing')
 Control = TypeVar('Control')
@@ -93,7 +92,7 @@ def input_from(ss, comm, i):
 
 
 class CommunicationNet(nn.Module):
-    def __init__(self, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from, device) -> None:
+    def __init__(self, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from) -> None:
         """
 
         :param myt_quantity:
