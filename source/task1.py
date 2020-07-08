@@ -79,7 +79,8 @@ if __name__ == '__main__':
 
     runs_dir_omniscient = os.path.join(d, 'omniscient')
     runs_dir_manual = os.path.join(d, 'manual')
-    runs_dir_learned = os.path.join(d, 'learned')
+    runs_dir_learned_dist = os.path.join(d, 'learned_distributed')
+    runs_dir_learned_comm = os.path.join(d, 'learned_communication')
 
     for c in controllers:
         run_dir, run_img_dir, run_video_dir = directory_for_dataset(d, c)
@@ -165,7 +166,7 @@ if __name__ == '__main__':
         from utils.my_plots import plot_compared_distance_from_goal
         print('\nGenerating comparison plots among all datasets of type %s avg-gap %s…' % (args.net_input, args.avg_gap))
         runs_img_dir = os.path.join(d, 'images')
-        dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned]
+        dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist, runs_dir_learned_comm]
 
         plot_compared_distance_from_goal(dataset_folders, runs_img_dir,
                                          'Robot distances from goal - %s avg_gap-%s' % (args.net_input, args.avg_gap),

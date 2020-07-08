@@ -221,9 +221,9 @@ class CommunicationNet(nn.Module):
                     comm[i + 2] = communication[1]
                 control = self.step(sensing, comm, sync=sync, sim=True, i=i).numpy()
 
-                print("comm = ", comm)
-                print("comm subset = ", comm[1:-1])
-                print()
+                # print("comm = ", comm)
+                # print("comm subset = ", comm[1:-1])
+                # print()
 
                 return control, comm[1:-1].clone().numpy().flatten()
 

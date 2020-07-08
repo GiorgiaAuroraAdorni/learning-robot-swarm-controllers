@@ -126,7 +126,7 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename):
     """
 
     utils.check_dir(img_dir)
-    datasets = ['omniscient', 'manual', 'learned']
+    datasets = ['omniscient', 'manual', 'distributed', 'communication']
 
     positions = []
     timesteps = []
@@ -171,8 +171,12 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename):
     ax = fig.gca()
     handles, labels = ax.get_legend_handles_labels()
 
-    handles = [handles[0], handles[1], handles[2], handles[3], handles[5], handles[7], handles[4], handles[6], handles[8]]
-    labels = [labels[0], labels[1], labels[2], labels[3], labels[5], labels[7], labels[4], labels[6], labels[8]]
+    handles = [handles[0], handles[1], handles[2], handles[3],
+               handles[4], handles[6], handles[8], handles[10],
+               handles[5], handles[7], handles[9], handles[11]]
+    labels = [labels[0], labels[1], labels[2], labels[3],
+              labels[4], labels[6], labels[8], labels[10],
+              labels[5], labels[7], labels[9], labels[11]]
 
     fig.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.4), ncol=3,
                bbox_transform=axes[1].transAxes)
