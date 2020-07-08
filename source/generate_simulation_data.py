@@ -12,6 +12,7 @@ from tqdm import tqdm
 from controllers import controllers
 from thymio import DistributedThymio2
 from utils import utils
+from utils import my_plots
 
 
 class GenerateSimulationData:
@@ -356,4 +357,4 @@ class GenerateSimulationData:
         x_label = 'sensing (%s)' % net_input
         y_label = 'control'
 
-        utils.my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)
+        my_plots.my_scatterplot(x, y, x_label, y_label, runs_img, title, file_name)

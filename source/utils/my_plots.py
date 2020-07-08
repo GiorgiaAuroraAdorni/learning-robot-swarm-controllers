@@ -315,7 +315,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input)
 
     plt.figure()
-    fig, axes = plt.subplots(nrows=3, sharex=True)
+    fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
 
     # Plot the evolution of the positions of all robots over time
     axes[0].set_ylabel('x position', fontsize=11)

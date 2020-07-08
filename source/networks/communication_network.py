@@ -203,7 +203,7 @@ class CommunicationNet(nn.Module):
         shuffle(tmp)
         self.tmp_indices = tmp
 
-        comm = init_comm(self.thymio, sim=True, device=self.device)
+        comm = init_comm(self.thymio, device=self.device)
 
         def f(sensing: Sequence[Sensing], communication, i) -> Tuple[Sequence[Control], Sequence[float]]:
             """
