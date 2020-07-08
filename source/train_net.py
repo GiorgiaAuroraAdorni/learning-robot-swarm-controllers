@@ -55,7 +55,8 @@ def train_net(epochs: int,
         net.train()
         training_loss.reset()
 
-        for n, (inputs, labels) in enumerate(train_minibatch):
+        for batch in train_minibatch:
+            inputs, labels = (tensor.to(device) for tensor in batch)
             output = net(inputs)
 
             loss = criterion(output, labels)

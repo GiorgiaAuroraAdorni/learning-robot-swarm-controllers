@@ -166,7 +166,7 @@ def get_input_sensing(in_label, myt, normalise=True):
     :return sensing:
     """
     from distributed_thymio import DistributedThymio2
-    
+
     if isinstance(myt, dict):
         myt = ThymioState(myt)
     elif isinstance(myt, DistributedThymio2):
