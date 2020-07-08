@@ -252,7 +252,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     :return:
     """
     print('\nGenerating plots for %s…' % model)
-    net = torch.load('%s/%s' % (model_dir, model))
+    net = torch.load('%s/%s' % (model_dir, model), map_location='cpu')
 
     train_indices, validation_indices, test_indices = indices[1]
 
