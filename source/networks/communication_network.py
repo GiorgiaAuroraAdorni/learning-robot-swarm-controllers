@@ -64,10 +64,11 @@ class SingleNet(nn.Module):
         return output
 
 
-def init_comm(N: int):
+def init_comm(N: int, device):
     """
     Initialise the communication vector (for the initial timestep of each sequence)
     :param N: thymio quantity
+    :param device
     :return: communication vector
     """
     ls = [0.0]
@@ -75,7 +76,7 @@ def init_comm(N: int):
         ls.append(random.uniform(0, 1))
     ls.append(0.0)
 
-    return Variable(torch.Tensor(ls))
+    return torch.Tensor(ls, device=device)
 
 
 def input_from(ss, comm, i):
@@ -92,7 +93,7 @@ def input_from(ss, comm, i):
 
 
 class CommunicationNet(nn.Module):
-    def __init__(self, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from) -> None:
+    def __init__(self, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from, device) -> None:
         """
 
         :param myt_quantity:
@@ -102,6 +103,7 @@ class CommunicationNet(nn.Module):
         """
         super(CommunicationNet, self).__init__()
         self.single_net = module()
+        self.device = device
         self.sync = sync
         self.input_fn = input_fn
         self.tmp_indices = None
@@ -154,7 +156,7 @@ class CommunicationNet(nn.Module):
         # for each sequence in batch
         for run in runs:
             # FIXME
-            comm = init_comm(run[0].shape[0])
+            comm = init_comm(run[0].shape[0], device=self.device)
             controls = []
             tmp = list(range(run[0].shape[0]))
             shuffle(tmp)
@@ -169,7 +171,8 @@ class CommunicationNet(nn.Module):
 
     def controller(self, N=1, sync: Sync = Sync.sync) -> Controller:
         """
-
+        
+        :param N:
         :param sync:
         :return:
         """
@@ -180,7 +183,7 @@ class CommunicationNet(nn.Module):
         # shuffle(tmp)
         # self.tmp_indices = tmp
         self.tmp_indices = [N]
-        comm = init_comm(N)
+        comm = init_comm(N, device=self.device)
         print("initial comm = ", comm)
 
         def f(sensing: Sequence[Sensing]) -> Tuple[Sequence[Control], Sequence[float]]:

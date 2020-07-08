@@ -127,7 +127,7 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if communication:
-        net = CommunicationNet(sync=Sync.sync)
+        net = CommunicationNet(sync=Sync.sync, device=device)
         net.to(device)
 
         metrics = train_net(epochs=200,
