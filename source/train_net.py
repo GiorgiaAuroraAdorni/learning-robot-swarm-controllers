@@ -126,17 +126,17 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     # Create the neural network and optimizer
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device('cpu')
-    
+
     if communication:
-        net = CommunicationNet(device=device, sync=Sync.sync)
+        net = CommunicationNet(x_train.shape[3], device=device, sync=Sync.sync)
         net.to(device)
 
-        metrics = train_net(epochs=200,
+        metrics = train_net(epochs=500,
                             train_dataset=train,
                             valid_dataset=valid,
                             test_dataset=test,
                             batch_size=10,
-                            learning_rate=0.0001,
+                            learning_rate=0.001,
                             net=net,
                             metrics_path=file_losses,
                             device=device)

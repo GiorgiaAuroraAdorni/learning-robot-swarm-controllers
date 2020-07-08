@@ -30,14 +30,14 @@ class Sync(Enum):
     random_sequential = 4
 
 
-class SingleNet(nn.Module):
-    def __init__(self):
+class SingleNet(nn.Module, ):
+    def __init__(self, input_size):
         """
 
         """
         super(SingleNet, self).__init__()
-        self.fc1 = torch.nn.Linear(9, 22)
-        self.relu = torch.nn.ReLU()
+        self.fc1 = torch.nn.Linear(input_size + 2, 22)  # (7 + 2) or (14 + 2)
+        self.relu = torch.nn.Tanh()
         self.fc2 = torch.nn.Linear(22, 2)
         self.sigmoid = torch.nn.Sigmoid()
 
@@ -92,16 +92,17 @@ def input_from(ss, comm, i):
 
 
 class CommunicationNet(nn.Module):
-    def __init__(self, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from) -> None:
+    def __init__(self, input_size, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from) -> None:
         """
 
-        :param myt_quantity:
+        :param input_size:
         :param sync:
         :param module:
         :param input_fn:
         """
         super(CommunicationNet, self).__init__()
-        self.single_net = module()
+        self.input_size = input_size
+        self.single_net = module(self.input_size)
         self.device = device
         self.sync = sync
         self.input_fn = input_fn
