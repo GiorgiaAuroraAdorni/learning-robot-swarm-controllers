@@ -171,7 +171,7 @@ class LearnedController:
         if len(state.prox_comm_events) == 0:
             communication = None
         else:
-            communication = utils.get_prox_comm_communication(state)
+            communication = utils.get_received_communication(state)
 
         if self.communication:
             speed, comm = self.net_controller(sensing, communication, state.index)

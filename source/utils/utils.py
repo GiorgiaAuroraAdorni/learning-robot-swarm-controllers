@@ -110,9 +110,9 @@ def get_prox_comm(myt):
     return prox_comm
 
 
-def get_prox_comm_communication(myt):
+def get_received_communication(myt):
     """
-    Create a dictionary containing all the senders as key and the corresponding intensities as value.
+    Create a list containing the messages received from the back and front.
     :param myt
     :return communication: the communication received
     """
@@ -123,13 +123,23 @@ def get_prox_comm_communication(myt):
     for idx, _ in enumerate(prox_comm_events):
         message = prox_comm_events[idx].rx
         message = float(message / (2 ** 10))
-        # FIXME for all sensors
+
         if mean([prox_comm_events[idx].intensities[5], prox_comm_events[idx].intensities[6]]) != 0:
 
             communication[0] = message
         else:
             communication[1] = message
 
+    return communication
+
+
+def get_transmitted_communication(myt):
+    """
+    Return the values transmitted during the communication.
+    :param myt
+    :return communication: the communication transmitted
+    """
+    communication = myt.prox_comm_tx
     return communication
 
 

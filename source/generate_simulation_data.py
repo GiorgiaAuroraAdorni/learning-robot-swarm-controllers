@@ -111,12 +111,13 @@ class GenerateSimulationData:
             myt.goal_position = (goal_positions[i], 0)
 
     @classmethod
-    def generate_dict(cls, myt, n_sim, s):
+    def generate_dict(cls, myt, n_sim, s, comm=None):
         """
         Save data in a dictionary
         :param myt
         :param n_sim
         :param s
+        :param comm: boolean, True if the dataset is generated using the learned model with communication
         :return dictionary:
             'run': n_sim,
             'timestep': s,
@@ -156,15 +157,20 @@ class GenerateSimulationData:
             'goal_position_distance': abs(myt.goal_position[0] - myt.position[0])
         }
 
+        if comm:
+            transmitted_comm = utils.get_transmitted_communication(myt)
+            myt.dictionary['transmitted_comm'] = transmitted_comm
+
         dictionary = myt.dictionary.copy()
         return dictionary
 
     @classmethod
-    def update_dict(cls, myt, s):
+    def update_dict(cls, myt, s, comm=None):
         """
         Updated data in the dictionary instead of rewrite every field to optimise performances
         :param myt
         :param s
+        :param comm: boolean, True if the dataset is generated using the learned model with communication
         :return dictionary
         """
         prox_values = myt.prox_values
@@ -180,6 +186,10 @@ class GenerateSimulationData:
         myt.dictionary['motor_left_target'] = myt.motor_left_target
         myt.dictionary['motor_right_target'] = myt.motor_right_target,
         myt.dictionary['goal_position_distance'] = abs(myt.goal_position[0] - myt.position[0])
+
+        if comm:
+            transmitted_comm = utils.get_transmitted_communication(myt)
+            myt.dictionary['transmitted_comm'] = transmitted_comm
 
         dictionary = myt.dictionary.copy()
 
@@ -213,8 +223,8 @@ class GenerateSimulationData:
             json.dump(complete_data, f, ensure_ascii=False, indent=4)
 
     @classmethod
-    def run(cls, n_sim, myts, runs, complete_runs,
-            world: pyenki.World, gui: bool = False, T: float = 2, dt: float = 0.1, tol: float = 0.1) -> None:
+    def run(cls, n_sim, myts, runs, complete_runs, world: pyenki.World,
+            comm=None, gui: bool = False, T: float = 2, dt: float = 0.1, tol: float = 0.1) -> None:
         """
         Run the simulation as fast as possible or using the real time GUI.
         Generate two different type of simulation data, one with all the thymios and the other without including the 2
@@ -225,6 +235,7 @@ class GenerateSimulationData:
         :param runs
         :param complete_runs
         :param world
+        :param comm
         :param gui
         :param T
         :param dt: update timestep in seconds, should be below 1 (typically .02-.1)
@@ -255,9 +266,9 @@ class GenerateSimulationData:
                 if s > 0:
                     for i, myt in enumerate(myts):
                         if myt.dictionary is None:
-                            dictionary = cls.generate_dict(myt, n_sim, s)
+                            dictionary = cls.generate_dict(myt, n_sim, s, comm)
                         else:
-                            dictionary = cls.update_dict(myt, s)
+                            dictionary = cls.update_dict(myt, s, comm)
 
                         # Do not include the 2 thymio at the ends, but only the ones that have to move.
                         if i != 0 and i != (myt_quantity - 1):
@@ -301,6 +312,8 @@ class GenerateSimulationData:
         :param model:
         :param communication
         """
+        comm = False
+
         if controller == cls.MANUAL_CONTROLLER:
             def controller_factory(**kwargs):
                 return controllers.ManualController(net_input=args.net_input, **kwargs)
@@ -312,6 +325,9 @@ class GenerateSimulationData:
             # controller_factory = lambda **kwargs: d_c.LearnedController(net=net, **kwargs)
             net = torch.load('%s/%s' % (model_dir, model))
 
+            if communication:
+                comm = True
+
             def controller_factory(**kwargs):
                 return controllers.LearnedController(net=net, net_input=args.net_input, communication=communication,
                                                      N=myt_quantity, **kwargs)
@@ -320,15 +336,15 @@ class GenerateSimulationData:
 
         world, myts = cls.setup(controller_factory, myt_quantity)
 
+
         runs = []
         complete_runs = []
         for n_sim in tqdm(range(n_simulations)):
             try:
                 cls.init_positions(myts, args.net_input, args.avg_gap)
-                cls.run(n_sim, myts, runs, complete_runs, world, args.gui)
+                cls.run(n_sim, myts, runs, complete_runs, world, comm, args.gui)
             except Exception as e:
                 print('ERROR: ', e)
-                print(e.with_traceback())
 
         print('Saving dataset…')
         cls.save_simulation(complete_runs, runs, run_dir)
