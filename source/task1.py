@@ -49,11 +49,10 @@ def parse_args():
                         help='Name of the directory containing the models (default: models)')
     parser.add_argument('--model-type', default='distributed', type=str,
                         help='Name of the sub-directory containing the models (default: distributed)')
-    parser.add_argument('--model', default='net1', type=str,
-                        help='Name of the model (default: net1)')
+    parser.add_argument('--model', default='net1', type=str, help='Name of the model (default: net1)')
 
-    parser.add_argument('--train-net', action="store_true",
-                        help='Train the model  (default: False)')
+    parser.add_argument('--train-net', action='store_true', help='Train the model (default: False)')
+    parser.add_argument('--save-net', action='store_true', help='Save the model in onnx format (default: False)')
 
     parser.add_argument('--net-input', default='prox_values', choices=['prox_values', 'prox_comm', 'all_sensors'],
                         help='Choose the input of the net between prox_values and prox_comm_events (default: '
@@ -160,7 +159,7 @@ if __name__ == '__main__':
             if args.train_net:
                 from network_training import network_train
                 network_train(indices, file_losses, runs_dir_omniscient, model_dir, args.model, communication,
-                              net_input=args.net_input)
+                              net_input=args.net_input, save_net=args.save_net)
 
             if args.plots_net:
                 from network_evaluation import network_evaluation
@@ -170,6 +169,7 @@ if __name__ == '__main__':
                 if not args.net_input == 'all_sensors':
                     from utils.my_plots import plot_sensing_timestep
                     plot_sensing_timestep(runs_dir_omniscient, model_img_dir, net_input=args.net_input, model=args.model)
+
 
     if args.compare_all:
         from utils.my_plots import plot_compared_distance_from_goal

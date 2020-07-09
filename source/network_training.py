@@ -1,14 +1,14 @@
 from typing import AnyStr
 
-
 import torch
 import tqdm
 from torch.utils import data
 
-from utils import utils
 from networks.communication_network import Sync, CommunicationNet
 from networks.distributed_network import DistributedNet
 from networks.metrics import StreamingMean, NetMetrics
+from utils import utils
+from utils.utils import export_network
 
 
 def train_net(epochs: int,
@@ -102,7 +102,7 @@ def validate_net(net, device, valid_minibatch, criterion=torch.nn.MSELoss()):
     return validation_loss.mean
 
 
-def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input):
+def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net):
     """
     :param indices
     :param file_losses
@@ -111,6 +111,7 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     :param model
     :param communication
     :param net_input
+    :param save_net
     """
     train_indices, validation_indices, test_indices = indices[1]
 
@@ -155,3 +156,16 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
 
     torch.save(net, '%s/%s' % (model_dir, model))
     metrics.finalize()
+
+    if save_net:
+        if net_input == 'all_sensors':
+            width = 14
+        else:
+            width = 7
+
+        if communication:
+            dummy_input = torch.randn(1, 1, 1, width)
+        else:
+            dummy_input = torch.randn(1, width)
+
+        export_network(model_dir, model, dummy_input)
