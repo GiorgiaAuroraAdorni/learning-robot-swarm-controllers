@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib.collections import LineCollection
 from sklearn.linear_model import LinearRegression
 
 from utils import utils
@@ -43,7 +44,6 @@ def save_visualisation(filename, img_dir, make_space=False, axes=None):
 
     plt.savefig(file)
     plt.savefig(img, dpi=300, bbox_inches='tight')
-    # plt.show()
     plt.close()
 
 
@@ -204,7 +204,7 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
                      'prox_comm', 'all_sensors']]
 
     run = runs_sub[runs_sub['run'] == simulation]
-    target = np.array(run.apply(lambda row: list(row.goal_position)[0], axis=1))
+    target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
     max_time_step = run['timestep'].max()
     time_steps = np.arange(max_time_step)
@@ -266,7 +266,7 @@ def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_i
                      'prox_comm', 'all_sensors']]
 
     run = runs_sub[runs_sub['run'] == simulation]
-    target = np.array(run.apply(lambda row: list(row.goal_position)[0], axis=1))
+    target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
     max_time_step = run['timestep'].max()
     time_steps = np.arange(max_time_step)
@@ -319,7 +319,8 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     max_time_step = runs_sub['timestep'].max()
     time_steps = np.arange(max_time_step)
 
-    target = np.array(runs_sub[runs_sub['run'] == 0].apply(lambda row: list(row.goal_position)[0], axis=1))
+    run = runs_sub[runs_sub['run'] == 0]
+    target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
     runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
     _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input)
@@ -330,6 +331,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     # Plot the evolution of the positions of all robots over time
     axes[0].set_ylabel('x position', fontsize=11)
     axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
+
     for name in runs.name.unique():
         runs_myt = runs[runs['name'] == name].reset_index()
         mean_x_positions = np.array(runs_myt.groupby('timestep').x_position.mean())
@@ -399,7 +401,8 @@ def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_i
     max_time_step = runs_sub['timestep'].max()
     time_steps = np.arange(max_time_step)
 
-    target = np.array(runs_sub[runs_sub['run'] == 0].apply(lambda row: list(row.goal_position)[0], axis=1))
+    run = runs_sub[runs_sub['run'] == 0]
+    target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
     runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
     _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input)
@@ -640,7 +643,6 @@ def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
                          mean_sensing + std_sensing,
                          alpha=0.2)
 
-
     plt.legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.3), ncol=len(proximity_sensors),
                title="proximity sensor")
 
@@ -650,3 +652,65 @@ def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
 
     file_name = 'response-sensing-%s' % model
     save_visualisation(file_name, img_dir)
+
+
+def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
+    """
+
+    :param runs_dir:
+    :param img_dir:
+    :param simulation:
+    :param title:
+    """
+    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'transmitted_comm']]
+
+    run = runs_sub[runs_sub['run'] == simulation]
+    target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
+
+    max_time_step = run['timestep'].max()
+    time_steps = np.arange(max_time_step)
+
+    fig = plt.figure(figsize=(8.8, 4.8))
+    norm = plt.Normalize(0, 1)
+
+    # Plot the evolution of the positions of all robots over time
+    for i, name in enumerate(run.name.unique()):
+        run_myt = run[run['name'] == name].reset_index()
+        x = np.array(run[run['name'] == name].apply(lambda row: list(row.position)[0], axis=1))
+
+        comm = np.array(run_myt.transmitted_comm, dtype='float32')
+        comm = np.divide(comm, 2 ** 10)
+
+        # Create a set of line segments so that we can color them individually
+        # This creates the points as a N x 1 x 2 array so that we can stack points
+        # together easily to get the segments. The segments array for line collection
+        # needs to be (numlines) x (points per line) x 2 (for x and y)
+        points = np.array([time_steps, x]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+        # Create a continuous norm to map from data points to colors
+        lc = LineCollection(segments, cmap='viridis', norm=norm)
+        # Set the values used for colormapping
+        lc.set_array(comm)
+        # lc.set_linewidth(2)
+
+        ax = fig.gca()
+        line = ax.add_collection(lc)
+        line.set_clim(0, 1)
+
+    plt.colorbar(line, ax=ax, boundaries=np.linspace(0, 1, 50), ticks=np.linspace(0, 1, 5))
+    plt.xlim(0, max_time_step - 1)
+    plt.ylim(-1, target[4] + 1)
+
+    plt.yticks(target)
+    plt.grid()
+
+    plt.xlabel('timestep', fontsize=11)
+    plt.ylabel('x position', fontsize=11)
+
+    plt.tight_layout()
+    plt.title(title, fontsize=12, weight='bold')
+
+    filename = 'plot-simulation-communication%d' % simulation
+    save_visualisation(filename, img_dir)
