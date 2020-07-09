@@ -165,7 +165,12 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename):
             axes[idx].fill_between(time_steps, q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
 
             axes[idx].set_xlabel('timestep', fontsize=11)
-            axes[idx].set_ylim(top=10)
+            axes[idx].set_xlim(0, 17)
+            axes[idx].set_ylim(0, 10)
+
+            xint = range(0, max_time_step + 1, max_time_step // 6)
+            axes[idx].set_xticks(xint)
+
             axes[idx].set_title(m, fontsize=12)
 
     ax = fig.gca()
@@ -178,8 +183,9 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename):
               labels[4], labels[6], labels[8], labels[10],
               labels[5], labels[7], labels[9], labels[11]]
 
-    fig.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.4), ncol=3,
+    fig.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=3,
                bbox_transform=axes[1].transAxes)
+
     fig.suptitle(title, weight='bold', fontsize=12)
     save_visualisation(filename, img_dir)
 
