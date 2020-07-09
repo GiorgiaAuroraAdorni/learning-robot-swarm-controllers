@@ -108,7 +108,7 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input,
     """
     if communication:
         groundtruth = np.reshape(np.array(groundtruth).flat, [-1])
-        sensing = np.reshape(np.array(sensing).flat, [-1, 7])
+        sensing = np.reshape(np.array(sensing).flat, [-1, sensing.shape[3]])
 
     controller_predictions = []
     controller = controllers.ManualController(net_input=net_input)
@@ -185,6 +185,7 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
 
         state = ThymioState(state_dict)
 
+        # FIXME
         control, _ = controller.perform_control(state, dt=0.1)
 
         controller_predictions.append(control)

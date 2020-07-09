@@ -564,7 +564,10 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
     plt.ylabel(y_label, fontsize=11)
 
     plt.scatter(x, y, alpha=0.3, marker='.', label='sample')
-    plt.plot(x, lr.predict(np.reshape(x, [-1, 1])), color="orange", label='regression: $R^2=%.3f$' % score)
+    y_hat = lr.predict(np.reshape(x, [-1, 1]))
+    if len(y_hat.shape) > 1:
+        y_hat = y_hat.squeeze()
+    plt.plot(x, y_hat, color="orange", label='regression: $R^2=%.3f$' % score)
 
     plt.title(title, weight='bold', fontsize=12)
     plt.legend()
