@@ -170,7 +170,6 @@ if __name__ == '__main__':
                     from utils.my_plots import plot_sensing_timestep
                     plot_sensing_timestep(runs_dir_omniscient, model_img_dir, net_input=args.net_input, model=args.model)
 
-
     if args.compare_all:
         from utils.my_plots import plot_compared_distance_from_goal
         print('\nGenerating comparison plots among all datasets of type %s avg-gap %s…' % (args.net_input, args.avg_gap))
