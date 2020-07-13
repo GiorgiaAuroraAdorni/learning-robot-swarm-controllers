@@ -11,16 +11,22 @@ class ManualController:
     ​​recorded by the front and rear sensors.
     """
 
-    def __init__(self, net_input, **kwargs):
+    def __init__(self, name, goal, N, net_input, **kwargs):
         """
 
+        :param name
+        :param goal
+        :param N: number of thymios in the simulation
         :param net_input:
         :param kwargs:
         """
         super().__init__(**kwargs)
 
+        self.name = name
+        self.goal = goal
+        self.N = N
+
         self.p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
-        # self.p_distributed_controller = PID(-0.005, 0, 0, max_out=16.6, min_out=-16.6)
         self.net_input = net_input
 
     def neighbors_distance(self, state):
@@ -93,6 +99,20 @@ class OmniscientController:
     actual pose to the target one.
     """
 
+    def __init__(self, name, goal, N, **kwargs):
+        """
+
+        :param name
+        :param goal
+        :param N: number of thymios in the simulation
+        :param kwargs:
+        """
+        super().__init__(**kwargs)
+
+        self.name = name
+        self.goal = goal
+        self.N = N
+
     def linear_vel(self, state, constant=10):
         """
         :param state
@@ -131,23 +151,28 @@ class LearnedController:
     The robots can be moved following a controller learned by a neural network.
     """
 
-    def __init__(self, net, net_input, communication, N, **kwargs):
+    def __init__(self, name, goal, N, net, net_input, communication, **kwargs):
         """
 
+        :param name
+        :param goal
+        :param N: number of thymios in the simulation
         :param net:
         :param net_input:
         :param communication:
-        :param N:
         :param kwargs:
         """
         super().__init__(**kwargs)
+
+        self.name = name
+        self.goal = goal
+        self.N = N
 
         self.net = net
         if self.net is None:
             raise ValueError("Value for net not provided")
 
         self.communication = communication
-        self.N = N
         self.net_controller = net.controller(thymio=self.N)
         self.net_input = net_input
 

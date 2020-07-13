@@ -9,7 +9,6 @@ import pyenki
 import torch
 from tqdm import tqdm
 
-from controllers import controllers
 from thymio import DistributedThymio2
 from utils import utils
 from utils import my_plots
@@ -18,7 +17,7 @@ from utils import my_plots
 class GenerateSimulationData:
     MANUAL_CONTROLLER = "manual"
     OMNISCIENT_CONTROLLER = "omniscient"
-    LEARNED_CONTROLLER = r"^learned"
+    LEARNED_CONTROLLER = "learned"
 
     @classmethod
     def setup(cls, controller_factory, myt_quantity, aseba: bool = False):
@@ -133,7 +132,9 @@ class GenerateSimulationData:
             'goal_angle': myt.goal_angle,
             'motor_left_target': myt.motor_left_target,
             'motor_right_target': myt.motor_right_target,
-            'goal_position_distance': abs(myt.goal_position[0] - myt.position[0])
+            'goal_position_distance': abs(myt.goal_position[0] - myt.position[0]),
+            'transmitted_comm': communication transmitted two the neighbours
+            'colour': colour of the top led
         """
         prox_values = myt.prox_values
         prox_comm = utils.get_prox_comm(myt)
@@ -160,6 +161,9 @@ class GenerateSimulationData:
         if comm:
             transmitted_comm = utils.get_transmitted_communication(myt)
             myt.dictionary['transmitted_comm'] = transmitted_comm
+
+        if myt.controller.goal == 'colour':
+            myt.dictionary['colour'] = myt.colour
 
         dictionary = myt.dictionary.copy()
         return dictionary
@@ -190,6 +194,9 @@ class GenerateSimulationData:
         if comm:
             transmitted_comm = utils.get_transmitted_communication(myt)
             myt.dictionary['transmitted_comm'] = transmitted_comm
+
+        if myt.controller.goal == 'colour':
+            myt.dictionary['colour'] = myt.colour
 
         dictionary = myt.dictionary.copy()
 
@@ -312,30 +319,39 @@ class GenerateSimulationData:
         :param model:
         :param communication
         """
+        if args.task == 'task1':
+            from controllers import controllers_task1 as controllers
+            goal = 'distribute'
+        elif args.task == 'task2':
+            from controllers import controllers_task2 as controllers
+            goal = 'colour'
+        else:
+            ValueError("Invalid value for task!")
+
         comm = False
 
         if controller == cls.MANUAL_CONTROLLER:
             def controller_factory(**kwargs):
-                return controllers.ManualController(net_input=args.net_input, **kwargs)
+                return controllers.ManualController(name=controller, goal=goal, N=myt_quantity,
+                                                    net_input=args.net_input, **kwargs)
 
         elif controller == cls.OMNISCIENT_CONTROLLER:
-            controller_factory = controllers.OmniscientController
+            def controller_factory(**kwargs):
+                return controllers.OmniscientController(name=controller, goal=goal, N=myt_quantity, **kwargs)
 
         elif re.match(cls.LEARNED_CONTROLLER, controller):
-            # controller_factory = lambda **kwargs: d_c.LearnedController(net=net, **kwargs)
             net = torch.load('%s/%s' % (model_dir, model))
 
             if communication:
                 comm = True
 
             def controller_factory(**kwargs):
-                return controllers.LearnedController(net=net, net_input=args.net_input, communication=communication,
-                                                     N=myt_quantity, **kwargs)
+                return controllers.LearnedController(name=controller, goal=goal, N=myt_quantity, net=net,
+                                                     net_input=args.net_input, communication=communication, **kwargs)
         else:
             raise ValueError("Invalid value for controller")
 
         world, myts = cls.setup(controller_factory, myt_quantity)
-
 
         runs = []
         complete_runs = []

@@ -24,6 +24,7 @@ class DistributedThymio2(pyenki.Thymio2):
         self.dictionary = None
 
         self.controller = controller
+        self.colour = None
 
     def controlStep(self, dt: float) -> None:
         """
@@ -33,10 +34,33 @@ class DistributedThymio2(pyenki.Thymio2):
         It is possible to use the distributed, the omniscient or the learned controller.
         :param dt: control step duration
         """
-        self.prox_comm_enable = True
-        speed, communication = self.controller.perform_control(self, dt)
 
-        self.motor_left_target = speed
-        self.motor_right_target = speed
+        if self.controller.goal == 'distribute':
+            if self.controller.name == "learned":
+                self.prox_comm_enable = True
+                speed, communication = self.controller.perform_control(self, dt)
+                self.prox_comm_tx = communication
+            else:
+                speed = self.controller.perform_control(self, dt)
 
-        self.prox_comm_tx = communication
+            self.motor_left_target = speed
+            self.motor_right_target = speed
+
+        elif self.controller.goal == 'colour':
+            if self.controller.name == "learned":
+                self.prox_comm_enable = True
+                colour, communication = self.controller.perform_control(self, dt)
+                self.prox_comm_tx = communication
+            else:
+                colour = self.controller.perform_control(self, dt)
+
+            self.colour = colour
+            if colour == 0:  # red
+                self.set_led_top(red=1.0)
+            elif colour == 1:  # blue
+                self.set_led_top(blue=1.0)
+            else:
+                raise ValueError('Invalid value for colour!')
+
+        else:
+            raise ValueError("Invalid value for goal!")
