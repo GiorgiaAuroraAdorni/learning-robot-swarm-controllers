@@ -8,9 +8,9 @@ from enum import Enum
 from random import shuffle
 from typing import Sequence, Tuple, TypeVar, Callable
 
-import numpy as np
 import torch
 import torch.nn as nn
+from torch.distributions import uniform
 
 Sensing = TypeVar('Sensing')
 Control = TypeVar('Control')
@@ -67,10 +67,11 @@ def init_comm(thymio: int, device):
     :param device
     :return: communication vector
     """
-    out = np.zeros(thymio + 2)
-    out[1:-1] = np.random.uniform(0, 1, thymio)
+    out = torch.zeros(thymio + 2)
+    distribution = uniform.Uniform(torch.Tensor([0.0]), torch.Tensor([1.0]))
+    out[1:-1] = distribution.sample(torch.Size([thymio]))
 
-    return torch.Tensor(out, device=device)
+    return out
 
 
 def input_from(ss, comm, i, sim=False):
@@ -174,9 +175,9 @@ class CommunicationNet(nn.Module):
         rs = []
         for sequence in batch:
             # FIXME
-            comm = init_comm(sequence[0].shape[0], device=self.device)
+            comm = init_comm(int(sequence[0].shape[0]), device=self.device)
             controls = []
-            tmp = list(range(sequence[0].shape[0]))
+            tmp = list(range(int(sequence[0].shape[0])))
             shuffle(tmp)
             self.tmp_indices = tmp
 
