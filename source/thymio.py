@@ -26,6 +26,11 @@ class DistributedThymio2(pyenki.Thymio2):
         self.controller = controller
         self.colour = None
 
+        if self.index > (self.controller.N / 2) - 1:
+            self.goal_colour = 0  # red
+        else:
+            self.goal_colour = 1  # blue
+
     def controlStep(self, dt: float) -> None:
         """
         Perform one control step:
