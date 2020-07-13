@@ -110,10 +110,11 @@ def get_prox_comm(myt):
     return prox_comm
 
 
-def get_received_communication(myt):
+def get_received_communication(myt, goal='distribute'):
     """
     Create a list containing the messages received from the back and front.
     :param myt
+    :param goal
     :return communication: the communication received
     """
     communication = [0, 0]
@@ -122,10 +123,10 @@ def get_received_communication(myt):
 
     for idx, _ in enumerate(prox_comm_events):
         message = prox_comm_events[idx].rx
-        message = float(message / (2 ** 10))
+        if goal == 'distribute':
+            message = float(message / (2 ** 10))
 
         if mean([prox_comm_events[idx].intensities[5], prox_comm_events[idx].intensities[6]]) != 0:
-
             communication[0] = message
         else:
             communication[1] = message
