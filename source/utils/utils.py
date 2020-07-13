@@ -3,7 +3,6 @@ from itertools import chain
 from statistics import mean
 
 import numpy as np
-import onnx
 import pandas as pd
 import torch
 from torch.utils.data import TensorDataset
@@ -429,3 +428,47 @@ def extract_input_output(runs, in_label, communication=False, input_combination=
             output_ = np.array(runs.motor_left_target)
 
     return input_, output_, runs, columns
+
+
+def export_network(model_dir, model, input_):
+    """
+
+    :param model_dir:
+    :param model:
+    :param input_:
+    :return:
+    """
+    net = torch.load('%s/%s' % (model_dir, model), map_location='cpu')
+
+    torch.save(net.single_net, '%s/%s.single-net' % (model_dir, model))
+
+    # Export the model
+    torch.onnx.export(net,                                        # model being run
+                      input_,                                     # model input (or a tuple for multiple inputs)
+                      "%s/%s.onnx" % (model_dir, model),           # where to save the model (can be a file or file-like object)
+                      do_constant_folding=True,
+                      # export_params=True,                         # store the trained parameter weights inside the model file
+                      # opset_version=10                           # the ONNX version to export the model to
+                      input_names=['sensing'],  # the model's input names
+                      output_names=['control']  # the model's output names
+                      )
+
+
+def write_graph(model_dir, model, dummy_input_graph):
+    """
+    FIXME
+    :param model_dir:
+    :param model:
+    :param input_:
+    :return:
+    """
+    from torch.utils.tensorboard import SummaryWriter
+
+    # default `log_dir` is "runs" - we'll be more specific here
+    writer = SummaryWriter('%s/tb' % model_dir)
+
+    net = torch.load('%s/%s' % (model_dir, model))
+
+    writer.add_graph(net, dummy_input_graph)
+    writer.close()
+
