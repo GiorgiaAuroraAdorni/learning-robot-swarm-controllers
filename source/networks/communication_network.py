@@ -27,39 +27,6 @@ class Sync(Enum):
     random_sequential = 4
 
 
-class SingleNet(nn.Module, ):
-    def __init__(self, input_size):
-        """
-        :param input_size: dimension of the sensing vector
-        """
-        super(SingleNet, self).__init__()
-        self.fc1 = torch.nn.Linear(input_size + 2, 22)  # (7 + 2) or (14 + 2)
-        self.relu = torch.nn.Tanh()
-        self.fc2 = torch.nn.Linear(22, 2)
-        self.sigmoid = torch.nn.Sigmoid()
-
-    def forward(self, input_):
-        """
-        :param input_: input of the network, vector containing the sensting and the messages received by the robot
-                       (can be multidimensional, that means a row for each robot)
-        :return output: output of the network containing the control and the message to communicate (shape: 1 x 2)
-        """
-        hidden = self.fc1(input_)
-        relu = self.relu(hidden)
-        output = self.fc2(relu)
-
-        # Convert the communication in values between 0 and 1 using the Sigmoid activation function
-        speed = output[:, 0, None]
-        communication = output[:, 1, None]
-
-        communication = self.sigmoid(communication)
-
-        output[:, 0, None] = speed
-        output[:, 1, None] = communication
-
-        return output
-
-
 def init_comm(thymio: int, device):
     """
     Initialise the communication vector (for the initial timestep of each sequence)
@@ -84,15 +51,62 @@ def input_from(ss, comm, i, sim=False):
     :return input_
     """
     if sim:
-        input_ = torch.cat((ss, comm[i].view(1), comm[i+2].view(1)), 0)
+        input_ = torch.cat((ss, comm[i].view(1), comm[i + 2].view(1)), 0)
     else:
         input_ = torch.cat((ss[i], comm[i].view(1), comm[i + 2].view(1)), 0)
 
     return input_
 
 
+def input_from_no_sensing(comm, i):
+    """
+
+    :param comm: communication vector
+    :param i: index of the thymio in the row
+    :return input_
+    """
+
+    input_ = torch.cat((comm[i].view(1), comm[i + 2].view(1)), 0)
+
+    return input_
+
+
+class SingleNet(nn.Module):
+    def __init__(self, input_size):
+        """
+        :param input_size: dimension of the sensing vector
+        """
+        super(SingleNet, self).__init__()
+        self.fc1 = torch.nn.Linear(input_size + 2, 22)  # (7 + 2) or (14 + 2)
+        self.tanh = torch.nn.Tanh()
+        self.fc2 = torch.nn.Linear(22, 2)
+        self.sigmoid = torch.nn.Sigmoid()
+
+    def forward(self, input_):
+        """
+        :param input_: input of the network, vector containing the sensing and the messages received by the robot
+                       (can be multidimensional, that means a row for each robot)
+        :return output: output of the network containing the control and the message to communicate (shape: 1 x 2)
+        """
+        hidden = self.fc1(input_)
+        tanh = self.tanh(hidden)
+        output = self.fc2(tanh)
+
+        # Convert the communication in values between 0 and 1 using the Sigmoid activation function
+        speed = output[:, 0, None]
+        communication = output[:, 1, None]
+
+        communication = self.sigmoid(communication)
+
+        output[:, 0, None] = speed
+        output[:, 1, None] = communication
+
+        return output
+
+
 class CommunicationNet(nn.Module):
-    def __init__(self, input_size, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNet, input_fn=input_from) -> None:
+    def __init__(self, input_size, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNet,
+                 input_fn=input_from) -> None:
         """
 
         :param input_size: dimension of the sensing vector (can be 7 or 14)
@@ -121,11 +135,6 @@ class CommunicationNet(nn.Module):
         """
         if sync == Sync.sync:
             if sim:
-                # if i == 0:
-                #     comm[0] = 0
-                # elif i == self.thymio - 1:
-                #     comm[1] = 0
-
                 input = self.input_fn(xs, comm, i, sim=True)
                 input = input.unsqueeze(0)
             else:
@@ -214,7 +223,7 @@ class CommunicationNet(nn.Module):
             :return control, new communication vector
             """
             nonlocal comm
-            
+
             with torch.no_grad():
                 sensing = torch.FloatTensor(sensing)
                 if communication is not None:
@@ -222,10 +231,46 @@ class CommunicationNet(nn.Module):
                     comm[i + 2] = communication[1]
                 control = self.step(sensing, comm, sync=sync, sim=True, i=i).numpy()
 
-                # print("comm = ", comm)
-                # print("comm subset = ", comm[1:-1])
-                # print()
-
                 return control, comm[1:-1].clone().numpy().flatten()
 
         return f
+
+
+class SingleNetNoSensing(nn.Module):
+    def __init__(self):
+        super(SingleNetNoSensing, self).__init__()
+
+        self.fc1 = torch.nn.Linear(2, 22)
+        self.tanh = torch.nn.Tanh()
+        self.fc2 = torch.nn.Linear(22, 2)
+        self.sigmoid = torch.nn.Sigmoid()
+
+    def forward(self, input_):
+        """
+
+        :param input_: input of the network, vector containing the two messages received by the robot (left and right)
+                       (can be multidimensional, that means a row for each robot)
+        :return output: output of the network containing the colour and the message to communicate (shape: 1 x 2)
+
+        """
+
+        hidden = self.fc1(input_)
+        tanh = self.tanh(hidden)
+        output = self.fc2(tanh)
+        output_ = self.sigmoid(output)
+
+        return output_
+
+
+class CommunicationNetNoSensing(CommunicationNet):
+    def __init__(self, input_size, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNetNoSensing,
+                 input_fn=input_from_no_sensing) -> None:
+
+        super(CommunicationNetNoSensing, self).__init__(input_size, device, sync, module, input_fn)
+
+        self.input_size = input_size
+        self.single_net = module(self.input_size)
+        self.device = device
+        self.sync = sync
+        self.input_fn = input_fn
+        self.tmp_indices = None
