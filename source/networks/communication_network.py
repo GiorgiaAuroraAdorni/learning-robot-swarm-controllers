@@ -250,8 +250,8 @@ class SingleNetNoSensing(nn.Module):
 
         :param input_: input of the network, vector containing the two messages received by the robot (left and right)
                        (can be multidimensional, that means a row for each robot)
-        :return output: output of the network containing the colour and the message to communicate (shape: 1 x 2)
-
+        :return output: output of the network containing the probability of the colour to be red
+                        (if less than 0.5 the colour is blue), and the message to communicate (shape: 1 x 2)
         """
 
         hidden = self.fc1(input_)
@@ -265,6 +265,14 @@ class SingleNetNoSensing(nn.Module):
 class CommunicationNetNoSensing(CommunicationNet):
     def __init__(self, input_size, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNetNoSensing,
                  input_fn=input_from_no_sensing) -> None:
+        """
+
+        :param input_size:
+        :param device:
+        :param sync:
+        :param module:
+        :param input_fn:
+        """
 
         super(CommunicationNetNoSensing, self).__init__(input_size, device, sync, module, input_fn)
 
