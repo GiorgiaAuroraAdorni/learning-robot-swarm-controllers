@@ -300,8 +300,6 @@ class GenerateSimulationData:
                     break
 
                 if s > 0:
-                    if s > 3:
-                        print()
                     for i, myt in enumerate(myts):
                         if myt.dictionary is None:
                             dictionary = cls.generate_dict(myt, n_sim, s, comm)

@@ -40,6 +40,7 @@ class DistributedThymio2(pyenki.Thymio2):
 
         self.prox_comm_enable = True
         self.prox_comm_tx = message
+
         self.colour = colour
 
         if colour == 0:  # red

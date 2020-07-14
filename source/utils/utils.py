@@ -123,7 +123,7 @@ def get_received_communication(myt, goal='distribute'):
     """
     communication = [0, 0]
 
-    prox_comm_events = myt.prox_comm_events
+    prox_comm_events = myt.prox_comm_events.copy()
 
     for idx, _ in enumerate(prox_comm_events):
         message = prox_comm_events[idx].rx
@@ -135,7 +135,7 @@ def get_received_communication(myt, goal='distribute'):
         else:
             communication[1] = message
 
-    return communication
+    return communication.copy()
 
 
 def get_transmitted_communication(myt):
