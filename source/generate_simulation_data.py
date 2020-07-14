@@ -113,7 +113,6 @@ class GenerateSimulationData:
             myt.prox_comm_tx = 0
             myt.prox_comm_enable = False
 
-
     @classmethod
     def generate_dict(cls, myt, n_sim, s, comm=None):
         """
@@ -358,6 +357,7 @@ class GenerateSimulationData:
         else:
             ValueError("Invalid value for task!")
 
+        comm = False
         if communication:
             comm = True
 

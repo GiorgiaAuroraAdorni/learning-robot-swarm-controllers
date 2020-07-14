@@ -57,12 +57,21 @@ class ManualController:
                 # if no communication is received yet do not send any message and colour the top led randomly
                 colour = 2
                 message = 0
+
             elif communication[0] == 0:
-                message = communication[1] + 1
-                colour = 0
+                if communication[1] == self.N / 2:
+                    message = np.random.choice([communication[1], communication[1] - 1])
+                    colour = 1
+                else:
+                    message = communication[1] + 1
+                    colour = 0
             elif communication[1] == 0:
-                message = communication[0] + 1
-                colour = 1
+                if communication[0] == self.N / 2:
+                    message = np.random.choice([communication[0], communication[0] - 1])
+                    colour = 0
+                else:
+                    message = communication[0] + 1
+                    colour = 1
             else:
                 if communication[0] > communication[1]:
                     colour = 0
@@ -74,7 +83,7 @@ class ManualController:
                     colour = 1
                     message = communication[0] + 1
 
-        return colour, message
+        return colour, int(message)
 
 
 class OmniscientController:
