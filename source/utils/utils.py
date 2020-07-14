@@ -98,12 +98,16 @@ def get_prox_comm(myt):
     """
     prox_comm = {}
 
-    prox_comm_events = myt.prox_comm_events
+    prox_comm_events = myt.prox_comm_events.copy()
 
     if len(prox_comm_events) > 0:
         for idx, _ in enumerate(prox_comm_events):
-            sender = prox_comm_events[idx].rx + 1
             intensities = prox_comm_events[idx].intensities
+
+            if mean([intensities[5], intensities[6]]) != 0:
+                sender = myt.index
+            else:
+                sender = myt.index + 2
 
             prox_comm['myt%d' % sender] = {'intensities': intensities}
 

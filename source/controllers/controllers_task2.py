@@ -27,19 +27,6 @@ class ManualController:
 
         self.net_input = net_input
 
-    def neighbors_distance(self, state):
-        """
-        Check if there is a robot ahead using the infrared sensor 2 (front-front).
-        Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
-        :param state
-        :return back, front: response values of the rear and front sensors
-        """
-        sensing = utils.get_input_sensing(self.net_input, state, normalise=False)
-
-        front = sensing[2]
-        back = np.mean(np.array([sensing[5], sensing[6]]))
-
-        return back, front
 
     def perform_control(self, state, dt):
         """
@@ -55,29 +42,21 @@ class ManualController:
 
         """
 
-        back, front = self.neighbors_distance(state)
-
-        if state.goal_position[0] == state.position[0]:
+        if state.index == 0:
+            colour = 1
             message = 1
-            state.prox_comm_enable = True
-            state.prox_comm_tx = message
 
-            if back == 0:
-                colour = 1
-
-            elif front == 0:
-                colour = 0
-
-            else:
-                raise ValueError('Invalid values for back and front!')
+        elif state.index == self.N - 1:
+            colour = 0
+            message = 1
 
         else:
             communication = utils.get_received_communication(state, goal=self.goal)
 
             if communication == [0, 0]:
                 # if no communication is received yet do not send any message and colour the top led randomly
-                colour = np.random.randint(2)
-                message = None
+                colour = 2
+                message = 0
             elif communication[0] == 0:
                 message = communication[1] + 1
                 colour = 0
@@ -95,11 +74,7 @@ class ManualController:
                     colour = 1
                     message = communication[0] + 1
 
-            if message is not None:
-                state.prox_comm_enable = True
-                state.prox_comm_tx = message
-
-        return colour
+        return colour, message
 
 
 class OmniscientController:
@@ -131,4 +106,5 @@ class OmniscientController:
         :param dt
         """
 
-        return state.goal_colour
+        return state.goal_colour, 0
+

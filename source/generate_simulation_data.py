@@ -103,11 +103,16 @@ class GenerateSimulationData:
 
             myt.initial_position = myt.position
 
-            #  Reset the dictionary
+            #  Reset the parameters
             myt.dictionary = None
             myt.angle = 0
-
             myt.goal_position = (goal_positions[i], 0)
+
+            if myt.colour is not None:
+                myt.colour = None
+            myt.prox_comm_tx = 0
+            myt.prox_comm_enable = False
+
 
     @classmethod
     def generate_dict(cls, myt, n_sim, s, comm=None):
@@ -163,6 +168,7 @@ class GenerateSimulationData:
             myt.dictionary['transmitted_comm'] = transmitted_comm
 
         if myt.controller.goal == 'colour':
+            myt.dictionary['goal_colour'] = myt.goal_colour
             myt.dictionary['colour'] = myt.colour
 
         dictionary = myt.dictionary.copy()
@@ -196,6 +202,7 @@ class GenerateSimulationData:
             myt.dictionary['transmitted_comm'] = transmitted_comm
 
         if myt.controller.goal == 'colour':
+            myt.dictionary['goal_colour'] = myt.goal_colour
             myt.dictionary['colour'] = myt.colour
 
         dictionary = myt.dictionary.copy()
@@ -228,6 +235,28 @@ class GenerateSimulationData:
 
         with open(c_json_file, 'w', encoding='utf-8') as f:
             json.dump(complete_data, f, ensure_ascii=False, indent=4)
+
+    @classmethod
+    def verify_target(cls, myt, counter, dictionary, tol):
+        """
+
+        :param myt:
+        :param counter:
+        :param dictionary:
+        :param tol:
+        """
+        if myt.controller.goal == 'distribute' or myt.controller.name == 'omniscient':
+            # do this also in case of omniscient controller to ensure enough timesteps
+            diff = abs(dictionary['position'][0] - dictionary['goal_position'][0])
+            if diff < tol:
+                counter += 1
+        elif myt.controller.goal == 'colour' and not myt.controller.name == 'omniscient':
+            if myt.goal_colour == myt.colour:
+                counter += 1
+        else:
+            raise ValueError("Invalid value for goal!")
+
+        return counter
 
     @classmethod
     def run(cls, n_sim, myts, runs, complete_runs, world: pyenki.World,
@@ -271,6 +300,8 @@ class GenerateSimulationData:
                     break
 
                 if s > 0:
+                    if s > 3:
+                        print()
                     for i, myt in enumerate(myts):
                         if myt.dictionary is None:
                             dictionary = cls.generate_dict(myt, n_sim, s, comm)
@@ -281,10 +312,11 @@ class GenerateSimulationData:
                         if i != 0 and i != (myt_quantity - 1):
                             iteration.append(dictionary)
 
-                            # Check if the robot has reached the target
-                            diff = abs(dictionary['position'][0] - dictionary['goal_position'][0])
-                            if diff < tol:
-                                counter += 1
+                            # Check if the robot has reached the target, which depends on the goal:
+                            # if it is distribute the thymios, then computed the euclidean distance between the actual
+                            # and the goal position
+                            # if it is colour the thymios, then check if the actual color is the same of the goal one
+                            counter = cls.verify_target(myt, counter, dictionary, tol)
 
                         complete_iteration.append(dictionary)
 
@@ -328,7 +360,8 @@ class GenerateSimulationData:
         else:
             ValueError("Invalid value for task!")
 
-        comm = False
+        if communication:
+            comm = True
 
         if controller == cls.MANUAL_CONTROLLER:
             def controller_factory(**kwargs):
@@ -341,9 +374,6 @@ class GenerateSimulationData:
 
         elif re.match(cls.LEARNED_CONTROLLER, controller):
             net = torch.load('%s/%s' % (model_dir, model))
-
-            if communication:
-                comm = True
 
             def controller_factory(**kwargs):
                 return controllers.LearnedController(name=controller, goal=goal, N=myt_quantity, net=net,

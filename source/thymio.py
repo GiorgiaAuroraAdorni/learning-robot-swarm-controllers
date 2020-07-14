@@ -16,6 +16,7 @@ class DistributedThymio2(pyenki.Thymio2):
 
         self.name = name
         self.index = index
+        self.controller = controller
 
         self.initial_position = None
         self.goal_position = None
@@ -23,13 +24,46 @@ class DistributedThymio2(pyenki.Thymio2):
 
         self.dictionary = None
 
-        self.controller = controller
         self.colour = None
 
         if self.index > (self.controller.N / 2) - 1:
             self.goal_colour = 0  # red
         else:
             self.goal_colour = 1  # blue
+
+    def colour_thymios(self, dt):
+        """
+
+        :param dt: control step duration
+        """
+        colour, message = self.controller.perform_control(self, dt)
+
+        self.prox_comm_enable = True
+        self.prox_comm_tx = message
+        self.colour = colour
+
+        if colour == 0:  # red
+            self.set_led_top(red=1.0)
+        elif colour == 1:  # blue
+            self.set_led_top(blue=1.0)
+        else:
+            self.set_led_top(green=1.0)
+
+    def distribute_thymios(self, dt):
+        """
+
+        :param dt: control step duration
+        """
+        if self.controller.name == "learned":
+            speed, communication = self.controller.perform_control(self, dt)
+
+            self.prox_comm_enable = True
+            self.prox_comm_tx = communication
+        else:
+            speed = self.controller.perform_control(self, dt)
+
+        self.motor_left_target = speed
+        self.motor_right_target = speed
 
     def controlStep(self, dt: float) -> None:
         """
@@ -41,31 +75,10 @@ class DistributedThymio2(pyenki.Thymio2):
         """
 
         if self.controller.goal == 'distribute':
-            if self.controller.name == "learned":
-                self.prox_comm_enable = True
-                speed, communication = self.controller.perform_control(self, dt)
-                self.prox_comm_tx = communication
-            else:
-                speed = self.controller.perform_control(self, dt)
-
-            self.motor_left_target = speed
-            self.motor_right_target = speed
+            self.distribute_thymios(dt)
 
         elif self.controller.goal == 'colour':
-            if self.controller.name == "learned":
-                self.prox_comm_enable = True
-                colour, communication = self.controller.perform_control(self, dt)
-                self.prox_comm_tx = communication
-            else:
-                colour = self.controller.perform_control(self, dt)
-
-            self.colour = colour
-            if colour == 0:  # red
-                self.set_led_top(red=1.0)
-            elif colour == 1:  # blue
-                self.set_led_top(blue=1.0)
-            else:
-                raise ValueError('Invalid value for colour!')
+            self.colour_thymios(dt)
 
         else:
             raise ValueError("Invalid value for goal!")
