@@ -4,7 +4,7 @@ import torch
 import tqdm
 from torch.utils import data
 
-from networks.communication_network import Sync, CommunicationNet, CommunicationNetNoSensing
+from networks.communication_network import Sync, CommunicationNet
 from networks.distributed_network import DistributedNet
 from networks.metrics import StreamingMean, NetMetrics
 from utils import utils
@@ -103,7 +103,7 @@ def validate_net(net, device, valid_minibatch, criterion=torch.nn.MSELoss()):
     return validation_loss.mean
 
 
-def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net, task):
+def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net):
     """
     :param indices
     :param file_losses
@@ -113,7 +113,6 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     :param communication
     :param net_input
     :param save_net
-    :param task
     """
     train_indices, validation_indices, test_indices = indices[1]
 
@@ -131,35 +130,18 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     device = torch.device('cpu')
 
     if communication:
-        if task == 'task1':
-            net = CommunicationNet(x_train.shape[3], device=device, sync=Sync.sync)
-            net.to(device)
+        net = CommunicationNet(x_train.shape[3], device=device, sync=Sync.sync)
+        net.to(device)
 
-            metrics = train_net(epochs=500,
-                                train_dataset=train,
-                                valid_dataset=valid,
-                                test_dataset=test,
-                                batch_size=10,
-                                learning_rate=0.001,
-                                net=net,
-                                metrics_path=file_losses,
-                                device=device)
-
-        elif task == 'task2':
-            net = CommunicationNetNoSensing(x_train.shape[3], device=device, sync=Sync.sync)
-            net.to(device)
-
-            metrics = train_net(epochs=500,
-                                train_dataset=train,
-                                valid_dataset=valid,
-                                test_dataset=test,
-                                batch_size=10,
-                                learning_rate=0.001,
-                                net=net,
-                                metrics_path=file_losses,
-                                device=device,
-                                criterion=torch.nn.BCELoss())
-
+        metrics = train_net(epochs=500,
+                            train_dataset=train,
+                            valid_dataset=valid,
+                            test_dataset=test,
+                            batch_size=10,
+                            learning_rate=0.001,
+                            net=net,
+                            metrics_path=file_losses,
+                            device=device)
     else:
         net = DistributedNet(x_train.shape[1])
         net.to(device)
