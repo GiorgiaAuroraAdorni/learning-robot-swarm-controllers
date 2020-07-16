@@ -7,7 +7,11 @@ import pandas as pd
 import torch
 from torch.utils.data import TensorDataset
 
-from network_evaluation import ThymioState
+
+class ThymioState:
+    def __init__(self, state_dict):
+        for k, v in state_dict.items():
+            setattr(self, k, v)
 
 
 def check_dir(directory):

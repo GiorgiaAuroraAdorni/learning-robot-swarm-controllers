@@ -5,14 +5,7 @@ import tqdm
 
 from utils import utils
 from utils import my_plots
-from controllers import controllers
 from generate_simulation_data import GenerateSimulationData as g
-
-
-class ThymioState:
-    def __init__(self, state_dict):
-        for k, v in state_dict.items():
-            setattr(self, k, v)
 
 
 def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid,
@@ -236,7 +229,7 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
     my_plots.plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
-def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication, net_input, avg_gap):
+def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication, net_input, avg_gap, task):
     """
 
     :param indices:
@@ -252,6 +245,17 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     :param avg_gap:
     :return:
     """
+    if args.task == 'task1':
+            from controllers import controllers_task1 as controllers
+            goal = 'distribute'
+            net_input = args.net_input
+        elif args.task == 'task2':
+            from controllers import controllers_task2 as controllers
+            goal = 'colour'
+        else:
+            ValueError("Invalid value for task!")
+
+
     print('\nGenerating plots for %s…' % model)
     net = torch.load('%s/%s' % (model_dir, model), map_location='cpu')
     # Ensure that the network is loaded in evaluation mode by default.
