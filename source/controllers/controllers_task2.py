@@ -24,7 +24,6 @@ class ManualController:
         self.goal = goal
         self.N = N
 
-
     def perform_control(self, state, dt):
         """
         Using the sensing of thw robots, decide which robots are the first and the last and start sending a
@@ -56,16 +55,21 @@ class ManualController:
                 message = 0
 
             elif communication[0] == 0:
-                if communication[1] == self.N / 2:
-                    message = np.random.choice([communication[1], communication[1] - 1])
+                if communication[1] == self.N // 2:
+                    message = communication[1]
+                    # message = np.random.choice([communication[1], communication[1] - 1])
                     colour = 1
                 else:
                     message = communication[1] + 1
                     colour = 0
             elif communication[1] == 0:
-                if communication[0] == self.N / 2:
-                    message = np.random.choice([communication[0], communication[0] - 1])
+                if communication[0] == self.N // 2:
+                    message = communication[0]
+                    # message = np.random.choice([communication[0], communication[0] - 1])
                     colour = 0
+                    # case of even robots
+                    if self.N % 2 == 1:
+                        colour = 1
                 else:
                     message = communication[0] + 1
                     colour = 1
@@ -76,9 +80,13 @@ class ManualController:
                 elif communication[0] < communication[1]:
                     colour = 1
                     message = communication[0] + 1
-                else:  # only if the number of robot is odd
-                    colour = 1
-                    message = communication[0] + 1
+                else:
+                    if self.N % 2 == 1:
+                        colour = 1
+                        message = communication[0] + 1
+                    else:
+                        colour = 2
+                        message = 0
 
         return colour, int(message)
 
