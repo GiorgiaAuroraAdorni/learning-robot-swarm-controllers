@@ -10,13 +10,12 @@ class ManualController:
     ​​recorded by the front and rear sensors.
     """
 
-    def __init__(self, name, goal, N, net_input, **kwargs):
+    def __init__(self, name, goal, N, **kwargs):
         """
 
         :param name
         :param goal
         :param N: number of thymios in the simulation
-        :param net_input:
         :param kwargs:
         """
         super().__init__(**kwargs)
@@ -24,8 +23,6 @@ class ManualController:
         self.name = name
         self.goal = goal
         self.N = N
-
-        self.net_input = net_input
 
 
     def perform_control(self, state, dt):

@@ -69,7 +69,7 @@ class GenerateSimulationData:
             maximum_gap = 14
         elif net_input == 'prox_comm':
             maximum_gap = 50
-        elif net_input == 'all_sensors':
+        elif net_input == 'all_sensors' or net_input == None:
             maximum_gap = avg_gap * 2
         else:
             raise ValueError("Invalid value for net_input")
@@ -348,9 +348,11 @@ class GenerateSimulationData:
         :param model:
         :param communication
         """
+        net_input = None
         if args.task == 'task1':
             from controllers import controllers_task1 as controllers
             goal = 'distribute'
+            net_input = args.net_input
         elif args.task == 'task2':
             from controllers import controllers_task2 as controllers
             goal = 'colour'
@@ -363,8 +365,11 @@ class GenerateSimulationData:
 
         if controller == cls.MANUAL_CONTROLLER:
             def controller_factory(**kwargs):
-                return controllers.ManualController(name=controller, goal=goal, N=myt_quantity,
-                                                    net_input=args.net_input, **kwargs)
+                if args.task == 'task2':
+                    return controllers.ManualController(name=controller, goal=goal, N=myt_quantity, **kwargs)
+                else:
+                    return controllers.ManualController(name=controller, goal=goal, N=myt_quantity,
+                                                        net_input=net_input, **kwargs)
 
         elif controller == cls.OMNISCIENT_CONTROLLER:
             def controller_factory(**kwargs):
@@ -374,8 +379,11 @@ class GenerateSimulationData:
             net = torch.load('%s/%s' % (model_dir, model))
 
             def controller_factory(**kwargs):
+                # FIXME
+                # if args.task == 'task2':
+                # else:
                 return controllers.LearnedController(name=controller, goal=goal, N=myt_quantity, net=net,
-                                                     net_input=args.net_input, communication=communication, **kwargs)
+                                                     net_input=net_input, communication=communication, **kwargs)
         else:
             raise ValueError("Invalid value for controller")
 
@@ -385,7 +393,7 @@ class GenerateSimulationData:
         complete_runs = []
         for n_sim in tqdm(range(n_simulations)):
             try:
-                cls.init_positions(myts, args.net_input, args.avg_gap)
+                cls.init_positions(myts, net_input, args.avg_gap)
                 cls.run(n_sim, myts, runs, complete_runs, world, comm, args.gui)
             except Exception as e:
                 print('ERROR: ', e)
