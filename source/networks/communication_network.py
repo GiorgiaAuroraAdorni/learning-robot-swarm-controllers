@@ -27,11 +27,10 @@ class Sync(Enum):
     random_sequential = 4
 
 
-def init_comm(thymio: int, device):
+def init_comm(thymio: int):
     """
     Initialise the communication vector (for the initial timestep of each sequence)
-    :param thymio: thymio quantity
-    :param device
+    :param thymio: number of thymio
     :return: communication vector
     """
     out = torch.zeros(thymio + 2)
@@ -65,7 +64,6 @@ def input_from_no_sensing(comm, i):
     :param i: index of the thymio in the row
     :return input_
     """
-
     input_ = torch.cat((comm[i].view(1), comm[i + 2].view(1)), 0)
 
     return input_
@@ -184,7 +182,7 @@ class CommunicationNet(nn.Module):
         rs = []
         for sequence in batch:
             # FIXME
-            comm = init_comm(int(sequence[0].shape[0]), device=self.device)
+            comm = init_comm(int(sequence[0].shape[0]))
             controls = []
             tmp = list(range(int(sequence[0].shape[0])))
             shuffle(tmp)
@@ -213,7 +211,7 @@ class CommunicationNet(nn.Module):
         shuffle(tmp)
         self.tmp_indices = tmp
 
-        comm = init_comm(self.thymio, device=self.device)
+        comm = init_comm(self.thymio)
 
         def f(sensing: Sequence[Sensing], communication, i) -> Tuple[Sequence[Control], Sequence[float]]:
             """
