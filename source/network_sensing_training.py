@@ -60,7 +60,7 @@ def train_net(epochs: int,
             inputs, labels = (tensor.to(device) for tensor in batch)
             output = net(inputs)
 
-            loss = criterion(output, labels)
+            loss = criterion(output, labels[..., None])
 
             loss.backward()
 
@@ -97,13 +97,13 @@ def validate_net(net, device, valid_minibatch, criterion=torch.nn.MSELoss()):
             inputs, labels = (tensor.to(device) for tensor in batch)
             t_output = net(inputs)
 
-            loss = criterion(t_output, labels)
+            loss = criterion(t_output, labels[..., None])
             validation_loss.update(loss, inputs.shape[0])
 
     return validation_loss.mean
 
 
-def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net):
+def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net, task='task1'):
     """
     :param indices
     :param file_losses
@@ -113,6 +113,7 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     :param communication
     :param net_input
     :param save_net
+    :param task
     """
     train_indices, validation_indices, test_indices = indices[1]
 
