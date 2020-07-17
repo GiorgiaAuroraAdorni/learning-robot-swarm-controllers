@@ -35,7 +35,7 @@ def init_comm(thymio: int):
     """
     out = torch.zeros(thymio + 2)
     distribution = uniform.Uniform(torch.Tensor([0.0]), torch.Tensor([1.0]))
-    out[1:-1] = distribution.sample(torch.Size([thymio]))
+    out[1:-1] = torch.flatten(distribution.sample(torch.Size([thymio])))
 
     return out
 

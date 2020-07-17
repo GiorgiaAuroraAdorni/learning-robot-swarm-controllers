@@ -35,7 +35,7 @@ class DistributedNet(torch.nn.Module):
         relu = self.relu(hidden)
         output = self.fc2(relu)
 
-        return output
+        return torch.squeeze(output)
 
     def controller(self, thymio) -> Controller:
         """
