@@ -6,6 +6,7 @@ import tqdm
 from utils import utils
 from utils import my_plots
 from generate_simulation_data import GenerateSimulationData as g
+from utils.utils import ThymioState
 
 
 def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid,
@@ -71,6 +72,7 @@ def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction, communicat
     :param ds_eval:
     :param groundtruth:
     :param prediction:
+    :param communication
     """
     model_img = '%s/images/' % model_dir
     utils.check_dir(model_img)
@@ -88,7 +90,7 @@ def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction, communicat
     my_plots.plot_regressor(groundtruth, prediction, x_label, y_label, model_img, title, file_name)
 
 
-def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input, communication):
+def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input, communication, goal, controllers):
     """
 
     :param model_dir:
@@ -98,13 +100,15 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input,
     :param sensing: used to obtain the prediction
     :param net_input
     :param communication
+    :param goal
+    :param controllers
     """
     if communication:
         groundtruth = np.reshape(np.array(groundtruth).flat, [-1])
         sensing = np.reshape(np.array(sensing).flat, [-1, sensing.shape[3]])
 
     controller_predictions = []
-    controller = controllers.ManualController(net_input=net_input)
+    controller = controllers.ManualController(net_input=net_input, name='manual', goal=goal, N=1)
 
     for sample in sensing:
         # Rescale the values of the sensor
@@ -145,7 +149,7 @@ def generate_sensing():
     return x, s
 
 
-def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_label):
+def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_label, goal, communication, controllers):
     """
 
     :param model_img:
@@ -156,9 +160,13 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     :param sensing:
     :param index:
     :param x_label:
+    :param goal
+    :param communication
+    :param controllers
     """
     controller_predictions = []
-    controller = controllers.LearnedController(net=net, net_input=net_input)
+    controller = controllers.LearnedController(net=net, net_input=net_input, name='learned', goal=goal, N=3,
+                                               communication=communication)
 
     for sample in sensing:
         # Rescale the values of the sensor
@@ -190,7 +198,7 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     my_plots.plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
 
 
-def test_controller_given_init_positions(model_img, net, model, net_input, avg_gap):
+def test_controller_given_init_positions(model_img, net, model, net_input, avg_gap, goal, communication, controllers):
     """
 
     :param model_img:
@@ -198,11 +206,15 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
     :param model:
     :param net_input
     :param avg_gap
+    :param goal
+    :param communication
+    :param controllers
     """
     myt_quantity = 3
 
     def controller_factory(**kwargs):
-        return controllers.LearnedController(net=net, net_input=net_input, **kwargs)
+        return controllers.LearnedController(net=net, net_input=net_input, name='learned', goal=goal, N=3,
+                                             communication=communication, **kwargs)
 
     # FIXME do not use simulation
     world, myts = g.setup(controller_factory, myt_quantity)
@@ -243,18 +255,14 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     :param communication:
     :param net_input:
     :param avg_gap:
-    :return:
+    :param task:
     """
-    if args.task == 'task1':
-            from controllers import controllers_task1 as controllers
-            goal = 'distribute'
-            net_input = args.net_input
-        elif args.task == 'task2':
-            from controllers import controllers_task2 as controllers
-            goal = 'colour'
-        else:
-            ValueError("Invalid value for task!")
-
+    if task == 'task1':
+        from controllers import controllers_task1 as controllers
+        goal = 'distribute'
+    else:
+        from controllers import controllers_task2 as controllers
+        goal = 'colour'
 
     print('\nGenerating plots for %s…' % model)
     net = torch.load('%s/%s' % (model_dir, model), map_location='cpu')
@@ -277,7 +285,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication)
 
     # Evaluate prediction of the distributed controller with the omniscient groundtruth
-    evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication)
+    evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication, goal, controllers)
 
     if not communication:
         if not net_input == 'all_sensors':
@@ -287,12 +295,12 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
             index = 2
     
             evaluate_net(model_img, model, net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
-                         'center proximity sensor')
+                         'center proximity sensor', goal, communication, controllers)
 
             index = -1
             sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
             evaluate_net(model_img, model, net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
-                         'rear proximity sensors')
+                         'rear proximity sensors', goal, communication, controllers)
 
         # Evaluate the learned controller by passing a specific initial position configuration
-        test_controller_given_init_positions(model_img, net, model, net_input, avg_gap)
+        test_controller_given_init_positions(model_img, net, model, net_input, avg_gap, goal, communication, controllers)

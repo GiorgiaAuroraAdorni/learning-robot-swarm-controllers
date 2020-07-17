@@ -288,7 +288,7 @@ def prepare_dataset(run_dir, split):
     return file, indices
 
 
-def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, task, communication=False):
+def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False, task='task1'):
     """
     :param runs_dir: directory containing the simulations
     :param train_indices
@@ -502,7 +502,7 @@ def export_network(model_dir, model, input_):
     """
     net = torch.load('%s/%s' % (model_dir, model), map_location='cpu')
 
-    torch.save(net.single_net, '%s/%s.single-net' % (model_dir, model))
+    # torch.save(net.single_net, '%s/%s.single-net' % (model_dir, model))
 
     # Export the model
     torch.onnx.export(net,                                        # model being run

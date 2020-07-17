@@ -336,7 +336,8 @@ class GenerateSimulationData:
             complete_runs.append(complete_data)
 
     @classmethod
-    def generate_simulation(cls, run_dir, n_simulations, controller, myt_quantity, args, model_dir=None, model=None, communication=False):
+    def generate_simulation(cls, run_dir, n_simulations, controller, myt_quantity, args, model_dir=None, model=None,
+                            communication=False):
         """
 
         :param run_dir:

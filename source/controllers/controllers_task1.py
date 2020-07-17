@@ -193,21 +193,19 @@ class LearnedController:
 
         sensing = utils.get_input_sensing(self.net_input, state)
 
-        if len(state.prox_comm_events) == 0:
-            communication = None
+        if not self.communication:
+            speed = float(self.net_controller(sensing)[0])
+            comm = 0
         else:
             communication = utils.get_received_communication(state)
 
-        if self.communication:
             speed, comm = self.net_controller(sensing, communication, state.index)
             speed = float(speed)
-        else:
-            speed = float(self.net_controller(sensing)[0])
-            comm = state.idx
 
         if state.initial_position[0] != state.goal_position[0]:
             # convert communication into an int of between 0 and 10 bit
-            comm = int(comm[state.index] * (2 ** 10))
+            if self.communication:
+                comm = int(comm[state.index] * (2 ** 10))
             return speed, comm
         else:
             return 0, 0
