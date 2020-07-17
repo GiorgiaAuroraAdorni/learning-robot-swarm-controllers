@@ -288,33 +288,44 @@ def prepare_dataset(run_dir, split):
     return file, indices
 
 
-def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False):
+def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, task, communication=False):
     """
     :param runs_dir: directory containing the simulations
     :param train_indices
     :param validation_indices
     :param test_indices
     :param net_input
+    :param task
     :param communication
-    :return: train_sample, valid_sample, test_sample, train_target, valid_target, test_target
+    :return: (train_sample, valid_sample, test_sample), train_target, valid_target, test_target
     """
 
     runs = load_dataset(runs_dir, 'simulation.pkl')
 
-    if communication:
-        runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
+    if task == 'task1':
+        if communication:
+            runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
+        else:
+            runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
     else:
-        runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
+        runs_sub = runs[['timestep', 'name', 'run', 'goal_colour']]
 
     train_runs = runs_sub[runs_sub['run'].isin(train_indices)].reset_index()
     valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
     test_runs = runs_sub[runs_sub['run'].isin(test_indices)].reset_index()
 
-    train_sample, train_target, _, _ = extract_input_output(train_runs, net_input, communication, input_combination=False)
-    valid_sample, valid_target, _, _ = extract_input_output(valid_runs, net_input, communication, input_combination=False)
-    test_sample, test_target, _, _ = extract_input_output(test_runs, net_input, communication, input_combination=False)
+    if task == 'task2':
+        train_target, _ = extract_colour_output(train_runs, communication, input_combination=False)
+        valid_target, _ = extract_colour_output(valid_runs, communication, input_combination=False)
+        test_target, _ = extract_colour_output(test_runs, communication, input_combination=False)
 
-    return train_sample, valid_sample, test_sample, train_target, valid_target, test_target
+        return train_target, valid_target, test_target
+    else:
+        train_sample, train_target, _, _ = extract_input_output(train_runs, net_input, communication, input_combination=False)
+        valid_sample, valid_target, _, _ = extract_input_output(valid_runs, net_input, communication, input_combination=False)
+        test_sample, test_target, _, _ = extract_input_output(test_runs, net_input, communication, input_combination=False)
+
+        return train_sample, valid_sample, test_sample, train_target, valid_target, test_target
 
 
 def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_target, test_sample, test_target):
@@ -437,6 +448,48 @@ def extract_input_output(runs, in_label, communication=False, input_combination=
             output_ = np.array(runs.motor_left_target)
 
     return input_, output_, runs, columns
+
+
+def extract_colour_output(runs, communication=False, input_combination=True):
+    """
+    The output is the colour of the top led that depends by the position of the robot in the row.
+    :param runs:
+    :param communication
+    :param input_combination
+    :return output_, runs
+    """
+    if input_combination:
+        output_ = np.array(runs.goal_colour)
+    else:
+        if communication:
+            simulations = runs['run'].unique()
+
+            tmp = np.array(runs[['run', 'timestep']].drop_duplicates().groupby(['run']).max()).squeeze()
+            timesteps = np.sum(tmp) - tmp.shape[0]
+
+            output_ = np.empty(shape=(timesteps, 2, 3), dtype='float32')
+
+            init_counter = 0
+            for i in simulations:
+                run = runs[runs['run'] == i]
+
+                out_run_ = np.array(run.goal_colour)
+                out_run_ = out_run_.reshape([-1, 3])
+
+                size = out_run_.shape[0] - 1
+                final_counter = init_counter + size
+
+                out_array = np.empty(shape=(size, 2, 3), dtype='float32')
+                out_array[:, 0, ...] = out_run_[:-1, ...]
+                out_array[:, 1, ...] = out_run_[1:, ...]
+
+                output_[init_counter:final_counter] = out_array
+
+                init_counter = final_counter
+        else:
+            output_ = np.array(runs.motor_left_target)
+
+    return output_, runs
 
 
 def export_network(model_dir, model, input_):
