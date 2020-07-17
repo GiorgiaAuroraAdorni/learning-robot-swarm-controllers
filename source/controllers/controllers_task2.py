@@ -1,15 +1,7 @@
-import numpy as np
-
 from utils import utils
 
 
 class ManualController:
-    """
-    The robots are moved following a “distributed controller”, that is a simple proportional controller PID,
-    with P fixed to -0.01, whose goal is to align the robots by minimizing the difference between the values
-    ​​recorded by the front and rear sensors.
-    """
-
     def __init__(self, name, goal, N, **kwargs):
         """
 
