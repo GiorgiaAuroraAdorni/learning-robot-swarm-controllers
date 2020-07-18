@@ -700,7 +700,8 @@ def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
         line.set_clim(0, 1)
 
     plt.colorbar(line, ax=ax, boundaries=np.linspace(0, 1, 50), ticks=np.linspace(0, 1, 5))
-    plt.xlim(0, max_time_step - 1)
+    if max_time_step > 1:
+        plt.xlim(0, max_time_step - 1)
     plt.ylim(-1, target[4] + 1)
 
     plt.yticks(target)
