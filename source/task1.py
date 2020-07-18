@@ -173,7 +173,7 @@ if __name__ == '__main__':
                     plot_sensing_timestep(runs_dir_omniscient, model_img_dir, net_input=args.net_input, model=args.model)
 
     if args.compare_all:
-        from utils.my_plots import plot_compared_distance_from_goal
+        from utils.my_plots import plot_compared_distance_from_goal, plot_compared_distance_compressed
         print('\nGenerating comparison plots among all datasets of type %s avg-gap %s…' % (args.net_input, args.avg_gap))
         runs_img_dir = os.path.join(d, 'images')
         dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist, runs_dir_learned_comm]
@@ -181,3 +181,7 @@ if __name__ == '__main__':
         plot_compared_distance_from_goal(dataset_folders, runs_img_dir,
                                          'Robot distances from goal - %s avg_gap-%s' % (args.net_input, args.avg_gap),
                                          'distances-from-goal')
+
+        plot_compared_distance_compressed(dataset_folders, runs_img_dir,
+                                         'Robot distances from goal - %s avg_gap-%s' % (args.net_input, args.avg_gap),
+                                         'distances-from-goal-compressed')

@@ -99,7 +99,7 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
     save_visualisation(filename, img_dir)
 
 
-def get_position_distances(runs_sub):
+def get_position_distances(runs_sub, with_run=False):
     """
 
     :param runs_sub:
@@ -111,7 +111,9 @@ def get_position_distances(runs_sub):
     position_distances = runs_sub.set_index(['timestep', 'run', 'name']).reindex(idx)
     position_distances.index.names = ['timestep', 'run', 'name']
     position_distances = position_distances.reset_index()
-    position_distances = position_distances.fillna(0).drop(columns='run')
+
+    if not with_run:
+        position_distances = position_distances.fillna(0).drop(columns='run')
 
     return position_distances
 
@@ -714,4 +716,66 @@ def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
     plt.title(title, fontsize=12, weight='bold')
 
     filename = 'plot-simulation-communication%d' % simulation
+    save_visualisation(filename, img_dir)
+
+
+def plot_compared_distance_compressed(dataset_folders, img_dir, title, filename):
+    """
+
+    :param dataset_folders:
+    :param img_dir:
+    :param title:
+    :param filename:
+    """
+
+    utils.check_dir(img_dir)
+    datasets = ['omniscient', 'manual', 'distributed', 'communication']
+
+    positions = []
+    timesteps = []
+
+    for el in dataset_folders:
+
+        runs = utils.load_dataset(el, 'simulation.pkl')
+        runs_sub = runs[['timestep', 'goal_position_distance', 'name', 'run']]
+        position_distances = get_position_distances(runs_sub, with_run=True)
+        max_time_step = runs_sub['timestep'].max()
+        time_steps = np.arange(max_time_step)
+
+        positions.append(position_distances)
+        timesteps.append(time_steps)
+
+    fig = plt.figure()
+    plt.ylabel('distance from goal', fontsize=11)
+    plt.xlabel('timestep', fontsize=11)
+
+    for d_idx, d in enumerate(datasets):
+        position_distances = positions[d_idx].groupby('timestep').goal_position_distance
+
+        q1 = position_distances.quantile(0.25).squeeze()
+        q2 = position_distances.quantile(0.75).squeeze()
+        q3 = position_distances.quantile(0.10).squeeze()
+        q4 = position_distances.quantile(0.90).squeeze()
+        median = position_distances.median().squeeze()
+
+        ln, = plt.plot(timesteps[d_idx], median, label='median (%s)' % d)
+        plt.fill_between(timesteps[d_idx], q1, q2, alpha=0.2, label='interquartile range (%s)' % d, color=ln.get_color())
+        plt.fill_between(timesteps[d_idx], q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
+
+    plt.xlim(0, 17)
+    plt.ylim(0, 10)
+
+    ax = fig.gca()
+    handles, labels = ax.get_legend_handles_labels()
+
+    handles = [handles[0], handles[1], handles[2], handles[3],
+               handles[4], handles[6], handles[8], handles[10],
+               handles[5], handles[7], handles[9], handles[11]]
+    labels = [labels[0], labels[1], labels[2], labels[3],
+              labels[4], labels[6], labels[8], labels[10],
+              labels[5], labels[7], labels[9], labels[11]]
+
+    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=3)
+
+    plt.title(title, weight='bold', fontsize=12)
     save_visualisation(filename, img_dir)
