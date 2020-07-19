@@ -715,7 +715,7 @@ def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
     plt.tight_layout()
     plt.title(title, fontsize=12, weight='bold')
 
-    filename = 'plot-simulation-communication%d' % simulation
+    filename = 'plot-simulation-communication-%d' % simulation
     save_visualisation(filename, img_dir)
 
 
@@ -779,3 +779,18 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, title, filename)
 
     plt.title(title, weight='bold', fontsize=12)
     save_visualisation(filename, img_dir)
+
+
+def visualise_communication_vs_control(runs_dir, img_dir, title):
+    """
+
+    :param runs_dir:
+    :param img_dir:
+    :param title:
+    """
+
+    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['motor_left_target', 'transmitted_comm']]
+
+    plot_regressor(np.array(runs_sub.motor_left_target), np.array(runs_sub.transmitted_comm),
+                   'motor_left_target', 'transmitted_comm', img_dir, title, 'regression-control-communication')
