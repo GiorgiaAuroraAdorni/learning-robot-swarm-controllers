@@ -280,7 +280,7 @@ class GenerateSimulationData:
 
         if gui:
             # We can either run a simulation [in real-time] inside a Qt application
-            world.run_in_viewer(cam_position=(60, 0), cam_altitude=150.0, cam_yaw=0.0, cam_pitch=-pi / 2,
+            world.run_in_viewer(cam_position=(40, 0), cam_altitude=80.0, cam_yaw=0.0, cam_pitch=-pi / 2,
                                 walls_height=10.0, orthographic=True, period=0.1)
         else:
             steps = int(T // dt)

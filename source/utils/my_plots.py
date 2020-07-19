@@ -580,6 +580,9 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
         y_hat = y_hat.squeeze()
     plt.plot(x, y_hat, color="orange", label='regression: $R^2=%.3f$' % score)
 
+    if y_label == 'transmitted_comm':
+        plt.ylim(0, 1)
+
     plt.title(title, weight='bold', fontsize=12)
     plt.legend()
 
@@ -792,5 +795,24 @@ def visualise_communication_vs_control(runs_dir, img_dir, title):
     runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['motor_left_target', 'transmitted_comm']]
 
-    plot_regressor(np.array(runs_sub.motor_left_target), np.array(runs_sub.transmitted_comm),
-                   'motor_left_target', 'transmitted_comm', img_dir, title, 'regression-control-communication')
+    x = np.array(runs_sub.motor_left_target)
+    y = np.divide(np.array(runs_sub.transmitted_comm), (2 ** 10))
+    plot_regressor(x, y, 'motor_left_target', 'transmitted_comm', img_dir, title,
+                   'regression-control-communication')
+
+
+def visualise_communication_vs_distance(runs_dir, img_dir, title):
+    """
+
+    :param runs_dir:
+    :param img_dir:
+    :param title:
+    """
+
+    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['goal_position_distance', 'transmitted_comm']]
+
+    x = np.array(runs_sub.goal_position_distance)
+    y = np.divide(np.array(runs_sub.transmitted_comm), (2 ** 10))
+    plot_regressor(x, y, 'distance_from_goal', 'transmitted_comm', img_dir, title,
+                   'regression-distance-communication')

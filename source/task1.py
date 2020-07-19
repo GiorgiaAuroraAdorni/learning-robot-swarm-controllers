@@ -110,7 +110,8 @@ if __name__ == '__main__':
         if args.plots_dataset:
             from utils.my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal, \
                                        visualise_simulation_all_sensors, visualise_communication_simulation,\
-                                       visualise_simulations_comparison_all_sensors, visualise_communication_vs_control
+                                       visualise_simulations_comparison_all_sensors, visualise_communication_vs_control,\
+                                       visualise_communication_vs_distance
 
             print('Generating plots for %s %s controller…' % (d, c))
 
@@ -145,6 +146,10 @@ if __name__ == '__main__':
 
                 visualise_communication_vs_control(run_dir, run_img_dir,
                                                    'Communication vs Control - %s avg_gap-%s %s' %
+                                                   (args.net_input, args.avg_gap, c))
+
+                visualise_communication_vs_distance(run_dir, run_img_dir,
+                                                   'Communication vs Distance from goal - %s avg_gap-%s %s' %
                                                    (args.net_input, args.avg_gap, c))
 
         if args.check_dataset:
