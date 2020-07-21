@@ -285,8 +285,16 @@ def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_i
     for i, name in enumerate(run.name.unique()):
         x = np.array(run[run['name'] == name].apply(lambda row: list(row.position)[0], axis=1))
         axes[0].plot(time_steps, x, label='myt%d' % (i + 1))
-    axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23),
-                   ncol=len(run.name.unique()), title="robot")
+
+    if not len(run.name.unique()) > 5:
+        col = len(run.name.unique())
+        pos = (0.5, -0.23)
+    else:
+        col = int(np.ceil(len(run.name.unique())/2))
+        pos = (0.5, -0.3)
+
+    axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=pos,
+                   ncol=col, title="robot")
     axes[0].set_yticks(target)
     axes[0].grid()
 
@@ -424,8 +432,16 @@ def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_i
         axes[0].fill_between(time_steps, mean_x_positions - std_x_positions,
                              mean_x_positions + std_x_positions, alpha=0.2)
 
-    axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23),
-                   ncol=len(runs.name.unique()), title="robot")
+    if not len(run.name.unique()) > 5:
+        col = len(run.name.unique())
+        pos = (0.5, -0.23)
+    else:
+        col = int(np.ceil(len(run.name.unique())/2))
+        pos = (0.5, -0.3)
+
+    axes[0].legend(loc='lower center', fontsize='small', bbox_to_anchor=pos,
+                   ncol=col, title="robot")
+
     axes[0].set_yticks(target)
     axes[0].grid()
 

@@ -100,3 +100,14 @@ if __name__ == '__main__':
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
                                         myt_quantity=None, args=args, communication=communication)
 
+        if args.plots_dataset:
+            from utils.my_plots import plot_distance_from_goal, visualise_simulation_all_sensors, \
+                                       visualise_communication_simulation, visualise_simulations_comparison_all_sensors, \
+                                       visualise_communication_vs_control, visualise_communication_vs_distance
+
+            print('Generating plots for %s %s controller…' % (d, c))
+
+            for i in range(5):
+                visualise_simulation_all_sensors(run_dir, run_img_dir, i,
+                                                 'Simulation run %d - %s %s' % (i, args.net_input, c),
+                                                 net_input=args.net_input)
