@@ -810,9 +810,17 @@ def visualise_communication_vs_distance(runs_dir, img_dir, title):
     """
 
     runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
-    runs_sub = runs[['goal_position_distance', 'transmitted_comm']]
+    runs_sub = runs[['position', 'goal_position', 'goal_position_distance', 'transmitted_comm']]
 
+    runs_sub[['x_position', 'y_position']] = pd.DataFrame(runs_sub.position.tolist(), index=runs_sub.index)
+    runs_sub[['x_goal_position', 'y_goal_position']] = pd.DataFrame(runs_sub.goal_position.tolist(), index=runs_sub.index)
+
+    x1 = np.array(runs_sub.x_goal_position - runs_sub.x_position)
     x = np.array(runs_sub.goal_position_distance)
     y = np.divide(np.array(runs_sub.transmitted_comm), (2 ** 10))
-    plot_regressor(x, y, 'distance_from_goal', 'transmitted_comm', img_dir, title,
+
+    plot_regressor(x, y, 'absolute_distance_from_goal', 'transmitted_comm', img_dir, title,
+                   'regression-absolute-distance-communication')
+
+    plot_regressor(x1, y, 'distance_from_goal', 'transmitted_comm', img_dir, title,
                    'regression-distance-communication')
