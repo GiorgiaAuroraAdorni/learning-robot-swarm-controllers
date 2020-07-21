@@ -6,9 +6,10 @@ class DistributedThymio2(pyenki.Thymio2):
     Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
     """
 
-    def __init__(self, name, index, controller, **kwargs) -> None:
+    def __init__(self, name, controller, index, **kwargs) -> None:
         """
         :param name
+        :param controller
         :param index
         :param kwargs
         """

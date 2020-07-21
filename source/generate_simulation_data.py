@@ -69,7 +69,7 @@ class GenerateSimulationData:
             maximum_gap = 14
         elif net_input == 'prox_comm':
             maximum_gap = 50
-        elif net_input == 'all_sensors' or net_input == None:
+        elif net_input == 'all_sensors' or net_input is None:
             maximum_gap = avg_gap * 2
         else:
             raise ValueError("Invalid value for net_input")
@@ -126,9 +126,11 @@ class GenerateSimulationData:
             'timestep': s,
             'name': myt.name,
             'index': myt.index,
-            'prox_values': myt.prox_values,
-            'prox_comm': utils.get_prox_comm(myt),
-            'all_sensors': utils.get_all_sensors(prox_values, prox_comm),
+            'myt_quantity': myt.controller.N,
+            'net_input': myt.controller.net_input,
+            'prox_values': prox_values,
+            'prox_comm': utils.parse_prox_comm(prox_comm),
+            'all_sensors': all_sensors,
             'initial_position': myt.initial_position,
             'position': myt.position,
             'angle': myt.angle,
@@ -136,7 +138,8 @@ class GenerateSimulationData:
             'goal_angle': myt.goal_angle,
             'motor_left_target': myt.motor_left_target,
             'motor_right_target': myt.motor_right_target,
-            'goal_position_distance': abs(myt.goal_position[0] - myt.position[0]),
+            'goal_position_distance': myt.goal_position[0] - myt.position[0],
+            'goal_position_distance_absolute': abs(myt.goal_position[0] - myt.position[0])
             'transmitted_comm': communication transmitted two the neighbours
             'colour': colour of the top led
         """
@@ -149,6 +152,8 @@ class GenerateSimulationData:
             'timestep': s,
             'name': myt.name,
             'index': myt.index,
+            'myt_quantity': myt.controller.N,
+            'net_input': myt.controller.net_input,
             'prox_values': prox_values,
             'prox_comm': utils.parse_prox_comm(prox_comm),
             'all_sensors': all_sensors,
@@ -159,7 +164,8 @@ class GenerateSimulationData:
             'goal_angle': myt.goal_angle,
             'motor_left_target': myt.motor_left_target,
             'motor_right_target': myt.motor_right_target,
-            'goal_position_distance': abs(myt.goal_position[0] - myt.position[0])
+            'goal_position_distance': myt.goal_position[0] - myt.position[0],
+            'goal_position_distance_absolute': abs(myt.goal_position[0] - myt.position[0])
         }
 
         if comm:
@@ -178,9 +184,9 @@ class GenerateSimulationData:
         """
         Updated data in the dictionary instead of rewrite every field to optimise performances
         :param myt
-        :param s
+        :param s: timestep
         :param comm: boolean, True if the dataset is generated using the learned model with communication
-        :return dictionary
+        :return updated dictionary
         """
         prox_values = myt.prox_values
         prox_comm = utils.get_prox_comm(myt)
@@ -194,14 +200,14 @@ class GenerateSimulationData:
         myt.dictionary['angle'] = myt.angle
         myt.dictionary['motor_left_target'] = myt.motor_left_target
         myt.dictionary['motor_right_target'] = myt.motor_right_target,
-        myt.dictionary['goal_position_distance'] = abs(myt.goal_position[0] - myt.position[0])
+        myt.dictionary['goal_position_distance'] = myt.goal_position[0] - myt.position[0]
+        myt.dictionary['goal_position_distance_absolute'] = abs(myt.goal_position[0] - myt.position[0])
 
         if comm:
             transmitted_comm = utils.get_transmitted_communication(myt)
             myt.dictionary['transmitted_comm'] = transmitted_comm
 
         if myt.controller.goal == 'colour':
-            myt.dictionary['goal_colour'] = myt.goal_colour
             myt.dictionary['colour'] = myt.colour
 
         dictionary = myt.dictionary.copy()
@@ -336,6 +342,37 @@ class GenerateSimulationData:
             complete_runs.append(complete_data)
 
     @classmethod
+    def get_controller(cls, controller, controllers, goal, communication, model, model_dir, myt_quantity, net_input, task):
+        """
+
+        :param controller:
+        :param controllers:
+        :param goal
+        :param communication
+        :param model:
+        :param model_dir:
+        :param myt_quantity
+        :param net_input:
+        :param task:
+        :return controller_factory:
+        """
+        if controller == cls.LEARNED_CONTROLLER:
+            net = torch.load('%s/%s' % (model_dir, model))
+            # FIXME 'task2':
+            controller_factory = lambda **kwargs: controllers.LearnedController(name=controller, goal=goal, N=myt_quantity,
+                                                                                net=net, net_input=net_input,
+                                                                                communication=communication, **kwargs)
+
+        elif controller == cls.MANUAL_CONTROLLER or controller == cls.OMNISCIENT_CONTROLLER:
+            controller_factory = lambda **kwargs: controllers.ManualController(name=controller, goal=goal,
+                                                                               N=myt_quantity, net_input=net_input,
+                                                                               **kwargs)
+        else:
+            raise ValueError("Invalid value for controller")
+
+        return controller_factory
+
+    @classmethod
     def generate_simulation(cls, run_dir, n_simulations, controller, myt_quantity, args, model_dir=None, model=None,
                             communication=False):
         """
@@ -349,52 +386,39 @@ class GenerateSimulationData:
         :param model:
         :param communication
         """
-        net_input = None
-        if args.task == 'task1':
-            from controllers import controllers_task1 as controllers
-            goal = 'distribute'
-            net_input = args.net_input
-        elif args.task == 'task2':
-            from controllers import controllers_task2 as controllers
-            goal = 'colour'
-        else:
-            ValueError("Invalid value for task!")
-
         comm = False
         if communication:
             comm = True
 
-        if controller == cls.MANUAL_CONTROLLER:
-            def controller_factory(**kwargs):
-                if args.task == 'task2':
-                    return controllers.ManualController(name=controller, goal=goal, N=myt_quantity, **kwargs)
-                else:
-                    return controllers.ManualController(name=controller, goal=goal, N=myt_quantity,
-                                                        net_input=net_input, **kwargs)
-
-        elif controller == cls.OMNISCIENT_CONTROLLER:
-            def controller_factory(**kwargs):
-                return controllers.OmniscientController(name=controller, goal=goal, N=myt_quantity, **kwargs)
-
-        elif re.match(cls.LEARNED_CONTROLLER, controller):
-            net = torch.load('%s/%s' % (model_dir, model))
-
-            def controller_factory(**kwargs):
-                # FIXME
-                # if args.task == 'task2':
-                # else:
-                return controllers.LearnedController(name=controller, goal=goal, N=myt_quantity, net=net,
-                                                     net_input=net_input, communication=communication, **kwargs)
-        else:
-            raise ValueError("Invalid value for controller")
-
-        world, myts = cls.setup(controller_factory, myt_quantity)
-
         runs = []
         complete_runs = []
+
+        if args.task == 'task1':
+            from controllers import controllers_task1 as controllers
+            goal = 'distribute'
+            net_input = args.net_input
+        else:
+            from controllers import controllers_task2 as controllers
+            goal = 'colour'
+            net_input = None
+
         for n_sim in tqdm(range(n_simulations)):
+            # if the number of agents is not defined randomly generate a simulation with N robots with N \in [5, 10]
+            if not hasattr(args, 'myt_quantity'):
+                myt_quantity = np.random.randint(5, 11)
+
+            # if average gap is not defined randomly generate a simulation with avg_gap \in [5, 25]
+            if hasattr(args, 'avg_gap'):
+                avg_gap = args.avg_gap
+            else:
+                avg_gap = np.random.randint(5, 26)
+
             try:
-                cls.init_positions(myts, net_input, args.avg_gap)
+                controller_factory = cls.get_controller(controller, controllers, goal, communication, model, model_dir,
+                                                        myt_quantity, args.net_input, args.task)
+
+                world, myts = cls.setup(controller_factory, myt_quantity)
+                cls.init_positions(myts, net_input, avg_gap)
                 cls.run(n_sim, myts, runs, complete_runs, world, comm, args.gui)
             except Exception as e:
                 print('ERROR: ', e)

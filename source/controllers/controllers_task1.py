@@ -99,12 +99,13 @@ class OmniscientController:
     actual pose to the target one.
     """
 
-    def __init__(self, name, goal, N, **kwargs):
+    def __init__(self, name, goal, N, net_input, **kwargs):
         """
 
         :param name
         :param goal
         :param N: number of thymios in the simulation
+        :param net_input
         :param kwargs:
         """
         super().__init__(**kwargs)
@@ -112,6 +113,7 @@ class OmniscientController:
         self.name = name
         self.goal = goal
         self.N = N
+        self.net_input = net_input
 
     def linear_vel(self, state, constant=10):
         """
