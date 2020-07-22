@@ -76,10 +76,6 @@ class GenerateSimulationData:
         first_x = 0
         last_x = (min_distance + avg_gap) * (myt_quantity - 1)
 
-        # Decide the goal pose for each robot
-        goal_positions = np.linspace(first_x, last_x, num=myt_quantity)
-        optimal_gap = goal_positions[1]
-
         if not extension:
             if variate_pose:
                 distances = [min_distance + x]
@@ -90,18 +86,20 @@ class GenerateSimulationData:
                 initial_positions = np.cumsum(distances)
         else:
             initial_positions = np.zeros(myt_quantity)
-            initial_positions[-1] = last_x
 
-            min_distances = np.ones((myt_quantity,), np.int) * min_distance
+            gaps = np.random.uniform(0, maximum_gap, myt_quantity - 1)
 
-            positions = np.random.uniform(0, optimal_gap - min_distance, myt_quantity)
+            distances = np.round(gaps + min_distance, 2)
+            initial_positions[1:] = np.cumsum(distances)
 
-            initial_positions[1:-1] = np.sort(np.cumsum(min_distances + positions) - min_distance)[1:-1]
+            last_x = initial_positions[-1]
 
-            distances = np.round(np.diff(initial_positions), 2)
             if distances[distances < min_distance]:
                 print(distances)
                 raise ValueError("Invalid initial positions")
+
+        # Decide the goal pose for each robot
+        goal_positions = np.linspace(first_x, last_x, num=myt_quantity)
 
         for i, myt in enumerate(myts):
             # Position the first and last robot at a fixed distance
@@ -109,7 +107,6 @@ class GenerateSimulationData:
                 myt.position = (first_x, 0)
             elif i == myt_quantity - 1:
                 myt.position = (last_x, 0)
-
             else:
                 current_pos = myts[i - 1].position[0] + distances[i - 1]
                 assert np.isclose(current_pos, initial_positions[i], rtol=1.e-2)
