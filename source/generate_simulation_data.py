@@ -1,8 +1,6 @@
 import json
 import os
 import pickle
-import re
-from math import pi
 
 import numpy as np
 import pyenki
@@ -10,8 +8,8 @@ import torch
 from tqdm import tqdm
 
 from thymio import DistributedThymio2
-from utils import utils
 from utils import my_plots
+from utils import utils
 
 
 class GenerateSimulationData:
@@ -286,7 +284,7 @@ class GenerateSimulationData:
 
         if gui:
             # We can either run a simulation [in real-time] inside a Qt application
-            world.run_in_viewer(cam_position=(40, 0), cam_altitude=80.0, cam_yaw=0.0, cam_pitch=-pi / 2,
+            world.run_in_viewer(cam_position=(40, 0), cam_altitude=80.0, cam_yaw=0.0, cam_pitch=-np.pi / 2,
                                 walls_height=10.0, orthographic=True, period=0.1)
         else:
             steps = int(T // dt)
@@ -363,10 +361,14 @@ class GenerateSimulationData:
                                                                                 net=net, net_input=net_input,
                                                                                 communication=communication, **kwargs)
 
-        elif controller == cls.MANUAL_CONTROLLER or controller == cls.OMNISCIENT_CONTROLLER:
+        elif controller == cls.MANUAL_CONTROLLER:
             controller_factory = lambda **kwargs: controllers.ManualController(name=controller, goal=goal,
                                                                                N=myt_quantity, net_input=net_input,
                                                                                **kwargs)
+        elif controller == cls.OMNISCIENT_CONTROLLER:
+            controller_factory = lambda **kwargs: controllers.OmniscientController(name=controller, goal=goal,
+                                                                                   N=myt_quantity, net_input=net_input,
+                                                                                   **kwargs)
         else:
             raise ValueError("Invalid value for controller")
 
