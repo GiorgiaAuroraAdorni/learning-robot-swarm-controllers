@@ -300,6 +300,7 @@ def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_i
 
     # Plot, for a given robot, the evolution of control over time
     axes[1].set_ylabel('control', fontsize=11)
+    axes[1].set_ylim(0, 18)
     axes[1].set_title('Thymio 2 Control', weight='bold', fontsize=12)
     axes[1].plot(time_steps, myt2_control, color='black')
     axes[1].grid()
@@ -738,17 +739,18 @@ def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
     save_visualisation(filename, img_dir)
 
 
-def plot_compared_distance_compressed(dataset_folders, img_dir, title, filename):
+def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title, filename, absolute=True):
     """
 
     :param dataset_folders:
     :param img_dir:
+    :param datasets
     :param title:
     :param filename:
+    :param absolute
     """
 
     utils.check_dir(img_dir)
-    datasets = ['omniscient', 'manual', 'distributed', 'communication']
 
     positions = []
     timesteps = []
@@ -756,7 +758,11 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, title, filename)
     for el in dataset_folders:
 
         runs = utils.load_dataset(el, 'simulation.pkl')
-        runs_sub = runs[['timestep', 'goal_position_distance', 'name', 'run']]
+        if absolute:
+            runs_sub = runs[['timestep', 'goal_position_distance_absolute', 'name', 'run']]
+        else:
+            runs_sub = runs[['timestep', 'goal_position_distance', 'name', 'run']]
+
         position_distances = get_position_distances(runs_sub, with_run=True)
         max_time_step = runs_sub['timestep'].max()
         time_steps = np.arange(max_time_step)
@@ -769,7 +775,10 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, title, filename)
     plt.xlabel('timestep', fontsize=11)
 
     for d_idx, d in enumerate(datasets):
-        position_distances = positions[d_idx].groupby('timestep').goal_position_distance
+        if absolute:
+            position_distances = positions[d_idx].groupby('timestep').goal_position_distance_absolute
+        else:
+            position_distances = positions[d_idx].groupby('timestep').goal_position_distance
 
         q1 = position_distances.quantile(0.25).squeeze()
         q2 = position_distances.quantile(0.75).squeeze()
@@ -782,19 +791,23 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, title, filename)
         plt.fill_between(timesteps[d_idx], q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
 
     plt.xlim(0, 17)
-    plt.ylim(0, 10)
+    # FIXME depends if it is used goal_position_distance or goal_position_distance_absolute
+    # plt.ylim(0, 10)
 
     ax = fig.gca()
     handles, labels = ax.get_legend_handles_labels()
 
-    handles = [handles[0], handles[1], handles[2], handles[3],
-               handles[4], handles[6], handles[8], handles[10],
-               handles[5], handles[7], handles[9], handles[11]]
-    labels = [labels[0], labels[1], labels[2], labels[3],
-              labels[4], labels[6], labels[8], labels[10],
-              labels[5], labels[7], labels[9], labels[11]]
+    if len(datasets) > 1:
+        handles = [handles[0], handles[1], handles[2], handles[3],
+                   handles[4], handles[6], handles[8], handles[10],
+                   handles[5], handles[7], handles[9], handles[11]]
+        labels = [labels[0], labels[1], labels[2], labels[3],
+                  labels[4], labels[6], labels[8], labels[10],
+                  labels[5], labels[7], labels[9], labels[11]]
 
-    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=3)
+        plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=3)
+
+    plt.legend(handles=handles, labels=labels, fontsize=11)
 
     plt.title(title, weight='bold', fontsize=12)
     save_visualisation(filename, img_dir)

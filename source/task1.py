@@ -186,11 +186,12 @@ if __name__ == '__main__':
         print('\nGenerating comparison plots among all datasets of type %s avg-gap %s…' % (args.net_input, args.avg_gap))
         runs_img_dir = os.path.join(d, 'images')
         dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist, runs_dir_learned_comm]
+        datasets = ['omniscient', 'manual', 'distributed', 'communication']
 
         plot_compared_distance_from_goal(dataset_folders, runs_img_dir,
                                          'Robot distances from goal - %s avg_gap-%s' % (args.net_input, args.avg_gap),
                                          'distances-from-goal')
 
-        plot_compared_distance_compressed(dataset_folders, runs_img_dir,
+        plot_compared_distance_compressed(dataset_folders, runs_img_dir, datasets,
                                          'Robot distances from goal - %s avg_gap-%s' % (args.net_input, args.avg_gap),
                                          'distances-from-goal-compressed')

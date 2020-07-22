@@ -101,9 +101,9 @@ if __name__ == '__main__':
                                         myt_quantity=None, args=args, communication=communication)
 
         if args.plots_dataset:
-            from utils.my_plots import plot_distance_from_goal, visualise_simulation_all_sensors, \
-                                       visualise_communication_simulation, visualise_simulations_comparison_all_sensors, \
-                                       visualise_communication_vs_control, visualise_communication_vs_distance
+            from utils.my_plots import visualise_simulation_all_sensors, visualise_communication_simulation, \
+                                       plot_compared_distance_compressed, visualise_communication_vs_control, \
+                                       visualise_communication_vs_distance
 
             print('Generating plots for %s %s controller…' % (d, c))
 
@@ -111,3 +111,13 @@ if __name__ == '__main__':
                 visualise_simulation_all_sensors(run_dir, run_img_dir, i,
                                                  'Simulation run %d - %s %s' % (i, args.net_input, c),
                                                  net_input=args.net_input)
+            # FIXME substitute controllers with datasets
+            # datasets = ['omniscient']
+            plot_compared_distance_compressed([run_dir], run_img_dir, controllers,
+                                              'Robot distances from goal - %s' % (args.net_input),
+                                              'distances-from-goal-compressed')
+
+            plot_compared_distance_compressed([run_dir], run_img_dir, controllers,
+                                              'Robot distances from goal - %s' % (args.net_input),
+                                              'distances-from-goal-absolute-compressed', absolute=False)
+
