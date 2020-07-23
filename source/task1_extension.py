@@ -101,16 +101,15 @@ if __name__ == '__main__':
                                         myt_quantity=None, args=args, communication=communication)
 
         if args.plots_dataset:
-            from utils.my_plots import visualise_simulation_over_time_all_sensors, visualise_communication_simulation, \
-                                       plot_compared_distance_compressed, visualise_communication_vs_control, \
-                                       visualise_communication_vs_distance
+            from utils.my_plots import visualise_simulation_over_time_all_sensors, plot_compared_distance_compressed, \
+                                       thymio_quantity_distribution
 
             print('Generating plots for %s %s controller…' % (d, c))
             runs = [0, 1, 2, 3, 4, 5, 251, 634]
             for i in runs:
                 visualise_simulation_over_time_all_sensors(run_dir, run_img_dir, i,
-                                                           'Thymio positions over time - Simulation run %d - %s %s' % (i, args.net_input, c),
-                                                           net_input=args.net_input)
+                                                           'Thymio positions over time - Simulation run %d - %s %s'
+                                                           % (i, args.net_input, c))
 
             # FIXME substitute controllers with datasets
             # datasets = ['omniscient']
@@ -121,6 +120,21 @@ if __name__ == '__main__':
             plot_compared_distance_compressed([run_dir], run_img_dir, controllers,
                                               'Robot distances from goal - %s' % (args.net_input),
                                               'distances-from-goal-absolute-compressed', absolute=False)
+
+            thymio_quantity_distribution(run_dir, run_img_dir, 'Thymio quantity distribution - %s' % (args.net_input),
+                                         'thymio-quantity-distribution')
+
+            # if communication:
+            #     for i in range(5):
+            #         visualise_communication_simulation(run_dir, run_img_dir, i,
+            #                                            'Simulation run %d - %s %s - communication' %
+            #                                            (i, args.net_input, c))
+            #
+            #     visualise_communication_vs_control(run_dir, run_img_dir,
+            #                                        'Communication vs Control - %s %s' % (args.net_input, c))
+            #
+            #     visualise_communication_vs_distance(run_dir, run_img_dir,
+            #                                         'Communication vs Distance from goal - %s %s' % (args.net_input, c))
 
         if args.check_dataset:
             from generate_simulation_data import GenerateSimulationData as sim

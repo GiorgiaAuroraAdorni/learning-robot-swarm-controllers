@@ -855,14 +855,13 @@ def visualise_communication_vs_distance(runs_dir, img_dir, title):
                    'regression-distance-communication')
 
 
-def visualise_simulation_over_time_all_sensors(runs_dir, img_dir, simulation, title, net_input):
+def visualise_simulation_over_time_all_sensors(runs_dir, img_dir, simulation, title):
     """
 
     :param runs_dir:
     :param img_dir:
     :param simulation:
     :param title:
-    :param net_input:
     """
     runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
@@ -900,4 +899,26 @@ def visualise_simulation_over_time_all_sensors(runs_dir, img_dir, simulation, ti
     plt.legend(handles=handles, labels=labels, loc='lower center', fontsize='small', bbox_to_anchor=pos, ncol=col, title="robot")
 
     filename = 'plot-simulation-%d' % simulation
+    save_visualisation(filename, img_dir)
+
+
+def thymio_quantity_distribution(runs_dir, img_dir, title, filename):
+    """
+
+    :param runs_dir:
+    :param img_dir:
+    :param title:
+    :param filename:
+    """
+    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['run', 'myt_quantity']]
+
+    df = runs_sub.drop_duplicates()
+
+    plt.figure()
+    plt.ylabel('simulations', fontsize=11)
+    plt.xlabel('number of thymios', fontsize=11)
+    plt.title(title, weight='bold', fontsize=12)
+
+    plt.hist(df.myt_quantity, bins=np.linspace(4.5, 10.5, 7), rwidth=0.8)
     save_visualisation(filename, img_dir)
