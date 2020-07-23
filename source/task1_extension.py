@@ -153,3 +153,9 @@ if __name__ == '__main__':
                 network_train(indices, file_losses, runs_dir_omniscient, model_dir, args.model, communication,
                               net_input=args.net_input, save_net=args.save_net)
 
+            if args.plots_net:
+                from network_evaluation import network_evaluation
+
+                network_evaluation(indices, file_losses, runs_dir_omniscient, model_dir, args.model, model_img_dir,
+                                   'omniscient', 'manual', communication, net_input=args.net_input, task=args.task)
+

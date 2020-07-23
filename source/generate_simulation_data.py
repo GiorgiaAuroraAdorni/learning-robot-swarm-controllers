@@ -78,8 +78,10 @@ class GenerateSimulationData:
 
         if not extension:
             if variate_pose:
+                initial_positions = np.zeros(myt_quantity)
+                initial_positions[-1] = last_x
                 distances = [min_distance + x]
-                initial_positions = np.cumsum(distances)
+                initial_positions[1] = np.cumsum(distances)
             else:
                 distances = min_distance + np.clip(np.random.normal(avg_gap, std, myt_quantity - 1), 1, maximum_gap)
                 distances = distances / np.sum(distances) * last_x
@@ -108,9 +110,6 @@ class GenerateSimulationData:
             elif i == myt_quantity - 1:
                 myt.position = (last_x, 0)
             else:
-                current_pos = myts[i - 1].position[0] + distances[i - 1]
-                assert np.isclose(current_pos, initial_positions[i], rtol=1.e-2)
-
                 myt.position = (initial_positions[i], 0)
 
             myt.initial_position = myt.position

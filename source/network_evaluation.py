@@ -213,7 +213,7 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
     myt_quantity = 3
 
     def controller_factory(**kwargs):
-        return controllers.LearnedController(net=net, net_input=net_input, name='learned', goal=goal, N=3,
+        return controllers.LearnedController(net=net, net_input=net_input, name='learned', goal=goal, N=1,
                                              communication=communication, **kwargs)
 
     # FIXME do not use simulation
@@ -241,7 +241,7 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
     my_plots.plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
 
 
-def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication, net_input, avg_gap, task):
+def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication, net_input, avg_gap=None, task='Task1'):
     """
 
     :param indices:
@@ -293,7 +293,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
             x, s = generate_sensing()
             sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
             index = 2
-    
+
             evaluate_net(model_img, model, net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
                          'center proximity sensor', goal, communication, controllers)
 
@@ -303,4 +303,6 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
                          'rear proximity sensors', goal, communication, controllers)
 
         # Evaluate the learned controller by passing a specific initial position configuration
+        if avg_gap is None:
+            avg_gap = np.random.randint(5, 26)
         test_controller_given_init_positions(model_img, net, model, net_input, avg_gap, goal, communication, controllers)
