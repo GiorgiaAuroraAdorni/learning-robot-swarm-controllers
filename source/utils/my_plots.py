@@ -300,7 +300,7 @@ def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_i
 
     # Plot, for a given robot, the evolution of control over time
     axes[1].set_ylabel('control', fontsize=11)
-    axes[1].set_ylim(0, 18)
+    axes[1].set_ylim(-18, 18)
     axes[1].set_title('Thymio 2 Control', weight='bold', fontsize=12)
     axes[1].plot(time_steps, myt2_control, color='black')
     axes[1].grid()
@@ -790,7 +790,7 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
         plt.fill_between(timesteps[d_idx], q1, q2, alpha=0.2, label='interquartile range (%s)' % d, color=ln.get_color())
         plt.fill_between(timesteps[d_idx], q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
 
-    plt.xlim(0, 17)
+    plt.xlim(0, time_steps.max())
     # FIXME depends if it is used goal_position_distance or goal_position_distance_absolute
     # plt.ylim(0, 10)
 
@@ -853,3 +853,51 @@ def visualise_communication_vs_distance(runs_dir, img_dir, title):
 
     plot_regressor(x1, y, 'distance_from_goal', 'transmitted_comm', img_dir, title,
                    'regression-distance-communication')
+
+
+def visualise_simulation_over_time_all_sensors(runs_dir, img_dir, simulation, title, net_input):
+    """
+
+    :param runs_dir:
+    :param img_dir:
+    :param simulation:
+    :param title:
+    :param net_input:
+    """
+    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
+                     'prox_comm', 'all_sensors']]
+
+    run = runs_sub[runs_sub['run'] == simulation]
+    target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
+
+    max_time_step = run['timestep'].max()
+    time_steps = np.arange(max_time_step)
+
+    # Plot the evolution of the positions of all robots over time
+    fig = plt.figure(constrained_layout=True)
+    plt.xlabel('timestep', fontsize=11)
+    plt.ylabel('x position', fontsize=11)
+    plt.yticks(target)
+    plt.grid()
+
+    plt.title(title, weight='bold', fontsize=12)
+
+    for i, name in enumerate(run.name.unique()):
+        x = np.array(run[run['name'] == name].apply(lambda row: list(row.position)[0], axis=1))
+        plt.plot(time_steps, x, label='myt%d' % (i + 1))
+
+    if not len(run.name.unique()) > 5:
+        col = len(run.name.unique())
+        pos = (0.5, -0.3)
+    else:
+        col = int(np.ceil(len(run.name.unique())/2))
+        pos = (0.5, -0.4)
+
+    ax = fig.gca()
+    handles, labels = ax.get_legend_handles_labels()
+
+    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize='small', bbox_to_anchor=pos, ncol=col, title="robot")
+
+    filename = 'plot-simulation-%d' % simulation
+    save_visualisation(filename, img_dir)
