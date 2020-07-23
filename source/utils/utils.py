@@ -288,7 +288,7 @@ def prepare_dataset(run_dir, split):
     return file, indices
 
 
-def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False, task='task1'):
+def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False, task='task1', extension=False):
     """
     :param runs_dir: directory containing the simulations
     :param train_indices
@@ -299,11 +299,15 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     :param communication
     :return: (train_sample, valid_sample, test_sample), train_target, valid_target, test_target
     """
-
     runs = load_dataset(runs_dir, 'simulation.pkl')
+    N = 3
+    myt_quantities = None
 
     if task == 'task1':
         if communication:
+            if extension:
+                N = runs.myt_quantity.unique().max() - 2
+                myt_quantities = np.array(runs[['run', 'myt_quantity']].drop_duplicates().myt_quantity)
             runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
         else:
             runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
@@ -315,15 +319,18 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     test_runs = runs_sub[runs_sub['run'].isin(test_indices)].reset_index()
 
     if task == 'task2':
-        train_target, _ = extract_colour_output(train_runs, communication, input_combination=False)
-        valid_target, _ = extract_colour_output(valid_runs, communication, input_combination=False)
-        test_target, _ = extract_colour_output(test_runs, communication, input_combination=False)
+        train_target, _ = extract_colour_output(train_runs, communication=communication, input_combination=False)
+        valid_target, _ = extract_colour_output(valid_runs, communication=communication, input_combination=False)
+        test_target, _ = extract_colour_output(test_runs, communication=communication, input_combination=False)
 
         return train_target, valid_target, test_target
     else:
-        train_sample, train_target, _, _ = extract_input_output(train_runs, net_input, communication, input_combination=False)
-        valid_sample, valid_target, _, _ = extract_input_output(valid_runs, net_input, communication, input_combination=False)
-        test_sample, test_target, _, _ = extract_input_output(test_runs, net_input, communication, input_combination=False)
+        train_sample, train_target, _, _ = extract_input_output(train_runs, net_input, N=N, communication=communication,
+                                                                input_combination=False, extension=extension, myt_quantities=myt_quantities)
+        valid_sample, valid_target, _, _ = extract_input_output(valid_runs, net_input, N=N, communication=communication,
+                                                                input_combination=False, extension=extension, myt_quantities=myt_quantities)
+        test_sample, test_target, _, _ = extract_input_output(test_runs, net_input, N=N, communication=communication,
+                                                              input_combination=False, extension=extension, myt_quantities=myt_quantities)
 
         return train_sample, valid_sample, test_sample, train_target, valid_target, test_target
 
@@ -369,7 +376,7 @@ def get_input_columns(in_label):
     return columns
 
 
-def extract_input_output(runs, in_label, communication=False, input_combination=True):
+def extract_input_output(runs, in_label, N, communication=False, input_combination=True, extension=False, myt_quantities=None):
     """
     Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
     sensors [array of 7 floats].
@@ -378,8 +385,11 @@ def extract_input_output(runs, in_label, communication=False, input_combination=
     There is no need to normalize the outputs.
     :param runs:
     :param in_label:
-    :param input_combination
+    :param N
     :param communication
+    :param input_combination
+    :param extension
+    :param myt_quantities
     :return input_, output_, runs, columns
     """
     inputs = ['prox_values', 'prox_comm', 'all_sensors']
@@ -416,28 +426,33 @@ def extract_input_output(runs, in_label, communication=False, input_combination=
             tmp = np.array(runs[['run', 'timestep']].drop_duplicates().groupby(['run']).max()).squeeze()
             timesteps = np.sum(tmp) - tmp.shape[0]
 
-            input_ = np.empty(shape=(timesteps, 2, 3, runs[columns].shape[1]), dtype='float32')
-            output_ = np.empty(shape=(timesteps, 2, 3), dtype='float32')
+            input_ = np.empty(shape=(timesteps, 2, N, runs[columns].shape[1]), dtype='float32')
+            output_ = np.empty(shape=(timesteps, 2, N), dtype='float32')
 
             init_counter = 0
             for i in simulations:
+                N_sim = myt_quantities[i] - 2
                 run = runs[runs['run'] == i]
 
                 in_run_ = np.array(run[columns])
-                in_run_ = in_run_.reshape([-1, 3, run[columns].shape[1]])
+                in_run_ = in_run_.reshape([-1, N_sim, run[columns].shape[1]])
                 out_run_ = np.array(run.motor_left_target)
-                out_run_ = out_run_.reshape([-1, 3])
+                out_run_ = out_run_.reshape([-1, N_sim])
 
                 size = in_run_.shape[0] - 1
                 final_counter = init_counter + size
 
-                in_array = np.empty(shape=(size, 2, 3, run[columns].shape[1]), dtype='float32')
+                in_array = np.empty(shape=(size, 2, N_sim, run[columns].shape[1]), dtype='float32')
                 in_array[:, 0, ...] = in_run_[:-1, ...]
                 in_array[:, 1, ...] = in_run_[1:, ...]
 
-                out_array = np.empty(shape=(size, 2, 3), dtype='float32')
+                out_array = np.empty(shape=(size, 2, N_sim), dtype='float32')
                 out_array[:, 0, ...] = out_run_[:-1, ...]
                 out_array[:, 1, ...] = out_run_[1:, ...]
+
+                # FIXME padding for extension
+                in_array = np.pad(in_array, ((0, 0), (0, 0), (0, N - N_sim), (0, 0)), 'constant', constant_values=(-1))
+                out_array = np.pad(out_array, ((0, 0), (0, 0), (0, N - N_sim)), 'constant', constant_values=(-1))
 
                 input_[init_counter:final_counter] = in_array
                 output_[init_counter:final_counter] = out_array

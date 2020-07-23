@@ -86,7 +86,8 @@ class ManualController:
 
         """
         # Don't move the first and last robots in the line
-        if state.index == 0 or state.index == self.N - 1:
+        # if state.index == 0 or state.index == self.N - 1:
+        if np.isclose(round(state.goal_position[0], 2), round(state.initial_position[0], 2), rtol=1e-1):
             return 0
         else:
             return self.p_distributed_controller.step(self.compute_difference(state), dt)
