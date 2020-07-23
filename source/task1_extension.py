@@ -142,3 +142,14 @@ if __name__ == '__main__':
             sim.check_dataset_conformity(run_dir, run_img_dir, 'Dataset - %s %s' % (args.net_input, c), c,
                                          net_input=args.net_input)
 
+        if args.train_net or args.plots_net:
+            from utils.utils import prepare_dataset
+
+            indices = prepare_dataset(run_dir, args.generate_split)
+            file_losses = os.path.join(model_dir, 'losses.npy')
+
+            if args.train_net:
+                from network_sensing_training import network_train
+                network_train(indices, file_losses, runs_dir_omniscient, model_dir, args.model, communication,
+                              net_input=args.net_input, save_net=args.save_net)
+

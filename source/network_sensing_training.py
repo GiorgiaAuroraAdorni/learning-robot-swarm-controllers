@@ -104,7 +104,7 @@ def validate_net(net, device, valid_minibatch, criterion=torch.nn.MSELoss()):
     return validation_loss.mean
 
 
-def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net, task='task1'):
+def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net):
     """
     :param indices
     :param file_losses
@@ -114,7 +114,6 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     :param communication
     :param net_input
     :param save_net
-    :param task
     """
     train_indices, validation_indices, test_indices = indices[1]
 
