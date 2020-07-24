@@ -303,6 +303,10 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     N = runs.myt_quantity.unique().max() - 2
     myt_quantities = np.array(runs[['run', 'myt_quantity']].drop_duplicates().myt_quantity) - 2
 
+    # For old datasets
+    # N = 3
+    # myt_quantities = np.full(shape=(1000,), fill_value=N, dtype='float32')
+
     if communication:
         runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
     else:
@@ -431,7 +435,7 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
 
             init_counter = 0
             for i in simulations:
-                N_sim = myt_quantities[i]
+                N_sim = int(myt_quantities[i])
                 run = runs[runs['run'] == i]
 
                 in_run_ = np.array(run[columns])

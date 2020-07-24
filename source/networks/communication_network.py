@@ -7,7 +7,6 @@
 from enum import Enum
 from random import shuffle
 from typing import Sequence, Tuple, TypeVar, Callable
-
 import torch
 import torch.nn as nn
 from torch.distributions import uniform
@@ -27,14 +26,14 @@ class Sync(Enum):
     random_sequential = 4
 
 
-def init_comm(thymio: int):
+def init_comm(thymio: int, distribution):
     """
     Initialise the communication vector (for the initial timestep of each sequence)
     :param thymio: number of thymio
+    :param distribution
     :return: communication vector
     """
     out = torch.zeros(thymio + 2)
-    distribution = uniform.Uniform(torch.Tensor([0.0]), torch.Tensor([1.0]))
     out[1:-1] = torch.flatten(distribution.sample(torch.Size([thymio])))
 
     return out
@@ -121,6 +120,8 @@ class CommunicationNet(nn.Module):
         self.input_fn = input_fn
         self.tmp_indices = None
 
+        self.distribution = uniform.Uniform(torch.Tensor([0.0]), torch.Tensor([1.0]))
+
     def step(self, xs, comm, sync: Sync, sim=False, i=None):
         """
 
@@ -177,15 +178,16 @@ class CommunicationNet(nn.Module):
         """
 
         :param batch:
+        :param batch_size:
         :return: rd
         """
         robots_control = []
         for idx, sequence in enumerate(batch):
-            max_shape_size = sequence[0].shape[0]
+            max_shape_size = int(sequence[0].shape[0])
             true_shape_size = int(batch_size[idx][0][0])
             sequence = sequence[:, :true_shape_size, :]
 
-            comm = init_comm(int(sequence[0].shape[0]))
+            comm = init_comm(int(sequence[0].shape[0]), self.distribution)
             controls = []
             tmp = list(range(int(sequence[0].shape[0])))
             shuffle(tmp)
@@ -219,7 +221,7 @@ class CommunicationNet(nn.Module):
         shuffle(tmp)
         self.tmp_indices = tmp
 
-        comm = init_comm(self.thymio)
+        comm = init_comm(self.thymio, self.distribution)
 
         def f(sensing: Sequence[Sensing], communication, i) -> Tuple[Sequence[Control], Sequence[float]]:
             """
