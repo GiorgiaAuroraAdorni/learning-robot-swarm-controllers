@@ -212,7 +212,8 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     time_steps = np.arange(max_time_step)
 
     run_myt2 = run[run['name'] == 'myt2'].drop(columns='name').reset_index()
-    _, myt2_control, run_myt2, proximity_sensors = utils.extract_input_output(run_myt2, net_input)
+    # FIXME
+    _, myt2_control, _, run_myt2, proximity_sensors = utils.extract_input_output(run_myt2, net_input, N=1)
     myt2_sensing = run_myt2[proximity_sensors]
 
     plt.figure()
@@ -274,7 +275,8 @@ def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_i
     time_steps = np.arange(max_time_step)
 
     run_myt2 = run[run['name'] == 'myt2'].drop(columns='name').reset_index()
-    _, myt2_control, run_myt2, proximity_sensors = utils.extract_input_output(run_myt2, net_input)
+    # FIXME
+    _, myt2_control, _, run_myt2, proximity_sensors = utils.extract_input_output(run_myt2, net_input, N=1)
 
     plt.figure(constrained_layout=True)
     fig, axes = plt.subplots(nrows=2, figsize=(6, 7), sharex=True)
@@ -334,7 +336,8 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
     runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
-    _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input)
+    # FIXME
+    _, _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input, N=1)
 
     plt.figure()
     fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
@@ -416,7 +419,8 @@ def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_i
     target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
     runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
-    _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input)
+    # FIXME
+    _, _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input, N=1)
 
     plt.figure(constrained_layout=True)
     fig, axes = plt.subplots(nrows=2, figsize=(6, 7), sharex=True)
@@ -646,8 +650,8 @@ def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
 
     max_time_step = runs_sub['timestep'].max()
     time_steps = np.arange(max_time_step)
-
-    _, _, runs_, proximity_sensors = utils.extract_input_output(runs_sub, net_input)
+    # FIXME
+    _, _, _, runs_, proximity_sensors = utils.extract_input_output(runs_sub, net_input, N=1)
 
     # Mean of the sensing of each run, among all the robots
     plt.figure(constrained_layout=True)

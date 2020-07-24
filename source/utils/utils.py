@@ -288,54 +288,47 @@ def prepare_dataset(run_dir, split):
     return file, indices
 
 
-def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False, task='task1', extension=False):
+def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False):
     """
     :param runs_dir: directory containing the simulations
     :param train_indices
     :param validation_indices
     :param test_indices
     :param net_input
-    :param task
     :param communication
-    :return: (train_sample, valid_sample, test_sample), train_target, valid_target, test_target
+    :return: (train_sample, valid_sample, test_sample), train_target, valid_target, test_target, train_quantities, valid_quantities, test_quantities
     """
     runs = load_dataset(runs_dir, 'simulation.pkl')
-    N = 3
-    myt_quantities = None
 
-    if task == 'task1':
-        if communication:
-            if extension:
-                N = runs.myt_quantity.unique().max() - 2
-                myt_quantities = np.array(runs[['run', 'myt_quantity']].drop_duplicates().myt_quantity)
-            runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
-        else:
-            runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
+    N = runs.myt_quantity.unique().max() - 2
+    myt_quantities = np.array(runs[['run', 'myt_quantity']].drop_duplicates().myt_quantity) - 2
+
+    if communication:
+        runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
     else:
-        runs_sub = runs[['timestep', 'name', 'run', 'goal_colour']]
+        runs_sub = runs[['timestep', 'myt_quantity', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
     train_runs = runs_sub[runs_sub['run'].isin(train_indices)].reset_index()
     valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
     test_runs = runs_sub[runs_sub['run'].isin(test_indices)].reset_index()
 
-    if task == 'task2':
-        train_target, _ = extract_colour_output(train_runs, communication=communication, input_combination=False)
-        valid_target, _ = extract_colour_output(valid_runs, communication=communication, input_combination=False)
-        test_target, _ = extract_colour_output(test_runs, communication=communication, input_combination=False)
+    train_sample, train_target, train_quantities, _, _ = extract_input_output(train_runs, net_input, N=N,
+                                                                              communication=communication,
+                                                                              input_combination=False,
+                                                                              myt_quantities=myt_quantities)
+    valid_sample, valid_target, valid_quantities, _, _ = extract_input_output(valid_runs, net_input, N=N,
+                                                                              communication=communication,
+                                                                              input_combination=False,
+                                                                              myt_quantities=myt_quantities)
+    test_sample, test_target, test_quantities, _, _ = extract_input_output(test_runs, net_input, N=N,
+                                                                           communication=communication,
+                                                                           input_combination=False,
+                                                                           myt_quantities=myt_quantities)
 
-        return train_target, valid_target, test_target
-    else:
-        train_sample, train_target, _, _ = extract_input_output(train_runs, net_input, N=N, communication=communication,
-                                                                input_combination=False, extension=extension, myt_quantities=myt_quantities)
-        valid_sample, valid_target, _, _ = extract_input_output(valid_runs, net_input, N=N, communication=communication,
-                                                                input_combination=False, extension=extension, myt_quantities=myt_quantities)
-        test_sample, test_target, _, _ = extract_input_output(test_runs, net_input, N=N, communication=communication,
-                                                              input_combination=False, extension=extension, myt_quantities=myt_quantities)
-
-        return train_sample, valid_sample, test_sample, train_target, valid_target, test_target
+    return train_sample, valid_sample, test_sample, train_target, valid_target, test_target, train_quantities, valid_quantities, test_quantities
 
 
-def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_target, test_sample, test_target):
+def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_target, test_sample, test_target, q_train, q_valid, q_test):
     """
 
     :param train_sample:
@@ -344,7 +337,10 @@ def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_targ
     :param valid_target:
     :param test_sample:
     :param test_target:
-    :return test, train, valid:
+    :param q_train:
+    :param q_valid:
+    :param q_test:
+    :return test, train, valid
     """
     x_train_tensor = torch.tensor(train_sample, dtype=torch.float32)
     x_valid_tensor = torch.tensor(valid_sample, dtype=torch.float32)
@@ -354,9 +350,13 @@ def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_targ
     y_valid_tensor = torch.tensor(valid_target, dtype=torch.float32)
     y_test_tensor = torch.tensor(test_target, dtype=torch.float32)
 
-    train = TensorDataset(x_train_tensor, y_train_tensor)
-    valid = TensorDataset(x_valid_tensor, y_valid_tensor)
-    test = TensorDataset(x_test_tensor, y_test_tensor)
+    q_train_tensor = torch.tensor(q_train, dtype=torch.float32)
+    q_valid_tensor = torch.tensor(q_valid, dtype=torch.float32)
+    q_test_tensor = torch.tensor(q_test, dtype=torch.float32)
+
+    train = TensorDataset(x_train_tensor, y_train_tensor, q_train_tensor)
+    valid = TensorDataset(x_valid_tensor, y_valid_tensor, q_valid_tensor)
+    test = TensorDataset(x_test_tensor, y_test_tensor, q_test_tensor)
 
     return test, train, valid
 
@@ -376,7 +376,7 @@ def get_input_columns(in_label):
     return columns
 
 
-def extract_input_output(runs, in_label, N, communication=False, input_combination=True, extension=False, myt_quantities=None):
+def extract_input_output(runs, in_label, N, communication=False, input_combination=True, myt_quantities=None):
     """
     Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
     sensors [array of 7 floats].
@@ -388,7 +388,6 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
     :param N
     :param communication
     :param input_combination
-    :param extension
     :param myt_quantities
     :return input_, output_, runs, columns
     """
@@ -406,7 +405,6 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
 
     full_columns = columns + ['x']
 
-    # FIXME
     if input_combination:
         if in_label == 'all_sensors':
             runs['x'] = runs.apply(lambda row: mean([row.pv_fc - mean([row.pv_bl, row.pv_br]), row.pc_fc - mean([row.pc_bl, row.pc_br])]), axis=1)
@@ -417,6 +415,7 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
 
         input_ = np.array(runs.x)
         output_ = np.array(runs.motor_left_target)
+        myt_quantities_ = None
     else:
         runs[columns] = runs[columns].div(1000)
 
@@ -428,10 +427,11 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
 
             input_ = np.empty(shape=(timesteps, 2, N, runs[columns].shape[1]), dtype='float32')
             output_ = np.empty(shape=(timesteps, 2, N), dtype='float32')
+            myt_quantities_ = np.empty(shape=(timesteps, 2, N), dtype='float32')
 
             init_counter = 0
             for i in simulations:
-                N_sim = myt_quantities[i] - 2
+                N_sim = myt_quantities[i]
                 run = runs[runs['run'] == i]
 
                 in_run_ = np.array(run[columns])
@@ -450,19 +450,22 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
                 out_array[:, 0, ...] = out_run_[:-1, ...]
                 out_array[:, 1, ...] = out_run_[1:, ...]
 
-                # FIXME padding for extension
-                in_array = np.pad(in_array, ((0, 0), (0, 0), (0, N - N_sim), (0, 0)), 'constant', constant_values=(-1))
-                out_array = np.pad(out_array, ((0, 0), (0, 0), (0, N - N_sim)), 'constant', constant_values=(-1))
+                # Padded array for reach the maximum number of thymios (for task1 extension)
+                in_array = np.pad(in_array, ((0, 0), (0, 0), (0, N - N_sim), (0, 0)), 'constant', constant_values=np.nan)
+                out_array = np.pad(out_array, ((0, 0), (0, 0), (0, N - N_sim)), 'constant', constant_values=np.nan)
+                myt = np.full(shape=(size, 2, N), fill_value=N_sim, dtype='float32')
 
                 input_[init_counter:final_counter] = in_array
                 output_[init_counter:final_counter] = out_array
+                myt_quantities_[init_counter:final_counter] = myt
 
                 init_counter = final_counter
         else:
             input_ = np.array(runs[columns])
             output_ = np.array(runs.motor_left_target)
+            myt_quantities_ = np.array(runs.myt_quantity)
 
-    return input_, output_, runs, columns
+    return input_, output_, myt_quantities_, runs, columns
 
 
 def extract_colour_output(runs, communication=False, input_combination=True):

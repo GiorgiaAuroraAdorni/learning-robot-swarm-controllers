@@ -25,7 +25,7 @@ class DistributedNet(torch.nn.Module):
         self.relu = torch.nn.ReLU()
         self.fc2 = torch.nn.Linear(42, 1)
 
-    def forward(self, xs):
+    def forward(self, xs, _):
         """
 
         :param xs:
@@ -37,7 +37,7 @@ class DistributedNet(torch.nn.Module):
 
         return torch.squeeze(output)
 
-    def controller(self, thymio) -> Controller:
+    def controller(self) -> Controller:
         """
 
         :return f

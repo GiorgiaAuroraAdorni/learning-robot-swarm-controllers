@@ -173,15 +173,18 @@ class CommunicationNet(nn.Module):
 
         return control
 
-    def forward(self, batch):
+    def forward(self, batch, batch_size):
         """
 
         :param batch:
         :return: rd
         """
-        rs = []
-        for sequence in batch:
-            # FIXME
+        robots_control = []
+        for idx, sequence in enumerate(batch):
+            max_shape_size = sequence[0].shape[0]
+            true_shape_size = int(batch_size[idx][0][0])
+            sequence = sequence[:, :true_shape_size, :]
+
             comm = init_comm(int(sequence[0].shape[0]))
             controls = []
             tmp = list(range(int(sequence[0].shape[0])))
@@ -190,10 +193,15 @@ class CommunicationNet(nn.Module):
 
             #  xs is the timestep
             for xs in sequence:
-                controls.append(self.step(xs, comm, self.sync))
-            rs.append(torch.stack(controls))
+                control = self.step(xs, comm, self.sync)
+                # reapply padding
+                control = torch.nn.functional.pad(control, pad=(0, max_shape_size - true_shape_size), mode='constant', value=float('nan'))
+                controls.append(control)
 
-        return torch.stack(rs)
+            robots_control.append(torch.stack(controls))
+
+        robots_control = robots_control
+        return torch.stack(robots_control)
 
     def controller(self, thymio, sync: Sync = Sync.sync) -> Controller:
         """

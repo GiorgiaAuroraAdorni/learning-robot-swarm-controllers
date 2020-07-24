@@ -457,10 +457,12 @@ class GenerateSimulationData:
         :param net_input
         """
 
+        # FIXME
         runs = utils.load_dataset(runs_dir, 'simulation.pkl')
         runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
-        x, y, _, _ = utils.extract_input_output(runs_sub, net_input)
+        # FIXME
+        x, y, myt_quantities, _, _ = utils.extract_input_output(runs_sub, net_input, N)
 
         #  Generate a scatter plot to check the conformity of the dataset
         file_name = 'dataset-scatterplot-%s' % dataset

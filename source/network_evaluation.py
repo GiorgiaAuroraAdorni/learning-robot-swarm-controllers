@@ -271,6 +271,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
 
     train_indices, validation_indices, test_indices = indices[1]
 
+    # FIXME
     x_train, x_valid, x_test, \
     y_train, y_valid, y_test = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
                                                              test_indices, net_input, communication)
