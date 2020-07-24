@@ -124,17 +124,19 @@ if __name__ == '__main__':
             thymio_quantity_distribution(run_dir, run_img_dir, 'Thymio quantity distribution - %s' % (args.net_input),
                                          'thymio-quantity-distribution')
 
-            # if communication:
-            #     for i in range(5):
-            #         visualise_communication_simulation(run_dir, run_img_dir, i,
-            #                                            'Simulation run %d - %s %s - communication' %
-            #                                            (i, args.net_input, c))
-            #
-            #     visualise_communication_vs_control(run_dir, run_img_dir,
-            #                                        'Communication vs Control - %s %s' % (args.net_input, c))
-            #
-            #     visualise_communication_vs_distance(run_dir, run_img_dir,
-            #                                         'Communication vs Distance from goal - %s %s' % (args.net_input, c))
+            if communication:
+                from utils.my_plots import visualise_communication_simulation, visualise_communication_vs_control, \
+                                           visualise_communication_vs_distance
+                for i in range(5):
+                    visualise_communication_simulation(run_dir, run_img_dir, i,
+                                                       'Simulation run %d - %s %s - communication' %
+                                                       (i, args.net_input, c))
+
+                visualise_communication_vs_control(run_dir, run_img_dir,
+                                                   'Communication vs Control - %s %s' % (args.net_input, c))
+
+                visualise_communication_vs_distance(run_dir, run_img_dir,
+                                                    'Communication vs Distance from goal - %s %s' % (args.net_input, c))
 
         if args.check_dataset:
             from generate_simulation_data import GenerateSimulationData as sim

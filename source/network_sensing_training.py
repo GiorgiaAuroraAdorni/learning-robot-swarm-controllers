@@ -104,7 +104,7 @@ def validate_net(net, device, valid_minibatch, criterion=torch.nn.MSELoss()):
     return validation_loss.mean
 
 
-def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net, extension=False):
+def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net):
     """
     :param indices
     :param file_losses
@@ -114,7 +114,6 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     :param communication
     :param net_input
     :param save_net
-    :param extesion
     """
     train_indices, validation_indices, test_indices = indices[1]
 
@@ -122,7 +121,7 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     x_train, x_valid, x_test, \
     y_train, y_valid, y_test, \
     q_train, q_valid, q_test = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
-                                                             test_indices, net_input, communication, extension=extension)
+                                                             test_indices, net_input, communication)
 
     # Generate the tensors
     test, train, valid = utils.from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test, q_train, q_valid, q_test)
