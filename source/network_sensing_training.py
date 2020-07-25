@@ -97,10 +97,13 @@ def validate_net(net, device, valid_minibatch, criterion=torch.nn.MSELoss()):
         validation_loss.reset()
 
         for batch in valid_minibatch:
-            inputs, labels, size= (tensor.to(device) for tensor in batch)
-            t_output = net(inputs, size)
+            inputs, labels, size = (tensor.to(device) for tensor in batch)
+            outputs = net(inputs, size)
 
-            loss = criterion(t_output, labels)
+            output_flatten = torch.flatten(outputs)[~torch.isnan(torch.flatten(outputs))]
+            labels_flatten = torch.flatten(labels)[~torch.isnan(torch.flatten(labels))]
+            loss = criterion(output_flatten, labels_flatten)
+            
             validation_loss.update(loss, inputs.shape[0])
 
     return validation_loss.mean
