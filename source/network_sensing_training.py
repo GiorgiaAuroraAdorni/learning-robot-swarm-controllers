@@ -58,9 +58,11 @@ def train_net(epochs: int,
 
         for batch in train_minibatch:
             inputs, labels, size = (tensor.to(device) for tensor in batch)
-            output = net(inputs, size)
+            outputs = net(inputs, size)
 
-            loss = criterion(output, labels)
+            output_flatten = torch.flatten(outputs)[~torch.isnan(torch.flatten(outputs))]
+            labels_flatten = torch.flatten(labels)[~torch.isnan(torch.flatten(labels))]
+            loss = criterion(output_flatten, labels_flatten)
 
             loss.backward()
 

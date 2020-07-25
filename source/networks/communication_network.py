@@ -119,8 +119,7 @@ class CommunicationNet(nn.Module):
         self.sync = sync
         self.input_fn = input_fn
         self.tmp_indices = None
-
-        self.distribution = uniform.Uniform(torch.Tensor([0.0]), torch.Tensor([1.0]))
+        self.distribution = None
 
     def step(self, xs, comm, sync: Sync, sim=False, i=None):
         """
@@ -182,6 +181,7 @@ class CommunicationNet(nn.Module):
         :return: rd
         """
         robots_control = []
+        self.distribution = uniform.Uniform(torch.Tensor([0.0]), torch.Tensor([1.0]))
         for idx, sequence in enumerate(batch):
             max_shape_size = int(sequence[0].shape[0])
             true_shape_size = int(batch_size[idx][0][0])
