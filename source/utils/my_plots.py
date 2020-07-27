@@ -1,4 +1,3 @@
-import math
 import os
 
 import matplotlib.pyplot as plt
@@ -495,7 +494,7 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
 
     plt.ylim(0, max(min(train_loss), min(valid_loss)) + 50)
 
-    xint = range(0, math.ceil(max(x)) + 1, max(x)//10)
+    xint = range(1, np.ceil(max(x)).astype(int) + 1, np.ceil(max(x)/10).astype(int))
     plt.xticks(xint)
 
     plt.legend()
@@ -587,6 +586,7 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
     :param filename:
     """
     lr = LinearRegression()
+
     lr.fit(np.reshape(x, [-1, 1]), np.reshape(y, [-1, 1]))
     score = lr.score(np.reshape(x, [-1, 1]), np.reshape(y, [-1, 1]))
 

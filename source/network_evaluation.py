@@ -61,6 +61,9 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
         y_g = np.reshape(np.array(y_g).flat, [-1])
         y_p = np.reshape(np.array(y_p).flat, [-1])
 
+        y_g = y_g[~np.isnan(y_g)]
+        y_p = y_p[~np.isnan(y_p)]
+
     my_plots.plot_regressor(y_g, y_p, x_label, y_label, model_img, title, file_name)
 
 
@@ -105,12 +108,16 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input,
     """
     if communication:
         groundtruth = np.reshape(np.array(groundtruth).flat, [-1])
+        groundtruth = groundtruth[~np.isnan(groundtruth)]
+
         sensing = np.reshape(np.array(sensing).flat, [-1, sensing.shape[3]])
 
     controller_predictions = []
     controller = controllers.ManualController(net_input=net_input, name='manual', goal=goal, N=1)
 
     for sample in sensing:
+        if np.isnan(sample).all():
+            continue
         # Rescale the values of the sensor
         sample = np.multiply(np.array(sample), 1000).tolist()
 
@@ -273,7 +280,8 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
 
     # FIXME
     x_train, x_valid, x_test, \
-    y_train, y_valid, y_test = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
+    y_train, y_valid, y_test,\
+    q_train, q_valid, q_test = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
                                                              test_indices, net_input, communication)
 
     # Load the metrics
@@ -281,7 +289,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     training_loss = losses.loc[:, 't. loss']
     validation_loss = losses.loc[:, 'v. loss']
 
-    prediction = net(torch.FloatTensor(x_valid))
+    prediction = net(torch.FloatTensor(x_valid), torch.FloatTensor(q_valid))
 
     network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication)
 
