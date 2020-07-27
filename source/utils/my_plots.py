@@ -102,6 +102,7 @@ def get_position_distances(runs_sub, with_run=False):
     """
 
     :param runs_sub:
+    :param with_run
     :return position_distances:
     """
     v = utils.cartesian_product(runs_sub.timestep.unique(), runs_sub.run.unique(), runs_sub.name.unique())
@@ -117,13 +118,14 @@ def get_position_distances(runs_sub, with_run=False):
     return position_distances
 
 
-def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename):
+def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename, absolute=True):
     """
 
     :param dataset_folders:
     :param img_dir:
     :param title:
     :param filename:
+    :param absolute
     """
 
     utils.check_dir(img_dir)
@@ -133,9 +135,12 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename):
     timesteps = []
 
     for el in dataset_folders:
-
         runs = utils.load_dataset(el, 'simulation.pkl')
-        runs_sub = runs[['timestep', 'goal_position_distance', 'name', 'run']]
+        if absolute:
+            runs_sub = runs[['timestep', 'goal_position_distance_absolute', 'name', 'run']]
+        else:
+            runs_sub = runs[['timestep', 'goal_position_distance', 'name', 'run']]
+
         position_distances = get_position_distances(runs_sub)
         max_time_step = runs['timestep'].max()
         time_steps = np.arange(max_time_step)
@@ -167,7 +172,7 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename):
 
             axes[idx].set_xlabel('timestep', fontsize=11)
             axes[idx].set_xlim(0, 17)
-            axes[idx].set_ylim(0, 10)
+            # axes[idx].set_ylim(0, 10)
 
             xint = range(0, max_time_step + 1, max_time_step // 6)
             axes[idx].set_xticks(xint)
@@ -177,15 +182,18 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename):
     ax = fig.gca()
     handles, labels = ax.get_legend_handles_labels()
 
-    handles = [handles[0], handles[1], handles[2], handles[3],
-               handles[4], handles[6], handles[8], handles[10],
-               handles[5], handles[7], handles[9], handles[11]]
-    labels = [labels[0], labels[1], labels[2], labels[3],
-              labels[4], labels[6], labels[8], labels[10],
-              labels[5], labels[7], labels[9], labels[11]]
+    if len(dataset_folders) > 1:
+        handles = [handles[0], handles[1], handles[2], handles[3],
+                   handles[4], handles[6], handles[8], handles[10],
+                   handles[5], handles[7], handles[9], handles[11]]
+        labels = [labels[0], labels[1], labels[2], labels[3],
+                  labels[4], labels[6], labels[8], labels[10],
+                  labels[5], labels[7], labels[9], labels[11]]
 
-    fig.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=3,
-               bbox_transform=axes[1].transAxes)
+        fig.legend(handles=handles, labels=labels, loc='lower center', fontsize=11,
+                   bbox_to_anchor=(0.5, -0.5), ncol=3, bbox_transform=axes[1].transAxes)
+    else:
+        fig.legend(handles=handles, labels=labels, fontsize=11)
 
     fig.suptitle(title, weight='bold', fontsize=12)
     save_visualisation(filename, img_dir)
@@ -801,7 +809,7 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
     ax = fig.gca()
     handles, labels = ax.get_legend_handles_labels()
 
-    if len(datasets) > 1:
+    if len(dataset_folders) > 1:
         handles = [handles[0], handles[1], handles[2], handles[3],
                    handles[4], handles[6], handles[8], handles[10],
                    handles[5], handles[7], handles[9], handles[11]]
@@ -810,8 +818,8 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
                   labels[5], labels[7], labels[9], labels[11]]
 
         plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=3)
-
-    plt.legend(handles=handles, labels=labels, fontsize=11)
+    else:
+        plt.legend(handles=handles, labels=labels, fontsize=11)
 
     plt.title(title, weight='bold', fontsize=12)
     save_visualisation(filename, img_dir)
