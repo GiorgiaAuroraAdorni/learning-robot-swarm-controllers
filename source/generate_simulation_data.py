@@ -445,7 +445,7 @@ class GenerateSimulationData:
         cls.save_simulation(complete_runs, runs, run_dir)
 
     @classmethod
-    def check_dataset_conformity(cls, runs_dir, runs_img, title, dataset, net_input):
+    def check_dataset_conformity(cls, runs_dir, runs_img, title, dataset, net_input, communication):
         """
         Generate a scatter plot to check the conformity of the dataset.
         The plot will show the distribution of the input sensing, in particular, as the difference between the front
@@ -455,14 +455,16 @@ class GenerateSimulationData:
         :param title:
         :param dataset
         :param net_input
+        :param communication
         """
 
-        # FIXME
         runs = utils.load_dataset(runs_dir, 'simulation.pkl')
         runs_sub = runs[['timestep', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
 
-        # FIXME
-        x, y, myt_quantities, _, _ = utils.extract_input_output(runs_sub, net_input, N)
+        N = runs.myt_quantity.unique().max() - 2
+        myt_quantitiy = np.array(runs[['run', 'myt_quantity']].drop_duplicates().myt_quantity) - 2
+
+        x, y, myt_quantities, _, _ = utils.extract_input_output(runs_sub, net_input, N, myt_quantities=myt_quantitiy, communication=communication)
 
         #  Generate a scatter plot to check the conformity of the dataset
         file_name = 'dataset-scatterplot-%s' % dataset

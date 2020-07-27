@@ -142,7 +142,7 @@ if __name__ == '__main__':
             from generate_simulation_data import GenerateSimulationData as sim
             print('\nChecking conformity of %s %s dataset…' % (d, c))
             sim.check_dataset_conformity(run_dir, run_img_dir, 'Dataset - %s %s' % (args.net_input, c), c,
-                                         net_input=args.net_input)
+                                         net_input=args.net_input, communication=communication)
 
         if args.train_net or args.plots_net:
             from utils.utils import prepare_dataset
