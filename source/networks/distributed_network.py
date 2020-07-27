@@ -25,7 +25,7 @@ class DistributedNet(torch.nn.Module):
         self.relu = torch.nn.ReLU()
         self.fc2 = torch.nn.Linear(42, 1)
 
-    def forward(self, xs):
+    def forward(self, xs, _):
         """
 
         :param xs:
@@ -45,6 +45,6 @@ class DistributedNet(torch.nn.Module):
 
         def f(sensing: Sequence[Sensing]) -> Tuple[Sequence[Control]]:
             with torch.no_grad():
-                return self(torch.FloatTensor(sensing)).numpy().flatten(),
+                return self(torch.FloatTensor(sensing), 0).numpy().flatten(),
 
         return f
