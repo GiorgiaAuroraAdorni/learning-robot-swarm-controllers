@@ -300,6 +300,7 @@ class GenerateSimulationData:
             world.run_in_viewer(cam_position=(40, 0), cam_altitude=80.0, cam_yaw=0.0, cam_pitch=-np.pi / 2,
                                 walls_height=10.0, orthographic=True, period=0.1)
         else:
+            T = 3
             steps = int(T // dt)
 
             data = []
@@ -429,7 +430,7 @@ class GenerateSimulationData:
             if hasattr(args, 'avg_gap'):
                 avg_gap = args.avg_gap
             else:
-                avg_gap = np.random.randint(5, 26)
+                avg_gap = np.random.randint(5, 15)
 
             try:
                 controller_factory = cls.get_controller(controller, controllers, goal, communication, model, model_dir,
