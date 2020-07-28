@@ -87,7 +87,7 @@ class ManualController:
         """
         # Don't move the first and last robots in the line
         # if state.index == 0 or state.index == self.N - 1:
-        if np.isclose(round(state.goal_position[0], 2), round(state.initial_position[0], 2), rtol=1e-1):
+        if np.isclose(round(state.goal_position[0], 2), round(state.initial_position[0], 2), rtol=1e-2):
             return 0
         else:
             return self.p_distributed_controller.step(self.compute_difference(state), dt)
@@ -201,11 +201,10 @@ class LearnedController:
             comm = 0
         else:
             communication = utils.get_received_communication(state)
-
             speed, comm = self.net_controller(sensing, communication, state.index)
             speed = float(speed)
 
-        if state.initial_position[0] != state.goal_position[0]:
+        if not np.isclose(round(state.goal_position[0], 2), round(state.initial_position[0], 2), rtol=1e-2):
             # convert communication into an int of between 0 and 10 bit
             if self.communication:
                 comm = int(comm[state.index] * (2 ** 10))
