@@ -51,12 +51,25 @@
 
 # Experiment slow omniscient
 
-python3 source/task1_extension.py --controller omniscient --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-slow
-python3 source/task1_extension.py --controller manual --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-slow
-python3 source/task1_extension.py --controller omniscient --generate-split --train-net --save-net --plots-net --dataset mixed-1000simulations-slow --model net1-extension-slow
-python3 source/task1_extension.py --controller learned --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-slow --model net1-extension-slow
+#python3 source/task1_extension.py --controller omniscient --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-slow
+#python3 source/task1_extension.py --controller manual --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-slow
+#python3 source/task1_extension.py --controller omniscient --generate-split --train-net --save-net --plots-net --dataset mixed-1000simulations-slow --model net1-extension-slow
+#python3 source/task1_extension.py --controller learned --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-slow --model net1-extension-slow
 
-python3 source/task1_extension.py --model-type communication --controller omniscient --train-net --save-net --plots-net --dataset mixed-1000simulations-slow --model net1-extension-slow
-python3 source/task1_extension.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-slow --model net1-extension-slow
+#python3 source/task1_extension.py --model-type communication --controller omniscient --train-net --save-net --plots-net --dataset mixed-1000simulations-slow --model net1-extension-slow
+#python3 source/task1_extension.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-slow --model net1-extension-slow
+#
+#python3 source/task1_extension.py --model-type communication --compare-all --dataset mixed-1000simulations-slow
 
-python3 source/task1_extension.py --model-type communication --compare-all --dataset mixed-1000simulations-slow
+
+# Experiment very slow omniscient
+
+python3 source/task1_extension.py --controller omniscient --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-veryslow
+#python3 source/task1_extension.py --controller manual --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-veryslow
+python3 source/task1_extension.py --controller omniscient --generate-split --train-net --save-net --plots-net --dataset mixed-1000simulations-veryslow --model net1-extension-veryslow
+#python3 source/task1_extension.py --controller learned --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-veryslow --model net1-extension-veryslow
+
+#python3 source/task1_extension.py --model-type communication --controller omniscient --train-net --save-net --plots-net --dataset mixed-1000simulations-veryslow --model net1-extension-veryslow
+#python3 source/task1_extension.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --dataset mixed-1000simulations-veryslow --model net1-extension-veryslow
+#
+#python3 source/task1_extension.py --model-type communication --compare-all --dataset mixed-1000simulations-veryslow

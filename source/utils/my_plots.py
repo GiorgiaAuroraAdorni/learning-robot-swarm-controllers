@@ -802,7 +802,7 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
         plt.fill_between(timesteps[d_idx], q1, q2, alpha=0.2, label='interquartile range (%s)' % d, color=ln.get_color())
         plt.fill_between(timesteps[d_idx], q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
 
-    plt.xlim(0, time_steps.max())
+    plt.xlim(0, 17)
     # FIXME depends if it is used goal_position_distance or goal_position_distance_absolute
     # plt.ylim(0, 10)
 
