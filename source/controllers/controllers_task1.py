@@ -36,7 +36,6 @@ class ManualController:
         :param state
         :return back, front: response values of the rear and front sensors
         """
-        # FIXME
         sensing = utils.get_input_sensing(self.net_input, state, normalise=False)
 
         front = sensing[2]
@@ -116,7 +115,7 @@ class OmniscientController:
         self.N = N
         self.net_input = net_input
 
-    def linear_vel(self, state, constant=10):
+    def linear_vel(self, state, constant=4):
         """
         :param state
         :param constant
