@@ -7,6 +7,7 @@ import seaborn as sns
 from matplotlib.collections import LineCollection
 from sklearn.linear_model import LinearRegression
 
+import matplotlib.animation as animation
 from utils import utils
 
 sns.set(style="white")
@@ -934,3 +935,195 @@ def thymio_quantity_distribution(runs_dir, img_dir, title, filename):
 
     plt.hist(df.myt_quantity, bins=np.linspace(4.5, 10.5, 7), rwidth=0.8)
     save_visualisation(filename, img_dir)
+
+
+def animate_simulation(out_dirs):
+    """
+
+    :param out_dirs:
+    """
+    run_states = []
+    max_timestep = 0
+    target = None
+
+    for out_dir in out_dirs:
+        run = utils.load_dataset(out_dir, 'complete-simulation.pkl')
+        r = run[['name', 'timestep', 'position', 'goal_position']]
+        run_states.append(r)
+
+        target = np.array(r[r['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
+
+        max_ts = r['timestep'].max()
+        if max_ts > max_timestep:
+            max_timestep = max_ts
+
+    timesteps = np.arange(max_timestep)
+
+    fig = plt.figure(1, figsize=(8.8, 6.8), constrained_layout=True)
+    ax = fig.add_subplot(111)
+    ax.set_xlim(0, max_timestep - 1)
+
+    plt.xlabel('timestep', fontsize=11)
+    plt.ylabel('x position', fontsize=11)
+    plt.yticks(target)
+    plt.grid()
+
+    ax1 = ax.twinx()
+    thymio_names = ['myt1', 'myt2', 'myt3', 'myt4', 'myt5', 'myt6', 'myt7', 'myt8']
+    ax1.set_yticklabels(thymio_names)
+    ax1.yaxis.set_ticks(target)
+
+    ax.set_ylim(
+        target[0] - 10,
+        target[7] + 10
+    )
+    ax1.set_ylim(
+        target[0] - 10,
+        target[7] + 10
+    )
+
+    plt.title('Animations', weight='bold', fontsize=12)
+
+    xs = []
+    lines = []
+    inits_l = np.full([32, max_timestep], np.nan)
+
+    colours = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
+    labels = ['omniscient controller', 'manual controller', 'distributed controller', 'communication controller']
+    for c, controller in enumerate(run_states):
+        for i, name in enumerate(controller.name.unique()):
+            if i == 0 or i == 7:
+                colour = 'black'
+                label = None
+                alpha = None
+            else:
+                colour = colours[c]
+                label = labels[c]
+                alpha = 0.8
+
+            x = np.array(controller[controller['name'] == name].apply(lambda row: list(row.position)[0], axis=1))
+            line, = ax.plot(timesteps, x, color=colour, label=label, alpha=alpha)
+
+            xs.append(x)
+            lines.append(line)
+
+    handles, labels = ax.get_legend_handles_labels()
+    handles = [handles[0], handles[6], handles[12], handles[18]]
+    labels = [labels[0], labels[6], labels[12], labels[18]]
+
+    lgd = ax.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=2)
+
+    def init():
+        for idx, line in enumerate(lines):
+            line.set_ydata(inits_l[idx])
+
+    def animate(i):
+        for idx, line in enumerate(lines):
+            inits_l[idx][i] = xs[idx][i]
+            line.set_ydata(inits_l[idx])  # update the data.
+
+    # create animation using the animate() function
+    myAnimation = animation.FuncAnimation(fig, animate, init_func=init, frames=max_timestep)
+
+    video_path = os.path.join(os.path.dirname(out_dirs[0]), 'animation.mp4')
+    myAnimation.save(video_path, dpi=300)
+    plt.close()
+
+
+def plot_simulations(out_dirs):
+    """
+
+    :param out_dirs:
+    """
+    run_states = []
+    max_timestep = 0
+    target = None
+
+    for out_dir in out_dirs:
+        run = utils.load_dataset(out_dir, 'complete-simulation.pkl')
+        r = run[['name', 'timestep', 'position', 'goal_position']]
+        run_states.append(r)
+
+        target = np.array(r[r['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
+
+        max_ts = r['timestep'].max()
+        if max_ts > max_timestep:
+            max_timestep = max_ts
+
+    timesteps = np.arange(max_timestep)
+
+    colours = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
+    labels = ['omniscient controller', 'manual controller', 'distributed controller', 'communication controller']
+    thymio_names = ['myt1', 'myt2', 'myt3', 'myt4', 'myt5', 'myt6', 'myt7', 'myt8']
+
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(figsize=(10.8, 6.8), constrained_layout=True, nrows=2, ncols=2)
+    axes = [ax1, ax2, ax3, ax4]
+
+    for c, controller in enumerate(run_states):
+
+        axes[c].set_title('%s' % labels[c], weight='bold', fontsize=12)
+
+        for i, name in enumerate(controller.name.unique()):
+            if i == 0 or i == 7:
+                colour = 'black'
+                label = None
+                alpha = None
+            else:
+                colour = colours[c]
+                label = labels[c]
+                alpha = 0.8
+
+            x = np.array(controller[controller['name'] == name].apply(lambda row: list(row.position)[0], axis=1))
+            axes[c].plot(timesteps, x, color=colour, label=label, alpha=alpha)
+            axes[c].fill_between(timesteps, x - 2.95, x + 7.95, alpha=0.2, color=colour)
+
+    for idx, ax in enumerate(fig.get_axes()):
+        if idx == 2 or idx == 3:
+            ax.set(xlabel='timestep')
+        if idx == 0 or idx == 2:
+            ax.set(ylabel='x position')
+
+        ax.set_xlim(0, max_timestep - 1)
+
+        ax.set_ylim(
+            target[0] - 10,
+            target[7] + 10
+        )
+        ax1.set_ylim(
+            target[0] - 10,
+            target[7] + 10
+        )
+
+        if idx == 0:
+            ax.tick_params(bottom=True, labelbottom=False)
+            ax.set_yticks(target)
+            ax.yaxis.tick_left()
+            ax.yaxis.set_label_position("left")
+        elif idx == 1:
+            ax.tick_params(bottom=True, labelbottom=False)
+            ax.yaxis.set_ticks(target)
+            ax.set_yticklabels(thymio_names)
+            ax.yaxis.tick_right()
+            ax.yaxis.set_label_position("right")
+        elif idx == 2:
+            ax.tick_params(bottom=True, labelbottom=True)
+            ax.set_yticks(target)
+            ax.yaxis.tick_left()
+            ax.yaxis.set_label_position("left")
+        elif idx == 3:
+            ax.tick_params(bottom=True, labelbottom=True)
+            ax.yaxis.set_ticks(target)
+            ax.set_yticklabels(thymio_names)
+            ax.yaxis.tick_right()
+            ax.yaxis.set_label_position("right")
+
+        ax.grid()
+
+        #
+        # if not firstcol:
+        #     for label in self.get_yticklabels(which="both"):
+        #         label.set_visible(False)
+        #     self.get_yaxis().get_offset_text().set_visible(False)
+        #     self.set_ylabel("")
+
+    save_visualisation('Positions over time', os.path.dirname(out_dirs[0]))

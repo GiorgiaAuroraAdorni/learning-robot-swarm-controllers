@@ -30,6 +30,8 @@ def parse_args():
     parser.add_argument('--compare-all', action="store_true",
                         help='Generate plots that compare all the experiments in terms of distance from goal ('
                              'default: False)')
+    parser.add_argument('--generate-animations', action="store_true",
+                        help='Generate animations that compare the controllers (default: False)')
 
     parser.add_argument('--controller', default='all', type=str,
                         help='Choose the controller for the current execution. Usually between all, learned, '
@@ -174,3 +176,12 @@ if __name__ == '__main__':
         plot_compared_distance_compressed(dataset_folders, runs_img_dir, datasets,
                                          'Robot distances from goal - %s' % (args.net_input),
                                          'distances-from-goal-compressed')
+
+    if args.generate_animations:
+        from utils.my_plots import animate_simulation, plot_simulations
+        from utils.utils import generate_fake_simulations
+
+        # create a simulation for each of the controller using the same initial position
+        out_dirs = generate_fake_simulations()
+        animate_simulation(out_dirs)
+        plot_simulations(out_dirs)

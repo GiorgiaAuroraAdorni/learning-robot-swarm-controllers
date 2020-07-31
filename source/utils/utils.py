@@ -556,3 +556,76 @@ def write_graph(model_dir, model, dummy_input_graph):
     writer.add_graph(net, dummy_input_graph)
     writer.close()
 
+
+def generate_fake_simulations():
+    """
+    """
+
+    from controllers import controllers_task1 as controllers
+    from generate_simulation_data import GenerateSimulationData as g
+
+    run_dir = os.path.join('datasets', 'task1', 'all_sensors', 'mixed-1000simulations-slow', 'animations')
+
+    myt_quantity = 8
+    goal_positions = np.linspace(0, 214, num=myt_quantity, dtype=np.float64)
+    initial_positions = np.array([0, 14, 59, 104, 135, 173, 203, 214], dtype=np.float64)
+
+    goal = 'distribute'
+    net_input = 'all_sensors'
+    model = 'net1-extension-slow'
+
+    omniscient_controller_factory = g.get_controller('omniscient', controllers, goal, myt_quantity, net_input)
+
+    manual_controller_factory = g.get_controller('manual', controllers, goal, myt_quantity, net_input)
+
+    distributed_net_dir = os.path.join('models', 'task1', 'distributed', model)
+    distributed_controller_factory = g.get_controller('learned', controllers, goal, myt_quantity, net_input,
+                                                      model=model, model_dir=distributed_net_dir,
+                                                      communication=False)
+
+    communication_net_dir = os.path.join('models', 'task1', 'communication', model)
+    communication_controller_factory = g.get_controller('learned', controllers, goal, myt_quantity, net_input,
+                                                        model=model, model_dir=communication_net_dir,
+                                                        communication=True)
+
+    controller_factories = [(omniscient_controller_factory, 'omniscient'),
+                            (manual_controller_factory, 'manual'),
+                            (distributed_controller_factory, 'distributed'),
+                            (communication_controller_factory, 'communication')]
+
+    out_dirs = []
+    for factory, name in controller_factories:
+        world, myts = g.setup(factory, myt_quantity)
+
+        comm = False
+        if myts[0].controller.name == 'learned':
+            if myts[0].controller.communication:
+                comm = True
+
+        for i, myt in enumerate(myts):
+            # Position the first and last robot at a fixed distance
+            myt.position = (initial_positions[i], 0)
+            myt.initial_position = myt.position
+
+            # Reset the parameters
+            myt.dictionary = None
+            myt.angle = 0
+            myt.goal_position = (goal_positions[i], 0)
+
+            if myt.colour is not None:
+                myt.colour = None
+            myt.prox_comm_tx = 0
+            myt.prox_comm_enable = False
+
+        runs = []
+        complete_runs = []
+
+        g.run(0, myts, runs, complete_runs, world, comm, gui=False)
+
+        out_dir = os.path.join(run_dir, name)
+        check_dir(out_dir)
+        g.save_simulation(complete_runs, runs, out_dir)
+
+        out_dirs.append(out_dir)
+
+    return out_dirs

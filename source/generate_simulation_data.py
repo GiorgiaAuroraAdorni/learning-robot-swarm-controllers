@@ -232,7 +232,6 @@ class GenerateSimulationData:
         :param complete_data:
         :param data:
         :param runs_dir:
-        :return:
         """
         pkl_file = os.path.join(runs_dir, 'simulation.pkl')
         json_file = os.path.join(runs_dir, 'simulation.json')
@@ -353,18 +352,17 @@ class GenerateSimulationData:
             complete_runs.append(complete_data)
 
     @classmethod
-    def get_controller(cls, controller, controllers, goal, communication, model, model_dir, myt_quantity, net_input, task):
+    def get_controller(cls, controller, controllers, goal, myt_quantity, net_input, communication=None, model=None, model_dir=None):
         """
 
         :param controller:
         :param controllers:
-        :param goal
-        :param communication
+        :param goal:
+        :param myt_quantity:
+        :param net_input:
+        :param communication:
         :param model:
         :param model_dir:
-        :param myt_quantity
-        :param net_input:
-        :param task:
         :return controller_factory:
         """
         if controller == cls.LEARNED_CONTROLLER:
@@ -433,7 +431,7 @@ class GenerateSimulationData:
 
             try:
                 controller_factory = cls.get_controller(controller, controllers, goal, communication, model, model_dir,
-                                                        myt_quantity, args.net_input, args.task)
+                                                        myt_quantity, args.net_input)
 
                 world, myts = cls.setup(controller_factory, myt_quantity)
                 cls.init_positions(myts, net_input, avg_gap, extension=extension)
