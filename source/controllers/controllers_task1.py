@@ -29,7 +29,7 @@ class ManualController:
         self.p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
         self.net_input = net_input
 
-    def neighbors_distance(self, state):
+    def neighbors_distance(self, state, conversion_constant = 1341.67):
         """
         Check if there is a robot ahead using the infrared sensor 2 (front-front).
         Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
@@ -38,8 +38,17 @@ class ManualController:
         """
         sensing = utils.get_input_sensing(self.net_input, state, normalise=False)
 
-        front = sensing[2]
-        back = np.mean(np.array([sensing[5], sensing[6]]))
+        if self.net_input == 'all_sensors':
+            front_prox_values = sensing[2] * conversion_constant / 4505
+            front_prox_comm = sensing[9]
+            front = max(front_prox_values, front_prox_comm)
+
+            back_prox_values = np.mean(np.array([sensing[5], sensing[6]])) * conversion_constant / 4505
+            back_prox_comm = np.mean(np.array([sensing[12], sensing[13]]))
+            back = max(back_prox_values, back_prox_comm)
+        else:
+            front = sensing[2]
+            back = np.mean(np.array([sensing[5], sensing[6]]))
 
         return back, front
 
@@ -87,9 +96,10 @@ class ManualController:
         # Don't move the first and last robots in the line
         # if state.index == 0 or state.index == self.N - 1:
         if np.isclose(round(state.goal_position[0], 2), round(state.initial_position[0], 2), rtol=1e-2):
-            return 0
+            return 0, 0
         else:
-            return self.p_distributed_controller.step(self.compute_difference(state), dt)
+            speed = self.p_distributed_controller.step(self.compute_difference(state), dt)
+            return speed, 0
 
 
 class OmniscientController:
@@ -145,7 +155,7 @@ class OmniscientController:
         """
         speed = self.move_to_goal(state)
 
-        return speed
+        return speed, 0
 
 
 class LearnedController:
