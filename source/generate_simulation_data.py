@@ -121,8 +121,9 @@ class GenerateSimulationData:
 
             if myt.colour is not None:
                 myt.colour = None
+
             myt.prox_comm_tx = 0
-            myt.prox_comm_enable = False
+            myt.prox_comm_enable = True
 
     @classmethod
     def generate_dict(cls, myt, n_sim, s, comm=None):
@@ -427,11 +428,10 @@ class GenerateSimulationData:
             if hasattr(args, 'avg_gap'):
                 avg_gap = args.avg_gap
             else:
-                avg_gap = np.random.randint(5, 26)
+                avg_gap = np.random.randint(5, 20)
 
             try:
-                controller_factory = cls.get_controller(controller, controllers, goal, communication, model, model_dir,
-                                                        myt_quantity, args.net_input)
+                controller_factory = cls.get_controller(controller, controllers, goal, myt_quantity, args.net_input, communication, model, model_dir)
 
                 world, myts = cls.setup(controller_factory, myt_quantity)
                 cls.init_positions(myts, net_input, avg_gap, extension=extension)

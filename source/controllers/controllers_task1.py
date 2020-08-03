@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from controllers.pid import PID
@@ -26,10 +28,10 @@ class ManualController:
         self.goal = goal
         self.N = N
 
-        self.p_distributed_controller = PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6)
+        self.p_distributed_controller = PID(5, 0, 0, max_out=16.6, min_out=-16.6)
         self.net_input = net_input
 
-    def neighbors_distance(self, state, conversion_constant = 1341.67):
+    def neighbors_distance(self, state):
         """
         Check if there is a robot ahead using the infrared sensor 2 (front-front).
         Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).
@@ -38,19 +40,55 @@ class ManualController:
         """
         sensing = utils.get_input_sensing(self.net_input, state, normalise=False)
 
-        if self.net_input == 'all_sensors':
-            front_prox_values = sensing[2] * conversion_constant / 4505
-            front_prox_comm = sensing[9]
-            front = max(front_prox_values, front_prox_comm)
+        if sensing == [0] * len(sensing):
+            return 0, 0
 
-            back_prox_values = np.mean(np.array([sensing[5], sensing[6]])) * conversion_constant / 4505
-            back_prox_comm = np.mean(np.array([sensing[12], sensing[13]]))
-            back = max(back_prox_values, back_prox_comm)
+        file = os.path.join('source/controllers', 'sensing_to_distances.pkl')
+        distances, front_prox_values, back_prox_values, front_prox_comm, back_prox_comm = np.load(file, allow_pickle=True)
+
+        f_pv_indices = np.nonzero(front_prox_values)[0]
+        f_pv_indices = f_pv_indices[np.argsort(front_prox_values[f_pv_indices])]
+
+        b_pv_indices = np.nonzero(back_prox_values)[0]
+        b_pv_indices = b_pv_indices[np.argsort(back_prox_values[b_pv_indices])]
+
+        f_pc_indices = np.nonzero(front_prox_comm)[0]
+        f_pc_indices = f_pc_indices[np.argsort(front_prox_comm[f_pc_indices])]
+
+        b_pc_indices = np.nonzero(back_prox_comm)[0]
+        b_pc_indices = b_pc_indices[np.argsort(back_prox_comm[b_pc_indices])]
+
+        front_distance_pv = np.interp(sensing[2], front_prox_values[f_pv_indices], distances[f_pv_indices])
+        back_distance_pv = np.interp(np.mean(np.array([sensing[5], sensing[6]])), back_prox_values[b_pv_indices], distances[b_pv_indices])
+
+        if sensing[7:] == [0] * 7 or self.net_input != 'all_sensors':
+            return back_distance_pv, front_distance_pv
+
+        elif sensing[0:7] == [0] * 7:
+            front_distance_pc = np.interp(sensing[9], front_prox_comm[f_pc_indices], distances[f_pc_indices])
+            back_distance_pc = np.interp(np.mean(np.array([sensing[12], sensing[13]])), back_prox_comm[b_pc_indices],
+                                         distances[b_pc_indices])
+            return back_distance_pc, front_distance_pc
+
+        elif self.net_input == 'all_sensors':
+            front_distance_pc = np.interp(sensing[9], front_prox_comm[f_pc_indices], distances[f_pc_indices])
+            back_distance_pc = np.interp(np.mean(np.array([sensing[12], sensing[13]])), back_prox_comm[b_pc_indices], distances[b_pc_indices])
+
+            if sensing[2] == 0.0:
+                front = front_distance_pc
+            else:
+                front = front_distance_pv
+
+            if np.mean([sensing[5], sensing[6]]) == 0.0:
+                back = back_distance_pc
+            elif np.mean([sensing[12], sensing[13]]) == 0.0:
+                back = back_distance_pv
+            else:
+                back = np.mean([back_distance_pv, back_distance_pc])
+
+            return back, front
         else:
-            front = sensing[2]
-            back = np.mean(np.array([sensing[5], sensing[6]]))
-
-        return back, front
+           raise ValueError('Impossible values for sensing.')
 
     def compute_difference(self, state):
         """
@@ -58,18 +96,20 @@ class ManualController:
         :return: the difference between the response value of front and the rear sensor
         """
         back, front = self.neighbors_distance(state)
+        if back == 0 and front == 0:
+            return 0
 
         # Apply a small correction to the distance measured by the rear sensors: the front sensor used is at a
-        # different x coordinate from the point to which the rear sensor of the robot that follows points. this is
+        # different x coordinate from the point to which the rear sensor of the robot that follows points. This is
         # because of the curved shape of the face of the Thymio
         delta_x = 7.41150769
         x = 7.95
 
         # Maximum possible response values
-        delta_x_m = 4505 * delta_x / 14
-        x_m = 4505 * x / 14
-
-        correction = x_m - delta_x_m
+        # delta_x_m = 4505 * delta_x / 14
+        # x_m = 4505 * x / 14
+        # correction = x_m - delta_x_m
+        correction = x - delta_x
 
         out = front - correction - back
 

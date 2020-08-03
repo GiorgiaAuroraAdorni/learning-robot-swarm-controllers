@@ -8,7 +8,7 @@ from matplotlib.collections import LineCollection
 from sklearn.linear_model import LinearRegression
 
 import matplotlib.animation as animation
-from utils import utils
+import utils
 
 sns.set(style="white")
 
@@ -55,7 +55,7 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
     :param filename
     """
 
-    runs = utils.load_dataset(runs_dir, 'simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'simulation.pkl')
     runs_sub = runs[['timestep', 'goal_position_distance', 'name', 'run']]
     position_distances = get_position_distances(runs_sub)
 
@@ -106,7 +106,7 @@ def get_position_distances(runs_sub, with_run=False):
     :param with_run
     :return position_distances:
     """
-    v = utils.cartesian_product(runs_sub.timestep.unique(), runs_sub.run.unique(), runs_sub.name.unique())
+    v = utils.utils.cartesian_product(runs_sub.timestep.unique(), runs_sub.run.unique(), runs_sub.name.unique())
     idx = pd.MultiIndex.from_arrays([v[:, 0], v[:, 1], v[:, 2]])
 
     position_distances = runs_sub.set_index(['timestep', 'run', 'name']).reindex(idx)
@@ -129,14 +129,14 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename, 
     :param absolute
     """
 
-    utils.check_dir(img_dir)
+    utils.utils.check_dir(img_dir)
     datasets = ['omniscient', 'manual', 'distributed', 'communication']
 
     positions = []
     timesteps = []
 
     for el in dataset_folders:
-        runs = utils.load_dataset(el, 'simulation.pkl')
+        runs = utils.utils.load_dataset(el, 'simulation.pkl')
         if absolute:
             runs_sub = runs[['timestep', 'goal_position_distance_absolute', 'name', 'run']]
         else:
@@ -209,7 +209,7 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     :param title:
     :param net_input:
     """
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
                      'prox_comm', 'all_sensors']]
 
@@ -221,7 +221,7 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
 
     run_myt2 = run[run['name'] == 'myt2'].drop(columns='name').reset_index()
     # FIXME
-    _, myt2_control, _, run_myt2, proximity_sensors = utils.extract_input_output(run_myt2, net_input, N=1)
+    _, myt2_control, _, run_myt2, proximity_sensors = utils.utils.extract_input_output(run_myt2, net_input, N=1)
     myt2_sensing = run_myt2[proximity_sensors]
 
     plt.figure()
@@ -272,7 +272,7 @@ def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_i
     :param title:
     :param net_input:
     """
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
                      'prox_comm', 'all_sensors']]
 
@@ -284,7 +284,7 @@ def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_i
 
     run_myt2 = run[run['name'] == 'myt2'].drop(columns='name').reset_index()
     # FIXME
-    _, myt2_control, _, run_myt2, proximity_sensors = utils.extract_input_output(run_myt2, net_input, N=1)
+    _, myt2_control, _, run_myt2, proximity_sensors = utils.utils.extract_input_output(run_myt2, net_input, N=1)
 
     plt.figure(constrained_layout=True)
     fig, axes = plt.subplots(nrows=2, figsize=(6, 7), sharex=True)
@@ -332,7 +332,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     :param title
     :param net_input:
     """
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
                      'prox_comm', 'all_sensors']]
     runs['x_position'] = runs.apply(lambda row: list(row.position)[0], axis=1)
@@ -345,7 +345,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
 
     runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
     # FIXME
-    _, _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input, N=1)
+    _, _, _, runs_myt2, proximity_sensors = utils.utils.extract_input_output(runs_myt2, net_input, N=1)
 
     plt.figure()
     fig, axes = plt.subplots(nrows=3, figsize=(7, 11), sharex=True)
@@ -415,7 +415,7 @@ def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_i
     :param title
     :param net_input:
     """
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
                      'prox_comm', 'all_sensors']]
     runs['x_position'] = runs.apply(lambda row: list(row.position)[0], axis=1)
@@ -428,7 +428,7 @@ def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_i
 
     runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
     # FIXME
-    _, _, _, runs_myt2, proximity_sensors = utils.extract_input_output(runs_myt2, net_input, N=1)
+    _, _, _, runs_myt2, proximity_sensors = utils.utils.extract_input_output(runs_myt2, net_input, N=1)
 
     plt.figure(constrained_layout=True)
     fig, axes = plt.subplots(nrows=2, figsize=(6, 7), sharex=True)
@@ -654,13 +654,13 @@ def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
     :param net_input
     :param model
     """
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['timestep', 'run', 'prox_values', 'prox_comm', 'all_sensors', 'motor_left_target']]
 
     max_time_step = runs_sub['timestep'].max()
     time_steps = np.arange(max_time_step)
     # FIXME
-    _, _, _, runs_, proximity_sensors = utils.extract_input_output(runs_sub, net_input, N=1)
+    _, _, _, runs_, proximity_sensors = utils.utils.extract_input_output(runs_sub, net_input, N=1)
 
     # Mean of the sensing of each run, among all the robots
     plt.figure(constrained_layout=True)
@@ -697,7 +697,7 @@ def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
     :param simulation:
     :param title:
     """
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'transmitted_comm']]
 
     run = runs_sub[runs_sub['run'] == simulation]
@@ -763,14 +763,14 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
     :param absolute
     """
 
-    utils.check_dir(img_dir)
+    utils.utils.check_dir(img_dir)
 
     positions = []
     timesteps = []
 
     for el in dataset_folders:
 
-        runs = utils.load_dataset(el, 'simulation.pkl')
+        runs = utils.utils.load_dataset(el, 'simulation.pkl')
         if absolute:
             runs_sub = runs[['timestep', 'goal_position_distance_absolute', 'name', 'run']]
         else:
@@ -834,7 +834,7 @@ def visualise_communication_vs_control(runs_dir, img_dir, title):
     :param title:
     """
 
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['motor_left_target', 'transmitted_comm']]
 
     x = np.array(runs_sub.motor_left_target)
@@ -851,7 +851,7 @@ def visualise_communication_vs_distance(runs_dir, img_dir, title):
     :param title:
     """
 
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['position', 'goal_position', 'goal_position_distance', 'transmitted_comm']]
 
     runs_sub[['x_position', 'y_position']] = pd.DataFrame(runs_sub.position.tolist(), index=runs_sub.index)
@@ -876,7 +876,7 @@ def visualise_simulation_over_time_all_sensors(runs_dir, img_dir, simulation, ti
     :param simulation:
     :param title:
     """
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
                      'prox_comm', 'all_sensors']]
 
@@ -923,7 +923,7 @@ def thymio_quantity_distribution(runs_dir, img_dir, title, filename):
     :param title:
     :param filename:
     """
-    runs = utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['run', 'myt_quantity']]
 
     df = runs_sub.drop_duplicates()
@@ -947,7 +947,7 @@ def animate_simulation(out_dirs):
     target = None
 
     for out_dir in out_dirs:
-        run = utils.load_dataset(out_dir, 'complete-simulation.pkl')
+        run = utils.utils.load_dataset(out_dir, 'complete-simulation.pkl')
         r = run[['name', 'timestep', 'position', 'goal_position']]
         run_states.append(r)
 
@@ -1040,7 +1040,7 @@ def plot_simulations(out_dirs):
     target = None
 
     for out_dir in out_dirs:
-        run = utils.load_dataset(out_dir, 'complete-simulation.pkl')
+        run = utils.utils.load_dataset(out_dir, 'complete-simulation.pkl')
         r = run[['name', 'timestep', 'position', 'goal_position']]
         run_states.append(r)
 

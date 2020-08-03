@@ -150,7 +150,10 @@ plt.plot(distances, front_prox_comms,  label='front_prox_comm')
 plt.plot(distances, back_prox_comms,   label='back_prox_comm')
 plt.legend()
 
-my_plots.save_visualisation('sensing_to_distances', 'controllers')
+dir = os.path.join('controllers', 'images')
+utils.check_dir(dir)
+
+my_plots.save_visualisation('sensing_to_distances', dir)
 
 # world.run_in_viewer(cam_position=(10.9, 0), cam_altitude=50.0, cam_yaw=0.0, cam_pitch=-np.pi / 2,
 #                     walls_height=10.0, orthographic=True, period=0.1)
