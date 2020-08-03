@@ -138,7 +138,7 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input,
 
         state = ThymioState(state_dict)
 
-        control = controller.perform_control(state, dt=0.1)
+        control, _ = controller.perform_control(state, dt=0.1)
 
         controller_predictions.append(control)
 
@@ -193,7 +193,6 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
 
         state = ThymioState(state_dict)
 
-        # FIXME
         control, _ = controller.perform_control(state, dt=0.1)
 
         controller_predictions.append(control)
