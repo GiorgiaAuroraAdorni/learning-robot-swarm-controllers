@@ -557,22 +557,17 @@ def write_graph(model_dir, model, dummy_input_graph):
     writer.close()
 
 
-def generate_fake_simulations():
+def generate_fake_simulations(run_dir, model, initial_positions, myt_quantity):
     """
     """
 
     from controllers import controllers_task1 as controllers
     from generate_simulation_data import GenerateSimulationData as g
 
-    run_dir = os.path.join('datasets', 'task1', 'all_sensors', 'mixed-1000simulations-slow', 'animations')
-
-    myt_quantity = 8
-    goal_positions = np.linspace(0, 214, num=myt_quantity, dtype=np.float64)
-    initial_positions = np.array([0, 14, 59, 104, 135, 173, 203, 214], dtype=np.float64)
+    goal_positions = np.linspace(0, initial_positions[-1], num=myt_quantity, dtype=np.float64)
 
     goal = 'distribute'
     net_input = 'all_sensors'
-    model = 'net1-extension-slow'
 
     omniscient_controller_factory = g.get_controller('omniscient', controllers, goal, myt_quantity, net_input)
 

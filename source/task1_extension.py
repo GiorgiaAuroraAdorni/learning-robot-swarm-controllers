@@ -179,9 +179,39 @@ if __name__ == '__main__':
 
     if args.generate_animations:
         from utils.my_plots import animate_simulation, plot_simulations
-        from utils.utils import generate_fake_simulations
+        from utils.utils import generate_fake_simulations, check_dir
+
+        animations_dir = os.path.join(d, 'animations')
+        check_dir(animations_dir)
 
         # create a simulation for each of the controller using the same initial position
-        out_dirs = generate_fake_simulations()
-        animate_simulation(out_dirs)
-        plot_simulations(out_dirs)
+
+        myt_quantity = 8
+        initial_positions = [0, 14, 59, 104, 135, 173, 203, 214]
+
+        dir1 = os.path.join(animations_dir, '1')
+        check_dir(dir1)
+
+        out_dirs = generate_fake_simulations(dir1, args.model, initial_positions, myt_quantity)
+        # animate_simulation(out_dirs, myt_quantity)
+        plot_simulations(out_dirs, myt_quantity)
+
+        myt_quantity = 5
+        initial_positions = [0, 25, 67, 110, 150]
+
+        dir2 = os.path.join(animations_dir, '2')
+        check_dir(dir2)
+
+        out_dirs = generate_fake_simulations(dir2, args.model, initial_positions, myt_quantity)
+        # animate_simulation(out_dirs, myt_quantity)
+        plot_simulations(out_dirs, myt_quantity)
+
+        myt_quantity = 6
+        initial_positions = [0, 12, 24, 64, 104, 119]
+
+        dir3 = os.path.join(animations_dir, '3')
+        check_dir(dir3)
+
+        out_dirs = generate_fake_simulations(dir3, args.model, initial_positions, myt_quantity)
+        # animate_simulation(out_dirs, myt_quantity)
+        plot_simulations(out_dirs, myt_quantity)

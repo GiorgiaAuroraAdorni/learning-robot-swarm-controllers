@@ -937,7 +937,7 @@ def thymio_quantity_distribution(runs_dir, img_dir, title, filename):
     save_visualisation(filename, img_dir)
 
 
-def animate_simulation(out_dirs):
+def animate_simulation(out_dirs, myt_quantity):
     """
 
     :param out_dirs:
@@ -969,17 +969,20 @@ def animate_simulation(out_dirs):
     plt.grid()
 
     ax1 = ax.twinx()
-    thymio_names = ['myt1', 'myt2', 'myt3', 'myt4', 'myt5', 'myt6', 'myt7', 'myt8']
+    thymio_names = []
+    for i in range(myt_quantity):
+        thymio_names.append('myt%d' % (i + 1))
+
     ax1.set_yticklabels(thymio_names)
     ax1.yaxis.set_ticks(target)
 
     ax.set_ylim(
         target[0] - 10,
-        target[7] + 10
+        target[myt_quantity - 1] + 10
     )
     ax1.set_ylim(
         target[0] - 10,
-        target[7] + 10
+        target[myt_quantity - 1] + 10
     )
 
     plt.title('Animations', weight='bold', fontsize=12)
@@ -992,7 +995,7 @@ def animate_simulation(out_dirs):
     labels = ['omniscient controller', 'manual controller', 'distributed controller', 'communication controller']
     for c, controller in enumerate(run_states):
         for i, name in enumerate(controller.name.unique()):
-            if i == 0 or i == 7:
+            if i == 0 or i == myt_quantity - 1:
                 colour = 'black'
                 label = None
                 alpha = None
@@ -1002,14 +1005,15 @@ def animate_simulation(out_dirs):
                 alpha = 0.8
 
             x = np.array(controller[controller['name'] == name].apply(lambda row: list(row.position)[0], axis=1))
+            x = np.pad(x, ((0, len(timesteps) - len(x))), mode='edge')
             line, = ax.plot(timesteps, x, color=colour, label=label, alpha=alpha)
 
             xs.append(x)
             lines.append(line)
 
     handles, labels = ax.get_legend_handles_labels()
-    handles = [handles[0], handles[6], handles[12], handles[18]]
-    labels = [labels[0], labels[6], labels[12], labels[18]]
+    handles = [handles[0], handles[6], handles[12]]#, handles[18]]
+    labels = [labels[0], labels[6], labels[12]]#, labels[18]]
 
     lgd = ax.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=2)
 
@@ -1030,7 +1034,7 @@ def animate_simulation(out_dirs):
     plt.close()
 
 
-def plot_simulations(out_dirs):
+def plot_simulations(out_dirs, myt_quantity):
     """
 
     :param out_dirs:
@@ -1054,7 +1058,9 @@ def plot_simulations(out_dirs):
 
     colours = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
     labels = ['omniscient controller', 'manual controller', 'distributed controller', 'communication controller']
-    thymio_names = ['myt1', 'myt2', 'myt3', 'myt4', 'myt5', 'myt6', 'myt7', 'myt8']
+    thymio_names = []
+    for i in range(myt_quantity):
+        thymio_names.append('myt%d' % (i + 1))
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(figsize=(10.8, 6.8), constrained_layout=True, nrows=2, ncols=2)
     axes = [ax1, ax2, ax3, ax4]
@@ -1064,7 +1070,7 @@ def plot_simulations(out_dirs):
         axes[c].set_title('%s' % labels[c], weight='bold', fontsize=12)
 
         for i, name in enumerate(controller.name.unique()):
-            if i == 0 or i == 7:
+            if i == 0 or i == myt_quantity - 1:
                 colour = 'black'
                 label = None
                 alpha = None
@@ -1074,6 +1080,7 @@ def plot_simulations(out_dirs):
                 alpha = 0.8
 
             x = np.array(controller[controller['name'] == name].apply(lambda row: list(row.position)[0], axis=1))
+            x = np.pad(x, ((0, len(timesteps) - len(x))), mode='edge')
             axes[c].plot(timesteps, x, color=colour, label=label, alpha=alpha)
             axes[c].fill_between(timesteps, x - 2.95, x + 7.95, alpha=0.2, color=colour)
 
@@ -1087,11 +1094,7 @@ def plot_simulations(out_dirs):
 
         ax.set_ylim(
             target[0] - 10,
-            target[7] + 10
-        )
-        ax1.set_ylim(
-            target[0] - 10,
-            target[7] + 10
+            target[myt_quantity - 1] + 10
         )
 
         if idx == 0:
@@ -1118,12 +1121,5 @@ def plot_simulations(out_dirs):
             ax.yaxis.set_label_position("right")
 
         ax.grid()
-
-        #
-        # if not firstcol:
-        #     for label in self.get_yticklabels(which="both"):
-        #         label.set_visible(False)
-        #     self.get_yaxis().get_offset_text().set_visible(False)
-        #     self.set_ylabel("")
 
     save_visualisation('Positions over time', os.path.dirname(out_dirs[0]))
