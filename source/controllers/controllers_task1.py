@@ -111,7 +111,7 @@ class ManualController:
         # correction = x_m - delta_x_m
         correction = x - delta_x
 
-        out = front - correction - back
+        out = front - (back - correction)
 
         return out
 
@@ -165,7 +165,7 @@ class OmniscientController:
         self.N = N
         self.net_input = net_input
 
-    def linear_vel(self, state, constant=1):
+    def linear_vel(self, state, constant=4):
         """
         :param state
         :param constant
@@ -252,6 +252,8 @@ class LearnedController:
             communication = utils.get_received_communication(state)
             speed, comm = self.net_controller(sensing, communication, state.index)
             speed = float(speed)
+
+        # speed = min(max(-16.6, speed * 5), 16.6)
 
         if not np.isclose(round(state.goal_position[0], 2), round(state.initial_position[0], 2), rtol=1e-2):
             # convert communication into an int of between 0 and 10 bit
