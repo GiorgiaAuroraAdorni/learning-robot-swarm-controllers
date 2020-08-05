@@ -9,7 +9,8 @@ Welcome to learning-robot-swarm-controllers's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
+   
+   includeme
    intro
    enki-simulations
    controllers
