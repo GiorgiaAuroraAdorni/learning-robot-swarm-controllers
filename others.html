@@ -1,0 +1,777 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Others &#8212; learning-robot-swarm-controllers 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="others">
+<h1>Others<a class="headerlink" href="#others" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-utils.my_plots">
+<span id="plots"></span><h2>Plots<a class="headerlink" href="#module-utils.my_plots" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="utils.my_plots.animate_simulation">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">animate_simulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">out_dirs</span></em>, <em class="sig-param"><span class="n">myt_quantity</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.animate_simulation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>out_dirs</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.get_position_distances">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">get_position_distances</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_sub</span></em>, <em class="sig-param"><span class="n">with_run</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.get_position_distances" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>runs_sub</strong> – </p>
+</dd>
+</dl>
+<p>:param with_run
+:return position_distances:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.make_space_above">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">make_space_above</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">axes</span></em>, <em class="sig-param"><span class="n">topmargin</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.make_space_above" title="Permalink to this definition">¶</a></dt>
+<dd><p>Increase figure size to make topmargin (in inches) space for titles, without changing the axes sizes
+:param axes:
+:param topmargin:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.my_histogram">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">my_histogram</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prediction</span></em>, <em class="sig-param"><span class="n">x_label</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">label</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.my_histogram" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prediction</strong> – </p></li>
+<li><p><strong>x_label</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+<li><p><strong>filename</strong> – </p></li>
+<li><p><strong>label</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.my_scatterplot">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">my_scatterplot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">x_label</span></em>, <em class="sig-param"><span class="n">y_label</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.my_scatterplot" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Plot a scatter plot. Usually with the groundtruth on x-axis and prediction on y-axis</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – </p></li>
+<li><p><strong>y</strong> – </p></li>
+<li><p><strong>x_label</strong> – </p></li>
+<li><p><strong>y_label</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+<li><p><strong>filename</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.plot_compared_distance_compressed">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_compared_distance_compressed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset_folders</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">datasets</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">absolute</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_compared_distance_compressed" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset_folders</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:param datasets
+:param title:
+:param filename:
+:param absolute</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.plot_compared_distance_from_goal">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_compared_distance_from_goal</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset_folders</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">absolute</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_compared_distance_from_goal" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset_folders</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+<li><p><strong>filename</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:param absolute</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.plot_distance_from_goal">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_distance_from_goal</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_distance_from_goal" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:param title
+:param filename</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.plot_losses">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_losses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_loss</span></em>, <em class="sig-param"><span class="n">valid_loss</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_losses" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_loss</strong> – the training losses</p></li>
+<li><p><strong>valid_loss</strong> – the testing losses</p></li>
+<li><p><strong>img_dir</strong> – directory for the output image</p></li>
+<li><p><strong>title</strong> – </p></li>
+<li><p><strong>filename</strong> – </p></li>
+<li><p><strong>scale</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.plot_regressor">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_regressor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">x_label</span></em>, <em class="sig-param"><span class="n">y_label</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_regressor" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – </p></li>
+<li><p><strong>y</strong> – </p></li>
+<li><p><strong>x_label</strong> – </p></li>
+<li><p><strong>y_label</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+<li><p><strong>filename</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.plot_response">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_response</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">x_label</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">index</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>:param x
+:param y
+:param x_label
+:param img_dir
+:param title
+:param filename
+:param index: this parameter is different from None only when x is the input sensing, otherwise, x is a 1D vector</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.plot_sensing_timestep">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_sensing_timestep</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">model</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_sensing_timestep" title="Permalink to this definition">¶</a></dt>
+<dd><p>:param runs_dir
+:param img_dir
+:param net_input
+:param model</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.plot_simulations">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_simulations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">out_dirs</span></em>, <em class="sig-param"><span class="n">myt_quantity</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_simulations" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>out_dirs</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.plot_target_distribution">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_target_distribution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">y_g</span></em>, <em class="sig-param"><span class="n">y_p</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_target_distribution" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_g</strong> – </p></li>
+<li><p><strong>y_p</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:param title
+:param filename:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.save_visualisation">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">save_visualisation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">make_space</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">axes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.save_visualisation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>make_space</strong> – </p></li>
+<li><p><strong>axes</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.thymio_quantity_distribution">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">thymio_quantity_distribution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.thymio_quantity_distribution" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+<li><p><strong>filename</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.visualise_communication_simulation">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">visualise_communication_simulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">simulation</span></em>, <em class="sig-param"><span class="n">title</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.visualise_communication_simulation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>simulation</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.visualise_communication_vs_control">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">visualise_communication_vs_control</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.visualise_communication_vs_control" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.visualise_communication_vs_distance">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">visualise_communication_vs_distance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.visualise_communication_vs_distance" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.visualise_simulation">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">visualise_simulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">simulation</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">net_input</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.visualise_simulation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>simulation</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+<li><p><strong>net_input</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.visualise_simulation_all_sensors">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">visualise_simulation_all_sensors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">simulation</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">net_input</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.visualise_simulation_all_sensors" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>simulation</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+<li><p><strong>net_input</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.visualise_simulation_over_time_all_sensors">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">visualise_simulation_over_time_all_sensors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">simulation</span></em>, <em class="sig-param"><span class="n">title</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.visualise_simulation_over_time_all_sensors" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+<li><p><strong>simulation</strong> – </p></li>
+<li><p><strong>title</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.visualise_simulations_comparison">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">visualise_simulations_comparison</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">net_input</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.visualise_simulations_comparison" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:param title
+:param net_input:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.visualise_simulations_comparison_all_sensors">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">visualise_simulations_comparison_all_sensors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">net_input</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.visualise_simulations_comparison_all_sensors" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – </p></li>
+<li><p><strong>img_dir</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:param title
+:param net_input:</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-utils.utils">
+<span id="utils"></span><h2>Utils<a class="headerlink" href="#module-utils.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="utils.utils.ThymioState">
+<em class="property">class </em><code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">ThymioState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state_dict</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.ThymioState" title="Permalink to this definition">¶</a></dt>
+<dd><p>:param state_dict</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.cartesian_product">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">cartesian_product</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">arrays</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.cartesian_product" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>arrays</strong> – </p>
+</dd>
+<dt class="field-even">Return arr.reshape(-1, la)</dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.check_dir">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">check_dir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.check_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the path is a directory, if not create it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>directory</strong> – path to the directory</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.dataset_split">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">dataset_split</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_name</span></em>, <em class="sig-param"><span class="n">num_run</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.dataset_split" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_name</strong> – path to the file where to save the splits of the dataset</p></li>
+<li><p><strong>num_run</strong> – number of simulations, by default 1000</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.directory_for_dataset">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">directory_for_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset</span></em>, <em class="sig-param"><span class="n">controller</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.directory_for_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> – name of the dataset</p></li>
+<li><p><strong>controller</strong> – name of the controller</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return run_dir, run_img_dir, run_video_dir</dt>
+<dd class="field-even"><p>output directories</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.directory_for_model">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">directory_for_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.directory_for_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>args</strong> – </p>
+</dd>
+<dt class="field-even">Return model_dir, model_img_dir, model_video_dir, metrics_path</dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.export_network">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">export_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_dir</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">input_</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.export_network" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_dir</strong> – </p></li>
+<li><p><strong>model</strong> – </p></li>
+<li><p><strong>input</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.extract_colour_output">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">extract_colour_output</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs</span></em>, <em class="sig-param"><span class="n">communication</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">input_combination</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.extract_colour_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>The output is the colour of the top led that depends by the position of the robot in the row.
+:param runs:
+:param communication
+:param input_combination
+:return <a href="#id1"><span class="problematic" id="id2">output_</span></a>, runs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.extract_input_output">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">extract_input_output</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs</span></em>, <em class="sig-param"><span class="n">in_label</span></em>, <em class="sig-param"><span class="n">N</span></em>, <em class="sig-param"><span class="n">communication</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">input_combination</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">myt_quantities</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.extract_input_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
+sensors [array of 7 floats].
+The input is normalised so that the average is around 1 or a constant (e.g. for all (dividing by 1000)).
+The output is the speed of the wheels (which we assume equals left and right) [array of 1 float].
+There is no need to normalize the outputs.
+:param runs:
+:param in_label:
+:param N
+:param communication
+:param input_combination
+:param myt_quantities
+:return <a href="#id3"><span class="problematic" id="id4">input_</span></a>, <a href="#id5"><span class="problematic" id="id6">output_</span></a>, runs, columns</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.from_dataset_to_tensors">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">from_dataset_to_tensors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_sample</span></em>, <em class="sig-param"><span class="n">train_target</span></em>, <em class="sig-param"><span class="n">valid_sample</span></em>, <em class="sig-param"><span class="n">valid_target</span></em>, <em class="sig-param"><span class="n">test_sample</span></em>, <em class="sig-param"><span class="n">test_target</span></em>, <em class="sig-param"><span class="n">q_train</span></em>, <em class="sig-param"><span class="n">q_valid</span></em>, <em class="sig-param"><span class="n">q_test</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.from_dataset_to_tensors" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_sample</strong> – </p></li>
+<li><p><strong>train_target</strong> – </p></li>
+<li><p><strong>valid_sample</strong> – </p></li>
+<li><p><strong>valid_target</strong> – </p></li>
+<li><p><strong>test_sample</strong> – </p></li>
+<li><p><strong>test_target</strong> – </p></li>
+<li><p><strong>q_train</strong> – </p></li>
+<li><p><strong>q_valid</strong> – </p></li>
+<li><p><strong>q_test</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:return test, train, valid</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.from_indices_to_dataset">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">from_indices_to_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">train_indices</span></em>, <em class="sig-param"><span class="n">validation_indices</span></em>, <em class="sig-param"><span class="n">test_indices</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">communication</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.from_indices_to_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>runs_dir</strong> – directory containing the simulations</p>
+</dd>
+</dl>
+<p>:param train_indices
+:param validation_indices
+:param test_indices
+:param net_input
+:param communication
+:return: (train_sample, valid_sample, test_sample), train_target, valid_target, test_target, train_quantities, valid_quantities, test_quantities</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.generate_fake_simulations">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">generate_fake_simulations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">run_dir</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">initial_positions</span></em>, <em class="sig-param"><span class="n">myt_quantity</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.generate_fake_simulations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.get_all_sensors">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">get_all_sensors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prox_values</span></em>, <em class="sig-param"><span class="n">prox_comm</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.get_all_sensors" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prox_values</strong> – prox_values reading</p></li>
+<li><p><strong>prox_comm</strong> – prox_comm reading</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return all_sensors</dt>
+<dd class="field-even"><p>combination of the two sensor readings</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.get_input_columns">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">get_input_columns</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_label</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.get_input_columns" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>in_label</strong> – </p>
+</dd>
+<dt class="field-even">Return columns</dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.get_input_sensing">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">get_input_sensing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_label</span></em>, <em class="sig-param"><span class="n">myt</span></em>, <em class="sig-param"><span class="n">normalise</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.get_input_sensing" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_label</strong> – </p></li>
+<li><p><strong>myt</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:param normalise
+:return sensing:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.get_key_value_of_nested_dict">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">get_key_value_of_nested_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_dict</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.get_key_value_of_nested_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Access a nested dictionary and return a list of tuples (rv) and values. Used to return the list of intensities
+given a prox_comm dictionary containing multiple senders.
+:param nested_dict
+:return rv, values: rv is a list of tuples where, in each of these, the first element is a list of keys and the
+second is the final value. values is the list of inner values.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.get_prox_comm">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">get_prox_comm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">myt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.get_prox_comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a dictionary containing all the senders as key and the corresponding intensities as value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>myt</strong> – agent</p>
+</dd>
+<dt class="field-even">Return prox_comm</dt>
+<dd class="field-even"><p>prox_comm sensing</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.get_received_communication">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">get_received_communication</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">myt</span></em>, <em class="sig-param"><span class="n">goal</span><span class="o">=</span><span class="default_value">'distribute'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.get_received_communication" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a list containing the messages received from the back and front.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>myt</strong> – agent</p></li>
+<li><p><strong>goal</strong> – goal of the task, by default distribute</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return communication</dt>
+<dd class="field-even"><p>the communication received from left to right</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.get_transmitted_communication">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">get_transmitted_communication</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">myt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.get_transmitted_communication" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the values transmitted during the communication.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>myt</strong> – agent</p>
+</dd>
+<dt class="field-even">Return communication</dt>
+<dd class="field-even"><p>the communication to be transmitted</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.load_dataset">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">load_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">dataset</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.load_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>runs_dir</strong> – directory containing the simulation runs</p></li>
+<li><p><strong>dataset</strong> – name of the dataset</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return dataframe</dt>
+<dd class="field-even"><p>resulting dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.parse_prox_comm">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">parse_prox_comm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prox_comm</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.parse_prox_comm" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>prox_comm</strong> – prox_comm dictionary</p>
+</dd>
+<dt class="field-even">Return prox_comm</dt>
+<dd class="field-even"><p>parsed prox_comm list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.prepare_dataset">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">prepare_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">run_dir</span></em>, <em class="sig-param"><span class="n">split</span></em>, <em class="sig-param"><span class="n">num_run</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.prepare_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>:param run_dir
+:param split
+:param num_run
+:return file, indices</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.signed_distance">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">signed_distance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.signed_distance" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>state</strong> – </p>
+</dd>
+<dt class="field-even">Return b - a</dt>
+<dd class="field-even"><p>Signed distance between current and the goal position, along the current theta of the robot</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.utils.write_graph">
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">write_graph</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_dir</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">dummy_input_graph</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.write_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>FIXME
+:param model_dir:
+:param model:
+:param <a href="#id7"><span class="problematic" id="id8">input_</span></a>:
+:return:</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">learning-robot-swarm-controllers</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enki-simulations.html">Enki simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html">Controllers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imitation-learning-models.html">Imitation learning models</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giorgia Adorni.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/others.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

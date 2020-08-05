@@ -1,0 +1,619 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Imitation learning models &#8212; learning-robot-swarm-controllers 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Controllers" href="controllers.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="imitation-learning-models">
+<h1>Imitation learning models<a class="headerlink" href="#imitation-learning-models" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="networks">
+<h2>Networks<a class="headerlink" href="#networks" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="distributed-network">
+<h3>Distributed Network<a class="headerlink" href="#distributed-network" title="Permalink to this headline">¶</a></h3>
+<p>Adapted from <a class="reference external" href="https://github.com/MarcoVernaUSI/distributed/blob/Refactored/network.py">https://github.com/MarcoVernaUSI/distributed/blob/Refactored/network.py</a></p>
+<p>© 2019-2020 Marco Verna – 2020 Giorgia Adorni</p>
+<span class="target" id="module-networks.distributed_network"></span><dl class="py class">
+<dt id="networks.distributed_network.DistributedNet">
+<em class="property">class </em><code class="sig-prename descclassname">networks.distributed_network.</code><code class="sig-name descname">DistributedNet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.distributed_network.DistributedNet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simplified “distributed network”, that takes as input an array containing the
+response values of the sensors – which can be either <code class="docutils literal notranslate"><span class="pre">​prox_values​</span></code>, <code class="docutils literal notranslate"><span class="pre">​prox_comm​</span></code>
+or <code class="docutils literal notranslate"><span class="pre">all_sensors​</span></code> – and the output is an array of 1 float that represents the ​speed​ of the wheels,
+which is assumed to be the same both right and left.</p>
+<p>The architecture of the network is straightforward:
+there are three linear layers each of size (inpuz_size, 10), (10, 10) and (10, 1) respectively,
+where input_size​ is the sum of the shape of the sensing – 7 or 14.
+The Tanh non-linear activation function is applied to the first and the second layer. ​</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>input_size</strong> – dimension of the sensing vector</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="networks.distributed_network.DistributedNet.controller">
+<code class="sig-name descname">controller</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">thymio</span></em><span class="sig-paren">)</span> &#x2192; Callable<span class="p">[</span><span class="p">[</span>Sequence<span class="p">[</span>Sensing<span class="p">]</span><span class="p">]</span><span class="p">, </span>Tuple<span class="p">[</span>Sequence<span class="p">[</span>Control<span class="p">]</span><span class="p">, </span>Sequence<span class="p">[</span>Communication<span class="p">]</span><span class="p">]</span><span class="p">]</span><a class="headerlink" href="#networks.distributed_network.DistributedNet.controller" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>thymio</strong> – unused</p>
+</dd>
+<dt class="field-even">Return f</dt>
+<dd class="field-even"><p>controller function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="networks.distributed_network.DistributedNet.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xs</span></em>, <em class="sig-param"><span class="n">_</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.distributed_network.DistributedNet.forward" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xs</strong> – input sensing batch</p></li>
+<li><p><strong>_</strong> – mask of the batch</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return output</dt>
+<dd class="field-even"><p>speed</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="communication-network">
+<h3>Communication Network<a class="headerlink" href="#communication-network" title="Permalink to this headline">¶</a></h3>
+<p>Adapted from <a class="reference external" href="https://github.com/MarcoVernaUSI/distributed/blob/Refactored/com_network.py">https://github.com/MarcoVernaUSI/distributed/blob/Refactored/com_network.py</a></p>
+<p>© 2019-2020 Marco Verna – 2020 Giorgia Adorni</p>
+<span class="target" id="module-networks.communication_network"></span><dl class="py class">
+<dt id="networks.communication_network.CommunicationNet">
+<em class="property">class </em><code class="sig-prename descclassname">networks.communication_network.</code><code class="sig-name descname">CommunicationNet</code><span class="sig-paren">(</span><em class="sig-param">input_size</em>, <em class="sig-param">device</em>, <em class="sig-param">sync: networks.communication_network.Sync = &lt;Sync.sequential: 2&gt;</em>, <em class="sig-param">module: torch.nn.modules.module.Module = &lt;class 'networks.communication_network.SingleNet'&gt;</em>, <em class="sig-param">input_fn=&lt;function input_from&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#networks.communication_network.CommunicationNet" title="Permalink to this definition">¶</a></dt>
+<dd><p>High-level module that handle the sensing of the agents.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_size</strong> – dimension of the sensing vector (can be 7 or 14)</p></li>
+<li><p><strong>device</strong> – device used (cpu or gpu)</p></li>
+<li><p><strong>sync</strong> – kind of synchronisation</p></li>
+<li><p><strong>module</strong> – SingleNet</p></li>
+<li><p><strong>input_fn</strong> – input function</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>self.tmp_indices</strong> – communication indices</p></li>
+<li><p><strong>self.distribution</strong> – distribution used for the initialisation of the communication</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="networks.communication_network.CommunicationNet.controller">
+<code class="sig-name descname">controller</code><span class="sig-paren">(</span><em class="sig-param">thymio</em>, <em class="sig-param">sync: networks.communication_network.Sync = &lt;Sync.sync: 3&gt;</em><span class="sig-paren">)</span> &#x2192; Callable<span class="p">[</span><span class="p">[</span>Sequence<span class="p">[</span>Sensing<span class="p">]</span><span class="p">]</span><span class="p">, </span>Tuple<span class="p">[</span>Sequence<span class="p">[</span>Control<span class="p">]</span><span class="p">, </span>Sequence<span class="p">[</span>Communication<span class="p">]</span><span class="p">]</span><span class="p">]</span><a class="headerlink" href="#networks.communication_network.CommunicationNet.controller" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>thymio</strong> – number of agents in the simulation</p></li>
+<li><p><strong>sync</strong> – kind of synchronisation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return f</dt>
+<dd class="field-even"><p>controller function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="networks.communication_network.CommunicationNet.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">batch</span></em>, <em class="sig-param"><span class="n">batch_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.communication_network.CommunicationNet.forward" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> – batch elements</p></li>
+<li><p><strong>batch_size</strong> – batch mask</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return robots_control</dt>
+<dd class="field-even"><p>network output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="networks.communication_network.CommunicationNet.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xs</span></em>, <em class="sig-param"><span class="n">comm</span></em>, <em class="sig-param"><span class="n">sync</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#networks.communication_network.Sync" title="networks.communication_network.Sync">networks.communication_network.Sync</a></span></em>, <em class="sig-param"><span class="n">sim</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">i</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.communication_network.CommunicationNet.step" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xs</strong> – input sensing of a certain timestep (shape: 1 x N x sensing)</p></li>
+<li><p><strong>comm</strong> – communication vector (shape: 1 X N)</p></li>
+<li><p><strong>sync</strong> – kind of synchronisation</p></li>
+<li><p><strong>sim</strong> – boolean true if step executed in simulation</p></li>
+<li><p><strong>i</strong> – index of the thymio in the row</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return control</dt>
+<dd class="field-even"><p>speed of the agent</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="networks.communication_network.SingleNet">
+<em class="property">class </em><code class="sig-prename descclassname">networks.communication_network.</code><code class="sig-name descname">SingleNet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.communication_network.SingleNet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Low-level module that works on the sensing and the communication received by a single agent (in a certain timestep),
+producing as output the control and the communication to transmit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>input_size</strong> – dimension of the sensing vector</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="networks.communication_network.SingleNet.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.communication_network.SingleNet.forward" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>input</strong> – input of the network, vector containing the sensing and the messages received by the robot
+(can be multidimensional, that means a row for each robot)</p>
+</dd>
+<dt class="field-even">Return output</dt>
+<dd class="field-even"><p>output of the network containing the control and the message to communicate (shape: 1 x 2)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="networks.communication_network.Sync">
+<em class="property">class </em><code class="sig-prename descclassname">networks.communication_network.</code><code class="sig-name descname">Sync</code><a class="headerlink" href="#networks.communication_network.Sync" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class used to define the synchronisation approach of the communication updates,
+that can be random, sequential, synchronous and random_sequential</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="networks.communication_network.init_comm">
+<code class="sig-prename descclassname">networks.communication_network.</code><code class="sig-name descname">init_comm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">thymio</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">distribution</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.communication_network.init_comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialise the communication vector (for the initial timestep of each sequence).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>thymio</strong> – number of agents</p></li>
+<li><p><strong>distribution</strong> – distribution used for the initialisation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return out</dt>
+<dd class="field-even"><p>communication vector</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="networks.communication_network.input_from">
+<code class="sig-prename descclassname">networks.communication_network.</code><code class="sig-name descname">input_from</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ss</span></em>, <em class="sig-param"><span class="n">comm</span></em>, <em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">sim</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.communication_network.input_from" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the sensing and the communication and prepare it to be the input on the single net.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ss</strong> – sensing</p></li>
+<li><p><strong>comm</strong> – communication vector</p></li>
+<li><p><strong>i</strong> – index of the thymio in the row</p></li>
+<li><p><strong>sim</strong> – boolean True if executed in simulation, False otherwise</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return input<a href="#id1"><span class="problematic" id="id2">input_</span></a></dt>
+<dd class="field-even"><p>parsed input containing the sensing values and the communication received</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="networks.communication_network.input_from_no_sensing">
+<code class="sig-prename descclassname">networks.communication_network.</code><code class="sig-name descname">input_from_no_sensing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">comm</span></em>, <em class="sig-param"><span class="n">i</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.communication_network.input_from_no_sensing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the communication vector to be the input on the single net.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>comm</strong> – communication vector</p></li>
+<li><p><strong>i</strong> – index of the thymio in the row</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return input<a href="#id3"><span class="problematic" id="id4">input_</span></a></dt>
+<dd class="field-even"><p>parsed input containing the communication received</p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="section" id="metrics">
+<h4>Metrics<a class="headerlink" href="#metrics" title="Permalink to this headline">¶</a></h4>
+<p>Adapted from <a class="reference external" href="https://github.com/GiorgiaAuroraAdorni/learning-relative-interactions-through-imitation">https://github.com/GiorgiaAuroraAdorni/learning-relative-interactions-through-imitation</a></p>
+<p>© 2020 Giorgia Adorni and Elia Cereda</p>
+<span class="target" id="module-networks.metrics"></span><dl class="py class">
+<dt id="networks.metrics.NetMetrics">
+<em class="property">class </em><code class="sig-prename descclassname">networks.metrics.</code><code class="sig-name descname">NetMetrics</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">tqdm.std.tqdm</span></em>, <em class="sig-param"><span class="n">metrics_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.metrics.NetMetrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class is supposed to create a dataframe that collects, updates and saves to file the metrics of a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> – tqdm</p></li>
+<li><p><strong>metrics_path</strong> – file where to save the metrics</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="networks.metrics.NetMetrics.finalize">
+<code class="sig-name descname">finalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#networks.metrics.NetMetrics.finalize" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="networks.metrics.NetMetrics.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_loss</span></em>, <em class="sig-param"><span class="n">valid_loss</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.metrics.NetMetrics.update" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_loss</strong> – training loss</p></li>
+<li><p><strong>valid_loss</strong> – validation loss</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="networks.metrics.StreamingMean">
+<em class="property">class </em><code class="sig-prename descclassname">networks.metrics.</code><code class="sig-name descname">StreamingMean</code><a class="headerlink" href="#networks.metrics.StreamingMean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the (possibly weighted) mean of a sequence of values in streaming fashion.</p>
+<p>This class stores the current mean and current sum of the weights and updates
+them when a new data point comes in.</p>
+<p>This should have better stability than summing all samples and dividing at the
+end, since here the partial mean is always kept at the same scale as the samples.</p>
+<dl class="py method">
+<dt id="networks.metrics.StreamingMean.mean">
+<em class="property">property </em><code class="sig-name descname">mean</code><a class="headerlink" href="#networks.metrics.StreamingMean.mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>mean</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>return self._mean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="networks.metrics.StreamingMean.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#networks.metrics.StreamingMean.reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="networks.metrics.StreamingMean.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sample</span></em>, <em class="sig-param"><span class="n">weight</span><span class="o">=</span><span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.metrics.StreamingMean.update" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample</strong> – sample</p></li>
+<li><p><strong>weight</strong> – weight</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+<div class="section" id="module-network_sensing_training">
+<span id="training"></span><h2>Training<a class="headerlink" href="#module-network_sensing_training" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="network_sensing_training.network_train">
+<code class="sig-prename descclassname">network_sensing_training.</code><code class="sig-name descname">network_train</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">file_losses</span></em>, <em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">model_dir</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">communication</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">save_net</span></em><span class="sig-paren">)</span><a class="headerlink" href="#network_sensing_training.network_train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split the dataset also defining input and output, using the indices.
+Generate tensors.
+Create the neural network and optimizer, and set the device.
+Train the model and save it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> – sample indices</p></li>
+<li><p><strong>file_losses</strong> – file where to save the metrics</p></li>
+<li><p><strong>runs_dir</strong> – directory containing the simulation runs</p></li>
+<li><p><strong>model_dir</strong> – directory containing the network data</p></li>
+<li><p><strong>model</strong> – network</p></li>
+<li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
+<li><p><strong>net_input</strong> – input of the network (between: prox_values, prox_comm and all_sensors)</p></li>
+<li><p><strong>save_net</strong> – states if save or not the network</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="network_sensing_training.train_net">
+<code class="sig-prename descclassname">network_sensing_training.</code><code class="sig-name descname">train_net</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">epochs</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">train_dataset</span><span class="p">:</span> <span class="n">torch.utils.data.dataset.TensorDataset</span></em>, <em class="sig-param"><span class="n">valid_dataset</span><span class="p">:</span> <span class="n">torch.utils.data.dataset.TensorDataset</span></em>, <em class="sig-param"><span class="n">test_dataset</span><span class="p">:</span> <span class="n">torch.utils.data.dataset.TensorDataset</span></em>, <em class="sig-param"><span class="n">net</span><span class="p">:</span> <span class="n">torch.nn.modules.module.Module</span></em>, <em class="sig-param"><span class="n">metrics_path</span><span class="p">:</span> <span class="n">AnyStr</span></em>, <em class="sig-param"><span class="n">device</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">100</span></em>, <em class="sig-param"><span class="n">learning_rate</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.01</span></em>, <em class="sig-param"><span class="n">criterion</span><span class="o">=</span><span class="default_value">MSELoss()</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#networks.metrics.NetMetrics" title="networks.metrics.NetMetrics">networks.metrics.NetMetrics</a><a class="headerlink" href="#network_sensing_training.train_net" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epochs</strong> – number of epochs</p></li>
+<li><p><strong>train_dataset</strong> – training dataset</p></li>
+<li><p><strong>valid_dataset</strong> – validation dataset</p></li>
+<li><p><strong>test_dataset</strong> – testing dataset</p></li>
+<li><p><strong>net</strong> – model</p></li>
+<li><p><strong>metrics_path</strong> – file where to save the metrics</p></li>
+<li><p><strong>device</strong> – device used (cpu or cuda)</p></li>
+<li><p><strong>batch_size</strong> – size of the batch (default: 100)</p></li>
+<li><p><strong>learning_rate</strong> – learning rate (default: 0.01)</p></li>
+<li><p><strong>criterion</strong> – loss function (default: ​Mean Squared Error)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return training_loss, validation_loss, testing_loss</dt>
+<dd class="field-even"><p>output losses of the datasets</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="network_sensing_training.validate_net">
+<code class="sig-prename descclassname">network_sensing_training.</code><code class="sig-name descname">validate_net</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net</span></em>, <em class="sig-param"><span class="n">device</span></em>, <em class="sig-param"><span class="n">valid_minibatch</span></em>, <em class="sig-param"><span class="n">criterion</span><span class="o">=</span><span class="default_value">MSELoss()</span></em><span class="sig-paren">)</span><a class="headerlink" href="#network_sensing_training.validate_net" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>net</strong> – model</p></li>
+<li><p><strong>device</strong> – device used (cpu or cuda)</p></li>
+<li><p><strong>valid_minibatch</strong> – validation batch</p></li>
+<li><p><strong>criterion</strong> – loss function</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return validation_loss.mean</dt>
+<dd class="field-even"><p>resulting loss of the validation set</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-network_evaluation">
+<span id="evaluation"></span><h2>Evaluation<a class="headerlink" href="#module-network_evaluation" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="network_evaluation.controller_plots">
+<code class="sig-prename descclassname">network_evaluation.</code><code class="sig-name descname">controller_plots</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_dir</span></em>, <em class="sig-param"><span class="n">ds</span></em>, <em class="sig-param"><span class="n">ds_eval</span></em>, <em class="sig-param"><span class="n">groundtruth</span></em>, <em class="sig-param"><span class="n">prediction</span></em>, <em class="sig-param"><span class="n">communication</span></em><span class="sig-paren">)</span><a class="headerlink" href="#network_evaluation.controller_plots" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_dir</strong> – directory containing the trained model</p></li>
+<li><p><strong>ds</strong> – name of the dataset</p></li>
+<li><p><strong>ds_eval</strong> – name of the dataset  for the evaluation (usually the manual one)</p></li>
+<li><p><strong>groundtruth</strong> – evidence</p></li>
+<li><p><strong>prediction</strong> – output control</p></li>
+<li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="network_evaluation.evaluate_controller">
+<code class="sig-prename descclassname">network_evaluation.</code><code class="sig-name descname">evaluate_controller</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_dir</span></em>, <em class="sig-param"><span class="n">ds</span></em>, <em class="sig-param"><span class="n">ds_eval</span></em>, <em class="sig-param"><span class="n">groundtruth</span></em>, <em class="sig-param"><span class="n">sensing</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">communication</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">controllers</span></em><span class="sig-paren">)</span><a class="headerlink" href="#network_evaluation.evaluate_controller" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_dir</strong> – directory containing the trained model</p></li>
+<li><p><strong>ds</strong> – name of the dataset</p></li>
+<li><p><strong>ds_eval</strong> – name of the dataset  for the evaluation (usually the manual one)</p></li>
+<li><p><strong>groundtruth</strong> – evidence</p></li>
+<li><p><strong>sensing</strong> – used to obtain the prediction</p></li>
+<li><p><strong>net_input</strong> – input of the network (between: prox_values, prox_comm and all_sensors)</p></li>
+<li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
+<li><p><strong>goal</strong> – task to perform (in this case distribute)</p></li>
+<li><p><strong>controllers</strong> – reference to the controller class</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="network_evaluation.evaluate_net">
+<code class="sig-prename descclassname">network_evaluation.</code><code class="sig-name descname">evaluate_net</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_img</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">net</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">net_title</span></em>, <em class="sig-param"><span class="n">sensing</span></em>, <em class="sig-param"><span class="n">index</span></em>, <em class="sig-param"><span class="n">x_label</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">communication</span></em>, <em class="sig-param"><span class="n">controllers</span></em><span class="sig-paren">)</span><a class="headerlink" href="#network_evaluation.evaluate_net" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_img</strong> – directory for the output image of the model</p></li>
+<li><p><strong>model</strong> – nae of the model</p></li>
+<li><p><strong>net</strong> – model used</p></li>
+<li><p><strong>net_input</strong> – input of the network (between: prox_values, prox_comm and all_sensors)</p></li>
+<li><p><strong>net_title</strong> – network title</p></li>
+<li><p><strong>sensing</strong> – input sensing</p></li>
+<li><p><strong>index</strong> – 1D vector</p></li>
+<li><p><strong>x_label</strong> – label of the x axis</p></li>
+<li><p><strong>goal</strong> – task to perform (in this case distribute)</p></li>
+<li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
+<li><p><strong>controllers</strong> – reference to the controller class</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="network_evaluation.generate_sensing">
+<code class="sig-prename descclassname">network_evaluation.</code><code class="sig-name descname">generate_sensing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#network_evaluation.generate_sensing" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return x, s</dt>
+<dd class="field-odd"><p>x is the configuration, s is the zeros array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="network_evaluation.network_evaluation">
+<code class="sig-prename descclassname">network_evaluation.</code><code class="sig-name descname">network_evaluation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">file_losses</span></em>, <em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">model_dir</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">model_img</span></em>, <em class="sig-param"><span class="n">ds</span></em>, <em class="sig-param"><span class="n">ds_eval</span></em>, <em class="sig-param"><span class="n">communication</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">avg_gap</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">task</span><span class="o">=</span><span class="default_value">'Task1'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#network_evaluation.network_evaluation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> – sample indices</p></li>
+<li><p><strong>file_losses</strong> – file where to save the metrics</p></li>
+<li><p><strong>runs_dir</strong> – directory containing the simulation runs</p></li>
+<li><p><strong>model_dir</strong> – directory containing the network data</p></li>
+<li><p><strong>model</strong> – network</p></li>
+<li><p><strong>model_img</strong> – directory for the output image of the model</p></li>
+<li><p><strong>ds</strong> – name of the dataset</p></li>
+<li><p><strong>ds_eval</strong> – name of the dataset  for the evaluation (usually the manual one)</p></li>
+<li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
+<li><p><strong>net_input</strong> – input of the network (between: prox_values, prox_comm and all_sensors)</p></li>
+<li><p><strong>avg_gap</strong> – average distance among the robots</p></li>
+<li><p><strong>task</strong> – task to be performed</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="network_evaluation.network_plots">
+<code class="sig-prename descclassname">network_evaluation.</code><code class="sig-name descname">network_plots</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_img</span></em>, <em class="sig-param"><span class="n">dataset</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">prediction</span></em>, <em class="sig-param"><span class="n">training_loss</span></em>, <em class="sig-param"><span class="n">validation_loss</span></em>, <em class="sig-param"><span class="n">x_train</span></em>, <em class="sig-param"><span class="n">y_valid</span></em>, <em class="sig-param"><span class="n">communication</span></em><span class="sig-paren">)</span><a class="headerlink" href="#network_evaluation.network_plots" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_img</strong> – directory for the output image of the model</p></li>
+<li><p><strong>dataset</strong> – name of the dataset</p></li>
+<li><p><strong>model</strong> – netowork</p></li>
+<li><p><strong>net_input</strong> – input of the network (between: prox_values, prox_comm and all_sensors)</p></li>
+<li><p><strong>prediction</strong> – output control of the model</p></li>
+<li><p><strong>training_loss</strong> – error on the train set</p></li>
+<li><p><strong>validation_loss</strong> – error on the validation set</p></li>
+<li><p><strong>x_train</strong> – train input</p></li>
+<li><p><strong>y_valid</strong> – validation output</p></li>
+<li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="network_evaluation.test_controller_given_init_positions">
+<code class="sig-prename descclassname">network_evaluation.</code><code class="sig-name descname">test_controller_given_init_positions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_img</span></em>, <em class="sig-param"><span class="n">net</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">avg_gap</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">communication</span></em>, <em class="sig-param"><span class="n">controllers</span></em><span class="sig-paren">)</span><a class="headerlink" href="#network_evaluation.test_controller_given_init_positions" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_img</strong> – directory for the output image of the model</p></li>
+<li><p><strong>net</strong> – model used</p></li>
+<li><p><strong>model</strong> – name of the model</p></li>
+<li><p><strong>net_input</strong> – input of the network (between: prox_values, prox_comm and all_sensors)</p></li>
+<li><p><strong>avg_gap</strong> – average gap among the robots</p></li>
+<li><p><strong>goal</strong> – task to perform (in this case distribute)</p></li>
+<li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
+<li><p><strong>controllers</strong> – reference to the controller class</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">learning-robot-swarm-controllers</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enki-simulations.html">Enki simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html">Controllers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Imitation learning models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#networks">Networks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-network_sensing_training">Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-network_evaluation">Evaluation</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="controllers.html" title="previous chapter">Controllers</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giorgia Adorni.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/imitation-learning-models.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
