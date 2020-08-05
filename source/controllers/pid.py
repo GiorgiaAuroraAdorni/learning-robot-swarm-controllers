@@ -5,6 +5,19 @@
 
 
 class PID:
+    """
+    A PID controller that implements the following formula.
+
+    .. math::
+        K_p \epsilon + K_d \\frac {d \epsilon}{d t} + K_i \int{\epsilon(t) dt}
+
+    :param Kp: apply a correction based on a proportional term
+    :param Ki: apply a correction based on a integral term
+    :param Kd: apply a correction based on a derivative term
+    :param min_out=-float("inf"): clip the speed to the minimum allowed velocity
+    :param max_out=float("inf")): clip the speed to the maximum allowed velocity
+
+    """
     def __init__(self, Kp, Ki, Kd, min_out=-float("inf"), max_out=float("inf")):
         self.Kp = Kp
         self.Ki = Ki
@@ -17,7 +30,11 @@ class PID:
         self.sum_e = 0
 
     def step(self, e, dt):
-        """ dt should be the time elapsed from the last time step was called """
+        """
+        :param e: error
+        :param dt: should be the time elapsed from the last time step was called
+        :return output: speed
+        """
 
         if self.last_e is not None:
             derivative = (e - self.last_e) / dt

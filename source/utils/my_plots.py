@@ -172,7 +172,7 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename, 
             axes[idx].fill_between(time_steps, q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
 
             axes[idx].set_xlabel('timestep', fontsize=11)
-            axes[idx].set_xlim(0, 17)
+            # axes[idx].set_xlim(0, 36)
             # axes[idx].set_ylim(0, 10)
 
             xint = range(0, max_time_step + 1, max_time_step // 6)
@@ -803,7 +803,7 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
         plt.fill_between(timesteps[d_idx], q1, q2, alpha=0.2, label='interquartile range (%s)' % d, color=ln.get_color())
         plt.fill_between(timesteps[d_idx], q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
 
-    plt.xlim(0, 17)
+    # plt.xlim(0, 17)
     # FIXME depends if it is used goal_position_distance or goal_position_distance_absolute
     # plt.ylim(0, 10)
 
@@ -1056,14 +1056,16 @@ def plot_simulations(out_dirs, myt_quantity):
 
     timesteps = np.arange(max_timestep)
 
-    colours = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
-    labels = ['omniscient controller', 'manual controller', 'distributed controller', 'communication controller']
+    colours = ['tab:blue', 'tab:orange', 'tab:green']#, 'tab:red']
+    labels = ['omniscient controller', 'manual controller', 'distributed controller']#, 'communication controller']
+
     thymio_names = []
     for i in range(myt_quantity):
         thymio_names.append('myt%d' % (i + 1))
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(figsize=(10.8, 6.8), constrained_layout=True, nrows=2, ncols=2)
-    axes = [ax1, ax2, ax3, ax4]
+    # fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(figsize=(10.8, 6.8), constrained_layout=True, nrows=2, ncols=2)
+    fig, axes = plt.subplots(figsize=(6.8, 10.8), constrained_layout=True, nrows=3)
+    # axes = [ax1, ax2, ax3, ax4]
 
     for c, controller in enumerate(run_states):
 

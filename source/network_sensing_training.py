@@ -23,18 +23,17 @@ def train_net(epochs: int,
               criterion=torch.nn.MSELoss()
               ) -> NetMetrics:
     """
-    :param epochs:
-    :param train_dataset:
-    :param valid_dataset:
-    :param test_dataset:
-    :param net:
-    :param metrics_path:
-    :param device
-    :param batch_size:
-    :param learning_rate:
-    :param criterion:
-    :return training_loss, validation_loss, testing_loss:
-
+    :param epochs: number of epochs
+    :param train_dataset: training dataset
+    :param valid_dataset: validation dataset
+    :param test_dataset: testing dataset
+    :param net: model
+    :param metrics_path: file where to save the metrics
+    :param device: device used (cpu or cuda)
+    :param batch_size: size of the batch (default: 100)
+    :param learning_rate: learning rate (default: 0.01)
+    :param criterion: loss function (default: ​Mean Squared Error)
+    :return training_loss, validation_loss, testing_loss: output losses of the datasets
     """
 
     train_minibatch = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -82,11 +81,11 @@ def train_net(epochs: int,
 
 def validate_net(net, device, valid_minibatch, criterion=torch.nn.MSELoss()):
     """
-    :param net:
-    :param device
-    :param valid_minibatch:
-    :param criterion:
-    :return validation_loss.mean:
+    :param net: model
+    :param device: device used (cpu or cuda)
+    :param valid_minibatch: validation batch
+    :param criterion: loss function
+    :return validation_loss.mean: resulting loss of the validation set
     """
 
     # Support objects for metrics and validation
@@ -111,14 +110,19 @@ def validate_net(net, device, valid_minibatch, criterion=torch.nn.MSELoss()):
 
 def network_train(indices, file_losses, runs_dir, model_dir, model, communication, net_input, save_net):
     """
-    :param indices
-    :param file_losses
-    :param runs_dir:
+    Split the dataset also defining input and output, using the indices.
+    Generate tensors.
+    Create the neural network and optimizer, and set the device.
+    Train the model and save it.
+
+    :param indices: sample indices
+    :param file_losses: file where to save the metrics
+    :param runs_dir: directory containing the simulation runs
     :param model_dir: directory containing the network data
-    :param model
-    :param communication
-    :param net_input
-    :param save_net
+    :param model: network
+    :param communication: states if the communication is used by the network
+    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+    :param save_net: states if save or not the network
     """
     train_indices, validation_indices, test_indices = indices[1]
 

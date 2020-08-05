@@ -6,10 +6,54 @@ from utils.utils import directory_for_dataset, directory_for_model
 
 def parse_args():
     """
+    Imitation Learning - Distributed Controller + Communication
 
-    :return args
+    usage: task1.py [--args]
+
+    :return args:
+                  --help                Show this help message and exit
+                  --gui                 Run simulation using the gui (default: False)
+                  --myt-quantity N      Number of thymios for the simulation (default: 5)
+                  --n-simulations N     Number of runs for each simulation (default: 1000)
+                  --task TASK
+                                        Choose the task to perform in the current execution
+                                        between task1 and task2 (default: task1)
+                  --avg-gap N           Average gap distance between thymios (default: 8)
+                  --generate-dataset    Generate the dataset containing the simulations
+                                        (default: False)
+                  --generate-split      Generate the indices for the split of the dataset
+                                        (default: False)
+                  --plots-dataset       Generate the plots of regarding the dataset
+                                        (default: False)
+                  --check-dataset       Generate the plots that check the dataset conformity
+                                        (default: False)
+                  --compare-all         Generate plots that compare all the experiments in
+                                        terms of distance from goal (default: False)
+                  --controller CONTROLLER
+                                        Choose the controller for the current execution.
+                                        Usually between all, learned, manual and omniscient
+                                        (default: all)
+                  --dataset-folder DATASET_FOLDER
+                                        Name of the directory containing the datasets
+                                        (default: datasets)
+                  --dataset DATASET     Choose the datasets to use in the current execution
+                                        (default: all)
+                  --models-folder MODELS_FOLDER
+                                        Name of the directory containing the models
+                                        (default: models)
+                  --model-type MODEL_TYPE
+                                        Name of the sub-directory containing the models
+                                        (default: distributed)
+                  --model MODEL         Name of the model (default: net1)
+                  --train-net           Train the model (default: False)
+                  --save-net            Save the model in onnx format (default: False)
+                  --net-input SENSING
+                                        Choose the input of the net between prox_values,
+                                        prox_comm or all_sensors (default: prox_values)
+                  --plots-net           Generate the plots of regarding the model
+                                        (default: False)
     """
-    parser = argparse.ArgumentParser(description='Imitation Learning - Distributed Controller No Communication')
+    parser = argparse.ArgumentParser(description='Imitation Learning - Distributed Controller + Communication')
 
     parser.add_argument('--gui', action="store_true",
                         help='Run simulation using the gui (default: False)')
@@ -55,8 +99,8 @@ def parse_args():
     parser.add_argument('--save-net', action='store_true', help='Save the model in onnx format (default: False)')
 
     parser.add_argument('--net-input', default='prox_values', choices=['prox_values', 'prox_comm', 'all_sensors'],
-                        help='Choose the input of the net between prox_values and prox_comm_events (default: '
-                             'prox_values)')
+                        help='Choose the input of the net between prox_values, prox_comm or all_sensors '
+                             '(default: prox_values)')
     parser.add_argument('--plots-net', action="store_true",
                         help='Generate the plots of regarding the model (default: False)')
 
@@ -162,7 +206,7 @@ if __name__ == '__main__':
         if args.train_net or args.plots_net:
             from utils.utils import prepare_dataset
 
-            indices = prepare_dataset(run_dir, args.generate_split)
+            indices = prepare_dataset(run_dir, args.generate_split, args.n_simulations)
             file_losses = os.path.join(model_dir, 'losses.npy')
 
             if args.train_net:

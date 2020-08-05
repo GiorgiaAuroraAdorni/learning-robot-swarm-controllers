@@ -22,8 +22,8 @@ class StreamingMean:
     def update(self, sample, weight=1.0):
         """
 
-        :param sample:
-        :param weight:
+        :param sample: sample
+        :param weight: weight
         """
         self._weights += weight
         self._mean += weight / self._weights * (sample - self._mean)
@@ -37,18 +37,25 @@ class StreamingMean:
 
     @property
     def mean(self):
+        """
+
+        :return self._mean: mean
+        """
         return self._mean
 
 
 class NetMetrics:
-    """This class is supposed to create a dataframe that collects, updates and saves to file the metrics of a model."""
+    """
+    This class is supposed to create a dataframe that collects, updates and saves to file the metrics of a model.
+
+    :param t: tqdm
+    :param metrics_path: file where to save the metrics
+    """
 
     TRAIN_LOSS = 't. loss'
     VALIDATION_LOSS = 'v. loss'
 
     def __init__(self, t: tqdm, metrics_path):
-        """
-        """
         self.metrics_path = metrics_path
         self.df = pd.DataFrame(columns=[
             self.TRAIN_LOSS, self.VALIDATION_LOSS
@@ -58,11 +65,15 @@ class NetMetrics:
 
     def update(self, train_loss, valid_loss):
         """
-        :param train_loss
-        :param valid_loss
+        :param train_loss: training loss
+        :param valid_loss: validation loss
         """
         metrics = {self.TRAIN_LOSS: float(train_loss), self.VALIDATION_LOSS: float(valid_loss)}
         self.df = self.df.append(metrics, ignore_index=True)
 
     def finalize(self):
+        """
+
+        :return:
+        """
         self.df.to_pickle(self.metrics_path)

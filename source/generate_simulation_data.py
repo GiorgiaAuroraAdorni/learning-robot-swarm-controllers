@@ -13,6 +13,9 @@ from utils import utils
 
 
 class GenerateSimulationData:
+    """
+
+    """
     MANUAL_CONTROLLER = "manual"
     OMNISCIENT_CONTROLLER = "omniscient"
     LEARNED_CONTROLLER = "learned"
@@ -21,10 +24,11 @@ class GenerateSimulationData:
     def setup(cls, controller_factory, myt_quantity, aseba: bool = False):
         """
         Set up the world as an unbounded world.
+
         :param controller_factory: if the controller is passed, load the learned network
         :param myt_quantity: number of robot in the simulation
-        :param aseba
-        :return world, myts
+        :param aseba: True
+        :return world, myts: world and the agents in the world
         """
         # Create an unbounded world
         world = pyenki.World()
@@ -43,21 +47,34 @@ class GenerateSimulationData:
     @classmethod
     def init_positions(cls, myts, net_input, avg_gap, variate_pose=False, min_distance=10.9, extension=False, x=None):
         """
-        Create multiple Thymios and position them such as all x-axes are aligned.
-        The robots are already arranged in an "indian row" (all x-axes aligned) and within the proximity sensor range.
-        The distance between the first and the last robot is computed in this way:
-        (min_distance + avg_gap) * (myt_quantity - 1).
-        The distances among the robot are computed by drawing (myt_quantity-1) real random gaps in using a normal
+        Given the agents, position them such as all x-axes are aligned.
+        Arrange the robots in a "single file" (all x-axes aligned) and within the proximity sensor range
+        (when running the extension of task 1 it is not mandatory that the robot are within the proximity sensor range,
+        since a random average gap is used).
+
+        The distance between the first and the last robot is usually computed as follow:
+
+        .. math:: (min\_distance + avg\_gap) * (myt\_quantity - 1)
+        In case of the extended task this quantity it is not initialised.
+
+        Usually, the distances among the robots are computed by drawing (myt_quantity - 1) real random gaps in using a normal
         distribution with mean equal to the average gap and stdev fixed to 8. This values are clipped between 1 and the
-        maximum_gap. Then, the minimum distance is added to all the distances, in order to move from the ICR to the front of
-        the thymio. The distances obtained are rescaled in such a way their sum corresponds to the total gap that is known.
-        :param myts
-        :param net_input
-        :param avg_gap: for the prox_values the default value is 8cm; for the prox_comm the default value is 25cm
-        :param variate_pose
-        :param min_distance: the minimum distance between two Thymio [wheel - wheel] is 10.9 cm.
+        ``maximum_gap``. Then, the ``minimum_distance`` is added to all the distances, in order to move from the ICR
+        to the front of the thymio. The distances obtained are rescaled in such a way their sum corresponds to the
+        total gap that is known.
+        In case of the extended task the distances are obtained using the random average gap fixed and generating
+        random positions in the maximum range allowed.
+
+        :param myts: list containing all the agents and associated attributes
+        :param net_input: input of the net between prox_values, prox_comm or all_sensors
+        :param avg_gap: for the prox_values the default value is 8cm; for the prox_comm the default value is 25cm.
+                        Can be also a random value, between 5 and 35, in case of the extended task.
+        :param variate_pose: False by default, True only during the evaluation of the models when only one agent is used.
+        :param min_distance: the minimum distance between two Thymio [wheel - wheel] is 10.9 cm,
+                             that corresponds to the length of the agents.
         :param extension: True if is running task1_extension
-        :param x
+        :param x: quantity of which variate the position along the x axis of the robot
+                  (only during the model evaluation with variate_pose True)
         """
         myt_quantity = len(myts)
         std = 8
@@ -128,32 +145,33 @@ class GenerateSimulationData:
     @classmethod
     def generate_dict(cls, myt, n_sim, s, comm=None):
         """
-        Save data in a dictionary
-        :param myt
-        :param n_sim
-        :param s
+        Save all the information of the agent in a dictionary.
+
+        :param myt: agent
+        :param n_sim: index of the simulation
+        :param s: index of the timestep
         :param comm: boolean, True if the dataset is generated using the learned model with communication
         :return dictionary:
-            'run': n_sim,
-            'timestep': s,
-            'name': myt.name,
-            'index': myt.index,
-            'myt_quantity': myt.controller.N,
-            'net_input': myt.controller.net_input,
-            'prox_values': prox_values,
-            'prox_comm': utils.parse_prox_comm(prox_comm),
-            'all_sensors': all_sensors,
-            'initial_position': myt.initial_position,
-            'position': myt.position,
-            'angle': myt.angle,
-            'goal_position': myt.goal_position,
-            'goal_angle': myt.goal_angle,
-            'motor_left_target': myt.motor_left_target,
-            'motor_right_target': myt.motor_right_target,
-            'goal_position_distance': myt.goal_position[0] - myt.position[0],
-            'goal_position_distance_absolute': abs(myt.goal_position[0] - myt.position[0])
-            'transmitted_comm': communication transmitted two the neighbours
-            'colour': colour of the top led
+                            * 'run': n_sim,
+                            * 'timestep': s,
+                            * 'name': myt.name,
+                            * 'index': myt.index,
+                            * 'myt_quantity': myt.controller.N,
+                            * 'net_input': myt.controller.net_input,
+                            * 'prox_values': prox_values,
+                            * 'prox_comm': utils.parse_prox_comm(prox_comm),
+                            * 'all_sensors': all_sensors,
+                            * 'initial_position': myt.initial_position,
+                            * 'position': myt.position,
+                            * 'angle': myt.angle,
+                            * 'goal_position': myt.goal_position,
+                            * 'goal_angle': myt.goal_angle,
+                            * 'motor_left_target': myt.motor_left_target,
+                            * 'motor_right_target': myt.motor_right_target,
+                            * 'goal_position_distance': myt.goal_position[0] - myt.position[0],
+                            * 'goal_position_distance_absolute': abs(myt.goal_position[0] - myt.position[0])
+                            * 'transmitted_comm': communication transmitted two the neighbours
+                            * 'colour': colour of the top led
         """
         prox_values = myt.prox_values
         prox_comm = utils.get_prox_comm(myt)
@@ -194,11 +212,12 @@ class GenerateSimulationData:
     @classmethod
     def update_dict(cls, myt, s, comm=None):
         """
-        Updated data in the dictionary instead of rewrite every field to optimise performances
-        :param myt
+        Updated data in the dictionary instead of rewrite every field to optimise performances.
+
+        :param myt: agent
         :param s: timestep
         :param comm: boolean, True if the dataset is generated using the learned model with communication
-        :return updated dictionary
+        :return updated dictionary: updated dictionary
         """
         prox_values = myt.prox_values
         prox_comm = utils.get_prox_comm(myt)
@@ -230,9 +249,10 @@ class GenerateSimulationData:
     def save_simulation(cls, complete_data, data, runs_dir):
         """
 
-        :param complete_data:
-        :param data:
-        :param runs_dir:
+        :param complete_data: list containing all the data of the robots in the simulations
+        :param data: list containing all the data of the robots (except about the two robots at the beginning and
+                     at the end of the row) in the simulations
+        :param runs_dir: directory where to save the simulation runs
         """
         pkl_file = os.path.join(runs_dir, 'simulation.pkl')
         json_file = os.path.join(runs_dir, 'simulation.json')
@@ -255,20 +275,25 @@ class GenerateSimulationData:
     @classmethod
     def verify_target(cls, myt, counter, dictionary, tol):
         """
+        Verify if the robot has reached the target goal.
 
-        :param myt:
-        :param counter:
-        :param dictionary:
-        :param tol:
+        *It is always ensured that enough timesteps are performed, especially for the omniscient controller.*
+
+        :param myt: agent
+        :param counter: counter incremented when the robot has reached the goal
+        :param dictionary: dictionary containing the agent information
+        :param tol: tolerance
         """
         if myt.controller.goal == 'distribute' or myt.controller.name == 'omniscient':
             # do this also in case of omniscient controller to ensure enough timesteps
             diff = abs(dictionary['position'][0] - dictionary['goal_position'][0])
             if diff < tol:
                 counter += 1
+
         elif myt.controller.goal == 'colour' and not myt.controller.name == 'omniscient':
             if myt.goal_colour == myt.colour:
                 counter += 1
+
         else:
             raise ValueError("Invalid value for goal!")
 
@@ -276,28 +301,31 @@ class GenerateSimulationData:
 
     @classmethod
     def run(cls, n_sim, myts, runs, complete_runs, world: pyenki.World,
-            comm=None, gui: bool = False, T: float = 2, dt: float = 0.1, tol: float = 0.1) -> None:
+            comm=None, gui: bool = False, T: float = 4, dt: float = 0.1, tol: float = 0.1) -> None:
         """
         Run the simulation as fast as possible or using the real time GUI.
         Generate two different type of simulation data, one with all the thymios and the other without including the 2
         thymios at the ends, but only the ones that have to move.
         If all the robots have reached their target, stop the simulation.
+
         :param n_sim: index of the simulation
-        :param myts: number of thymios
-        :param runs
-        :param complete_runs
-        :param world
-        :param comm
-        :param gui
-        :param T
-        :param dt: update timestep in seconds, should be below 1 (typically .02-.1)
+        :param myts: list containing the agents
+        :param runs: list containing all the data of the robots (except about the two robots at the beginning and
+                     at the end of the row) in the simulations
+        :param complete_runs: list containing all the data of the robots in the simulations
+        :param world: enki world
+        :param comm: variable that states if the communication is used
+        :param gui: variable that states if use the gui
+        :param T: duration of the simulation in seconds
+        :param dt: control step duration – update timestep in seconds, should be below 1 (typically .02-.1)
         :param tol: tolerance used to verify if the robot reaches the target
         """
+
         myt_quantity = len(myts)
 
         if gui:
             # We can either run a simulation [in real-time] inside a Qt application
-            world.run_in_viewer(cam_position=(70, 0), cam_altitude=150.0, cam_yaw=0.0, cam_pitch=-np.pi / 2,
+            world.run_in_viewer(cam_position=(70, 0), cam_altitude=170.0, cam_yaw=0.0, cam_pitch=-np.pi / 2,
                                 walls_height=10.0, orthographic=True, period=0.1)
         else:
             steps = int(T // dt)
@@ -356,15 +384,15 @@ class GenerateSimulationData:
     def get_controller(cls, controller, controllers, goal, myt_quantity, net_input, communication=None, model=None, model_dir=None):
         """
 
-        :param controller:
-        :param controllers:
-        :param goal:
-        :param myt_quantity:
-        :param net_input:
-        :param communication:
-        :param model:
-        :param model_dir:
-        :return controller_factory:
+        :param controller: name of the controller (between omniscient, manual and learned)
+        :param controllers: reference to the controller class
+        :param goal: task to perform (between colour ot distribute)
+        :param myt_quantity: number of agents
+        :param net_input: input of the net between prox_values, prox_comm or all_sensors
+        :param communication: states if the communication is used by the network
+        :param model: network to be used by the controller
+        :param model_dir: directory containing the model
+        :return controller_factory: lambda function containing the controller to be used
         """
         if controller == cls.LEARNED_CONTROLLER:
             net = torch.load('%s/%s' % (model_dir, model))
@@ -391,14 +419,14 @@ class GenerateSimulationData:
                             communication=False):
         """
 
-        :param run_dir:
-        :param n_simulations:
-        :param controller:
-        :param model_dir:
-        :param myt_quantity:
-        :param args:
-        :param model:
-        :param communication
+        :param run_dir: directory containing the simulation runs
+        :param n_simulations: number of simulations to generate
+        :param controller: controller to be used in the simulations
+        :param model_dir: directory containing the model
+        :param myt_quantity: number of agents
+        :param args: arguments from command line
+        :param model: model to be used
+        :param communication:  states if the communication is used by the network
         """
         comm = False
         if communication:
@@ -448,12 +476,13 @@ class GenerateSimulationData:
         Generate a scatter plot to check the conformity of the dataset.
         The plot will show the distribution of the input sensing, in particular, as the difference between the front
         sensor and the mean of the rear sensors, with respect to the output control of the datasets.
+
         :param runs_dir: directory containing the simulation
         :param runs_img: directory containing the simulation images
-        :param title:
-        :param dataset
-        :param net_input
-        :param communication
+        :param title: title of the plot
+        :param dataset: name of the dataset
+        :param net_input: input of the net between prox_values, prox_comm or all_sensors
+        :param communication: states if the communication is used by the network
         """
 
         runs = utils.load_dataset(runs_dir, 'simulation.pkl')

@@ -7,8 +7,11 @@ import pyenki
 from controllers.pid import PID
 
 
-# Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
 class DistributedThymio2(pyenki.Thymio2):
+    """
+    Superclass: `pyenki.Thymio2` -> the world update step will automatically call the Thymio `controlStep`.
+
+    """
     INITIAL = 0
     COLOURING = 1
 

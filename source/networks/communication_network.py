@@ -20,6 +20,10 @@ Controller = Callable[[Sequence[Sensing]], ControlOutput]
 
 
 class Sync(Enum):
+    """
+    Class used to define the synchronisation approach of the communication updates,
+    that can be random, sequential, synchronous and random_sequential
+    """
     random = 1
     sequential = 2
     sync = 3
@@ -28,10 +32,11 @@ class Sync(Enum):
 
 def init_comm(thymio: int, distribution):
     """
-    Initialise the communication vector (for the initial timestep of each sequence)
-    :param thymio: number of thymio
-    :param distribution
-    :return: communication vector
+    Initialise the communication vector (for the initial timestep of each sequence).
+
+    :param thymio: number of agents
+    :param distribution: distribution used for the initialisation
+    :return out: communication vector
     """
     out = torch.zeros(thymio + 2)
     out[1:-1] = torch.flatten(distribution.sample(torch.Size([thymio])))
@@ -41,12 +46,13 @@ def init_comm(thymio: int, distribution):
 
 def input_from(ss, comm, i, sim=False):
     """
+    Parse the sensing and the communication and prepare it to be the input on the single net.
 
     :param ss: sensing
     :param comm: communication vector
     :param i: index of the thymio in the row
     :param sim: boolean True if executed in simulation, False otherwise
-    :return input_
+    :return input_: parsed input containing the sensing values and the communication received
     """
     if sim:
         input_ = torch.cat((ss, comm[i].view(1), comm[i + 2].view(1)), 0)
@@ -58,10 +64,11 @@ def input_from(ss, comm, i, sim=False):
 
 def input_from_no_sensing(comm, i):
     """
+    Prepare the communication vector to be the input on the single net.
 
     :param comm: communication vector
     :param i: index of the thymio in the row
-    :return input_
+    :return input_: parsed input containing the communication received
     """
     input_ = torch.cat((comm[i].view(1), comm[i + 2].view(1)), 0)
 
@@ -69,10 +76,13 @@ def input_from_no_sensing(comm, i):
 
 
 class SingleNet(nn.Module):
+    """
+    Low-level module that works on the sensing and the communication received by a single agent (in a certain timestep),
+    producing as output the control and the communication to transmit.
+
+    :param input_size: dimension of the sensing vector
+    """
     def __init__(self, input_size):
-        """
-        :param input_size: dimension of the sensing vector
-        """
         super(SingleNet, self).__init__()
         self.fc1 = torch.nn.Linear(input_size + 2, 22)  # (7 + 2) or (14 + 2)
         self.tanh = torch.nn.Tanh()
@@ -102,16 +112,20 @@ class SingleNet(nn.Module):
 
 
 class CommunicationNet(nn.Module):
+    """
+    High-level module that handle the sensing of the agents.
+
+    :param input_size: dimension of the sensing vector (can be 7 or 14)
+    :param device: device used (cpu or gpu)
+    :param sync: kind of synchronisation
+    :param module: SingleNet
+    :param input_fn: input function
+
+    :var self.tmp_indices: communication indices
+    :var self.distribution: distribution used for the initialisation of the communication
+    """
     def __init__(self, input_size, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNet,
                  input_fn=input_from) -> None:
-        """
-
-        :param input_size: dimension of the sensing vector (can be 7 or 14)
-        :param device
-        :param sync
-        :param module
-        :param input_fn
-        """
         super(CommunicationNet, self).__init__()
         self.input_size = input_size
         self.single_net = module(self.input_size)
@@ -126,10 +140,10 @@ class CommunicationNet(nn.Module):
 
         :param xs: input sensing of a certain timestep (shape: 1 x N x sensing)
         :param comm: communication vector (shape: 1 X N)
-        :param sync:
+        :param sync: kind of synchronisation
         :param sim: boolean true if step executed in simulation
         :param i: index of the thymio in the row
-        :return control
+        :return control: speed of the agent
         """
         if sync == Sync.sync:
             if sim:
@@ -176,9 +190,9 @@ class CommunicationNet(nn.Module):
     def forward(self, batch, batch_size):
         """
 
-        :param batch:
-        :param batch_size:
-        :return: rd
+        :param batch: batch elements
+        :param batch_size: batch mask
+        :return robots_control: network output
         """
         robots_control = []
         self.distribution = uniform.Uniform(torch.Tensor([0.0]), torch.Tensor([1.0]))
@@ -203,14 +217,15 @@ class CommunicationNet(nn.Module):
             robots_control.append(torch.stack(controls))
 
         robots_control = robots_control
+
         return torch.stack(robots_control)
 
     def controller(self, thymio, sync: Sync = Sync.sync) -> Controller:
         """
 
-        :param thymio: number of thymio in the simulation
-        :param sync:
-        :return f
+        :param thymio: number of agents in the simulation
+        :param sync: kind of synchronisation
+        :return f: controller function
         """
         if sync == None:
             sync = self.sync
@@ -225,10 +240,10 @@ class CommunicationNet(nn.Module):
 
         def f(sensing: Sequence[Sensing], communication, i) -> Tuple[Sequence[Control], Sequence[float]]:
             """
-            :param sensing:
+            :param sensing: input sensing
             :param communication: array containing the communication received by the thymio from left and right
             :param i: index of the robot in the row
-            :return control, new communication vector
+            :return control, new communication vector: speed and complete communication vector
             """
             nonlocal comm
 
@@ -242,51 +257,3 @@ class CommunicationNet(nn.Module):
                 return control, comm[1:-1].clone().numpy().flatten()
 
         return f
-
-
-class SingleNetNoSensing(nn.Module):
-    def __init__(self):
-        super(SingleNetNoSensing, self).__init__()
-
-        self.fc1 = torch.nn.Linear(2, 22)
-        self.tanh = torch.nn.Tanh()
-        self.fc2 = torch.nn.Linear(22, 2)
-        self.sigmoid = torch.nn.Sigmoid()
-
-    def forward(self, input_):
-        """
-
-        :param input_: input of the network, vector containing the two messages received by the robot (left and right)
-                       (can be multidimensional, that means a row for each robot)
-        :return output: output of the network containing the probability of the colour to be red
-                        (if less than 0.5 the colour is blue), and the message to communicate (shape: 1 x 2)
-        """
-
-        hidden = self.fc1(input_)
-        tanh = self.tanh(hidden)
-        output = self.fc2(tanh)
-        output_ = self.sigmoid(output)
-
-        return output_
-
-
-class CommunicationNetNoSensing(CommunicationNet):
-    def __init__(self, input_size, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNetNoSensing,
-                 input_fn=input_from_no_sensing) -> None:
-        """
-
-        :param input_size:
-        :param device:
-        :param sync:
-        :param module:
-        :param input_fn:
-        """
-
-        super(CommunicationNetNoSensing, self).__init__(input_size, device, sync, module, input_fn)
-
-        self.input_size = input_size
-        self.single_net = module(self.input_size)
-        self.device = device
-        self.sync = sync
-        self.input_fn = input_fn
-        self.tmp_indices = None

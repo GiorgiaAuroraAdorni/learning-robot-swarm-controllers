@@ -12,16 +12,16 @@ from utils.utils import ThymioState
 def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid,
                   communication):
     """
-    :param model_img
-    :param dataset:
-    :param model
-    :param net_input
-    :param prediction:
-    :param training_loss:
-    :param validation_loss:
-    :param x_train:
-    :param y_valid:
-    :param communication
+    :param model_img: directory for the output image of the model
+    :param dataset: name of the dataset
+    :param model: netowork
+    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+    :param prediction: output control of the model
+    :param training_loss: error on the train set
+    :param validation_loss: error on the validation set
+    :param x_train: train input
+    :param y_valid: validation output
+    :param communication: states if the communication is used by the network
     """
     y_p = prediction.squeeze().tolist()
     y_g = y_valid.squeeze().tolist()
@@ -70,12 +70,12 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
 def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction, communication):
     """
 
-    :param model_dir
-    :param ds:
-    :param ds_eval:
-    :param groundtruth:
-    :param prediction:
-    :param communication
+    :param model_dir: directory containing the trained model
+    :param ds: name of the dataset
+    :param ds_eval: name of the dataset  for the evaluation (usually the manual one)
+    :param groundtruth: evidence
+    :param prediction: output control
+    :param communication: states if the communication is used by the network
     """
     model_img = '%s/images/' % model_dir
     utils.check_dir(model_img)
@@ -96,15 +96,15 @@ def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction, communicat
 def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input, communication, goal, controllers):
     """
 
-    :param model_dir:
-    :param ds:
-    :param ds_eval:
-    :param groundtruth:
+    :param model_dir: directory containing the trained model
+    :param ds: name of the dataset
+    :param ds_eval: name of the dataset  for the evaluation (usually the manual one)
+    :param groundtruth: evidence
     :param sensing: used to obtain the prediction
-    :param net_input
-    :param communication
-    :param goal
-    :param controllers
+    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+    :param communication: states if the communication is used by the network
+    :param goal: task to perform (in this case distribute)
+    :param controllers: reference to the controller class
     """
     if communication:
         groundtruth = np.reshape(np.array(groundtruth).flat, [-1])
@@ -159,17 +159,17 @@ def generate_sensing():
 def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_label, goal, communication, controllers):
     """
 
-    :param model_img:
-    :param model:
-    :param net:
-    :param net_input
-    :param net_title
-    :param sensing:
-    :param index:
-    :param x_label:
-    :param goal
-    :param communication
-    :param controllers
+    :param model_img: directory for the output image of the model
+    :param model: nae of the model
+    :param net: model used
+    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+    :param net_title: network title
+    :param sensing: input sensing
+    :param index: 1D vector
+    :param x_label: label of the x axis
+    :param goal: task to perform (in this case distribute)
+    :param communication: states if the communication is used by the network
+    :param controllers: reference to the controller class
     """
     controller_predictions = []
     controller = controllers.LearnedController(net=net, net_input=net_input, name='learned', goal=goal, N=3,
@@ -207,14 +207,14 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
 def test_controller_given_init_positions(model_img, net, model, net_input, avg_gap, goal, communication, controllers):
     """
 
-    :param model_img:
-    :param net:
-    :param model:
-    :param net_input
-    :param avg_gap
-    :param goal
-    :param communication
-    :param controllers
+    :param model_img: directory for the output image of the model
+    :param net: model used
+    :param model: name of the model
+    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+    :param avg_gap: average gap among the robots
+    :param goal: task to perform (in this case distribute)
+    :param communication: states if the communication is used by the network
+    :param controllers: reference to the controller class
     """
     myt_quantity = 3
 
@@ -250,18 +250,18 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
 def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication, net_input, avg_gap=None, task='Task1'):
     """
 
-    :param indices:
-    :param file_losses:
-    :param runs_dir:
-    :param model_dir:
-    :param model:
-    :param model_img:
-    :param ds:
-    :param ds_eval:
-    :param communication:
-    :param net_input:
-    :param avg_gap:
-    :param task:
+    :param indices: sample indices
+    :param file_losses: file where to save the metrics
+    :param runs_dir: directory containing the simulation runs
+    :param model_dir: directory containing the network data
+    :param model: network
+    :param model_img: directory for the output image of the model
+    :param ds: name of the dataset
+    :param ds_eval: name of the dataset  for the evaluation (usually the manual one)
+    :param communication: states if the communication is used by the network
+    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+    :param avg_gap: average distance among the robots
+    :param task: task to be performed
     """
     if task == 'task1':
         from controllers import controllers_task1 as controllers

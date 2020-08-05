@@ -9,6 +9,9 @@ from torch.utils.data import TensorDataset
 
 
 class ThymioState:
+    """
+    :param state_dict
+    """
     def __init__(self, state_dict):
         for k, v in state_dict.items():
             setattr(self, k, v)
@@ -17,6 +20,7 @@ class ThymioState:
 def check_dir(directory):
     """
     Check if the path is a directory, if not create it.
+
     :param directory: path to the directory
     """
     os.makedirs(directory, exist_ok=True)
@@ -25,9 +29,9 @@ def check_dir(directory):
 def directory_for_dataset(dataset, controller):
     """
 
-    :param dataset:
-    :param controller:
-    :return run_dir, run_img_dir, run_video_dir:
+    :param dataset: name of the dataset
+    :param controller: name of the controller
+    :return run_dir, run_img_dir, run_video_dir: output directories
     """
     run_dir = os.path.join(dataset, controller)
 
@@ -44,7 +48,7 @@ def directory_for_model(args):
     """
 
     :param args:
-    :return:
+    :return model_dir, model_img_dir, model_video_dir, metrics_path:
     """
     model_dir = os.path.join(args.models_folder, args.task, args.model_type, args.model)
 
@@ -60,9 +64,15 @@ def directory_for_model(args):
 
 
 def cartesian_product(*arrays):
+    """
+
+    :param arrays:
+    :return arr.reshape(-1, la):
+    """
     la = len(arrays)
     dtype = np.result_type(*arrays)
     arr = np.empty([len(a) for a in arrays] + [la], dtype=dtype)
+
     for i, a in enumerate(np.ix_(*arrays)):
         arr[...,i] = a
     return arr.reshape(-1, la)
@@ -70,7 +80,8 @@ def cartesian_product(*arrays):
 
 def signed_distance(state):
     """
-    :return: Signed distance between current and the goal position, along the current theta of the robot
+    :param state:
+    :return b - a: Signed distance between current and the goal position, along the current theta of the robot
     """
     a = state.position[0] * np.cos(state.angle) + state.position[1] * np.sin(state.angle)
     b = state.goal_position[0] * np.cos(state.angle) + state.goal_position[1] * np.sin(state.angle)
@@ -81,9 +92,9 @@ def signed_distance(state):
 def load_dataset(runs_dir, dataset):
     """
 
-    :param runs_dir:
-    :param dataset:
-    :return dataframe:
+    :param runs_dir: directory containing the simulation runs
+    :param dataset: name of the dataset
+    :return dataframe: resulting dataframe
     """
     pickle_file = os.path.join(runs_dir, dataset)
     runs = pd.read_pickle(pickle_file)
@@ -97,8 +108,9 @@ def load_dataset(runs_dir, dataset):
 def get_prox_comm(myt):
     """
     Create a dictionary containing all the senders as key and the corresponding intensities as value.
-    :param myt
-    :return prox_comm
+
+    :param myt: agent
+    :return prox_comm: prox_comm sensing
     """
     prox_comm = {}
 
@@ -121,9 +133,10 @@ def get_prox_comm(myt):
 def get_received_communication(myt, goal='distribute'):
     """
     Create a list containing the messages received from the back and front.
-    :param myt
-    :param goal
-    :return communication: the communication received
+
+    :param myt: agent
+    :param goal: goal of the task, by default distribute
+    :return communication: the communication received from left to right
     """
     communication = [0, 0]
 
@@ -145,8 +158,9 @@ def get_received_communication(myt, goal='distribute'):
 def get_transmitted_communication(myt):
     """
     Return the values transmitted during the communication.
-    :param myt
-    :return communication: the communication transmitted
+
+    :param myt: agent
+    :return communication: the communication to be transmitted
     """
     communication = myt.prox_comm_tx
     return communication
@@ -155,8 +169,8 @@ def get_transmitted_communication(myt):
 def parse_prox_comm(prox_comm):
     """
 
-    :param prox_comm:
-    :return prox_comm:
+    :param prox_comm: prox_comm dictionary
+    :return prox_comm: parsed prox_comm list
     """
 
     if len(prox_comm) == 0:
@@ -174,9 +188,9 @@ def parse_prox_comm(prox_comm):
 def get_all_sensors(prox_values, prox_comm):
     """
 
-    :param prox_values:
-    :param prox_comm:
-    :return all_sensors:
+    :param prox_values: prox_values reading
+    :param prox_comm: prox_comm reading
+    :return all_sensors: combination of the two sensor readings
     """
 
     prox_comm = parse_prox_comm(prox_comm)
@@ -189,8 +203,8 @@ def get_all_sensors(prox_values, prox_comm):
 def dataset_split(file_name, num_run=1000):
     """
 
-    :param file_name:
-    :param num_run:
+    :param file_name: path to the file where to save the splits of the dataset
+    :param num_run: number of simulations, by default 1000
     """
     x = np.arange(num_run)
     np.random.shuffle(x)
@@ -264,17 +278,18 @@ def get_key_value_of_nested_dict(nested_dict):
     return rv, values
 
 
-def prepare_dataset(run_dir, split):
+def prepare_dataset(run_dir, split, num_run):
     """
     :param run_dir
     :param split
+    :param num_run
     :return file, indices
     """
     file = os.path.join(run_dir, 'dataset_split.npy')
     # Uncomment the following line to generate a new dataset split
 
     if split:
-        dataset_split(file)
+        dataset_split(file, num_run)
 
     # Load the indices
     dataset = np.load(file)
@@ -578,15 +593,15 @@ def generate_fake_simulations(run_dir, model, initial_positions, myt_quantity):
                                                       model=model, model_dir=distributed_net_dir,
                                                       communication=False)
 
-    communication_net_dir = os.path.join('models', 'task1', 'communication', model)
-    communication_controller_factory = g.get_controller('learned', controllers, goal, myt_quantity, net_input,
-                                                        model=model, model_dir=communication_net_dir,
-                                                        communication=True)
+    # communication_net_dir = os.path.join('models', 'task1', 'communication', model)
+    # communication_controller_factory = g.get_controller('learned', controllers, goal, myt_quantity, net_input,
+    #                                                     model=model, model_dir=communication_net_dir,
+    #                                                     communication=True)
 
     controller_factories = [(omniscient_controller_factory, 'omniscient'),
                             (manual_controller_factory, 'manual'),
-                            (distributed_controller_factory, 'distributed'),
-                            (communication_controller_factory, 'communication')]
+                            (distributed_controller_factory, 'distributed')]#,
+                            # (communication_controller_factory, 'communication')]
 
     out_dirs = []
     for factory, name in controller_factories:
@@ -615,7 +630,7 @@ def generate_fake_simulations(run_dir, model, initial_positions, myt_quantity):
         runs = []
         complete_runs = []
 
-        g.run(0, myts, runs, complete_runs, world, comm, gui=False)
+        g.run(0, myts, runs, complete_runs, world, comm, T=15, gui=False)
 
         out_dir = os.path.join(run_dir, name)
         check_dir(out_dir)

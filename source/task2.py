@@ -106,7 +106,7 @@ if __name__ == '__main__':
         if args.train_net or args.plots_net:
             from utils.utils import prepare_dataset
 
-            indices = prepare_dataset(run_dir, args.generate_split)
+            indices = prepare_dataset(run_dir, args.generate_split, args.n_simulations)
             file_losses = os.path.join(model_dir, 'losses.npy')
 
             if args.train_net:
