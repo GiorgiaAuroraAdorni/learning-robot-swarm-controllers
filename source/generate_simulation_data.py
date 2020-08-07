@@ -379,6 +379,9 @@ class GenerateSimulationData:
     def get_controller(cls, controller, controllers, goal, myt_quantity, net_input, communication=None, model=None, model_dir=None):
         """
 
+        .. important:: This method has not yet been implemented for task 2.
+
+
         :param controller: name of the controller (between omniscient, manual and learned)
         :param controllers: reference to the controller class
         :param goal: task to perform (between colour ot distribute)

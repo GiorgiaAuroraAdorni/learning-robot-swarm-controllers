@@ -137,6 +137,10 @@ class CommunicationNet(nn.Module):
 
     def step(self, xs, comm, sync: Sync, sim=False, i=None):
         """
+        .. danger::
+            Sync of types 'random', 'sequential' and 'random_sequential'
+            are actually not working in simulation.
+
 
         :param xs: input sensing of a certain timestep (shape: 1 x N x sensing)
         :param comm: communication vector (shape: 1 X N)
@@ -162,8 +166,6 @@ class CommunicationNet(nn.Module):
                 comm[1:-1] = output[:, 1]
         else:
             # FIXME
-            #  not working in simulation
-
             # random_sequential
             # shuffle for each sequence
             if sync == Sync.random_sequential:

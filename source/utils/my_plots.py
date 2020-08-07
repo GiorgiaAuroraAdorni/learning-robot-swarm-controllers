@@ -215,7 +215,6 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     time_steps = np.arange(max_time_step)
 
     run_myt2 = run[run['name'] == 'myt2'].drop(columns='name').reset_index()
-    # FIXME
     _, myt2_control, _, run_myt2, proximity_sensors = utils.utils.extract_input_output(run_myt2, net_input, N=1)
     myt2_sensing = run_myt2[proximity_sensors]
 
@@ -278,7 +277,6 @@ def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_i
     time_steps = np.arange(max_time_step)
 
     run_myt2 = run[run['name'] == 'myt2'].drop(columns='name').reset_index()
-    # FIXME
     _, myt2_control, _, run_myt2, proximity_sensors = utils.utils.extract_input_output(run_myt2, net_input, N=1)
 
     plt.figure(constrained_layout=True)
@@ -340,7 +338,6 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
     runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
-    # FIXME
     _, _, _, runs_myt2, proximity_sensors = utils.utils.extract_input_output(runs_myt2, net_input, N=1)
 
     plt.figure()
@@ -750,6 +747,12 @@ def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
 def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title, filename, absolute=True):
     """
 
+    .. warning::
+        Limits on x and y axes have not yet been fixed.
+        Their value depends if it is used ``goal_position_distance`` or
+        ``goal_position_distance_absolute``.
+
+
     :param dataset_folders: directory containing the simulation runs
     :param img_dir: directory containing the simulation images
     :param datasets: names of the datasets to be uses
@@ -798,7 +801,7 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
         plt.fill_between(timesteps[d_idx], q1, q2, alpha=0.2, label='interquartile range (%s)' % d, color=ln.get_color())
         plt.fill_between(timesteps[d_idx], q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
 
-    # FIXME depends if it is used goal_position_distance or goal_position_distance_absolute
+    # FIXME
     # plt.xlim(0, 17)
     # plt.ylim(0, 10)
 
