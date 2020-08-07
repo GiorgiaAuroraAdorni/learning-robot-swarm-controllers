@@ -1,115 +1,285 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Examples &#8212; learning-robot-swarm-controllers 1.0.0 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Examples &mdash; learning-robot-swarm-controllers 1.0.0 documentation</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono"><link rel="stylesheet" href="_static/typlog.css?v=0.7.3" type="text/css" />
+  <link rel="stylesheet" href="_static/theme.css?v=0.7.3" type="text/css" />
+      <link rel="index" title="Index" href="genindex.html"/>
+      <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="learning-robot-swarm-controllers 1.0.0 documentation" href="index.html"/>
+      <link rel="next" title="Others" href="others.html"/>
+      <link rel="prev" title="Imitation learning models" href="imitation-learning-models.html"/>
+  <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create', '');ga('send', 'pageview');</script>
+  <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-   
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
-
-          <div class="body" role="main">
-            
-  <div class="section" id="examples">
-<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="distribute-agents">
-<h2>Distribute Agents<a class="headerlink" href="#distribute-agents" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="colour-agents">
-<h2>Colour Agents<a class="headerlink" href="#colour-agents" title="Permalink to this headline">¶</a></h2>
-</div>
-</div>
-
-
-          </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">learning-robot-swarm-controllers</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="includeme.html">Intro</a></li>
-<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="enki-simulations.html">Enki simulations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="controllers.html">Controllers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imitation-learning-models.html">Imitation learning models</a></li>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="learning-robot-swarm-controllers">
+  <meta property="og:title" content="Examples">
+  <meta name="twitter:card" content="summary">
+</head>
+<body role="document" data-page="examples">
+  <header class="t-head">
+    <div class="t-head_menu"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M64 384h384v-42.666H64V384zm0-106.666h384v-42.667H64v42.667zM64 128v42.665h384V128H64z"/></svg></div>
+    <a class="t-head_logo" href="index.html">learning-robot-swarm-controllers
+    </a>
+  </header>
+  <aside class="t-sidebar">
+    <div class="t-sidebar_close">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M405 136.798L375.202 107 256 226.202 136.798 107 107 136.798 226.202 256 107 375.202 136.798 405 256 285.798 375.202 405 405 375.202 285.798 256z"/></svg>
+    </div>
+    <div class="inner">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Examples</a><ul>
+<li><a class="reference internal" href="#module-examples.distribute_aligned_myts">Distribute Agents</a></li>
+<li><a class="reference internal" href="#module-examples.colour_aligned_myts">Colour Agents</a></li>
 </ul>
-
+</li>
+</ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="imitation-learning-models.html" title="previous chapter">Imitation learning models</a></li>
+      <li>Next: <a href="others.html" title="next chapter">Others</a></li>
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/examples.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox">
+  <form class="search" action="search.html" method="get">
+    <div class="input-group">
+      <input type="text" name="q" placeholder="Search" />
+      <button type="submit">Go</button>
     </div>
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
 </div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
     </div>
-    <div class="footer">
-      &copy;2020, Giorgia Adorni.
+  </aside>
+  <div class="t-content">
+    <div class="t-body yue">
       
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="_sources/examples.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
+  <div class="section" id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-examples.distribute_aligned_myts">
+<span id="distribute-agents"></span><h2>Distribute Agents<a class="headerlink" href="#module-examples.distribute_aligned_myts" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="examples.distribute_aligned_myts.DistributedThymio2">
+<em class="property">class </em><code class="sig-prename descclassname">examples.distribute_aligned_myts.</code><code class="sig-name descname">DistributedThymio2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#examples.distribute_aligned_myts.DistributedThymio2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Superclass: <code class="docutils literal notranslate"><span class="pre">pyenki.Thymio2</span></code> -&gt; the world update step will automatically call the Thymio <code class="docutils literal notranslate"><span class="pre">controlStep</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – name of the agent</p></li>
+<li><p><strong>kwargs</strong> – other arguments</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="examples.distribute_aligned_myts.DistributedThymio2.compute_difference">
+<code class="sig-name descname">compute_difference</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#examples.distribute_aligned_myts.DistributedThymio2.compute_difference" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return front - correction - back</dt>
+<dd class="field-odd"><p>the difference between the response value of front and the rear sensor</p>
+</dd>
+</dl>
+</dd></dl>
 
-    
+<dl class="py method">
+<dt id="examples.distribute_aligned_myts.DistributedThymio2.controlStep">
+<code class="sig-name descname">controlStep</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#examples.distribute_aligned_myts.DistributedThymio2.controlStep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform one control step: Move the robots in such a way they stand at equal distances from each other without
+using communication.</p>
+<p>Move the robots not to the end of the line using the distributed controller, setting the target {left,
+right} wheel speed each at the same value in order to moves the robot straight ahead. This distributed
+controller is a simple proportional controller PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6) that takes in
+input the difference between the response value of front and the rear sensor. To the distance measured by the
+rear sensors is applied a small correction since the front sensor used is at a different x coordinate from
+the point to which the rear sensor of the robot that follows points. This is because of the curved shape of
+the face of the Thymio.
+The response values are actually intensities: the front correspond to the frontal center sensor and the back
+to the mean of the response values of the rear sensors.
+The final difference is computed ad follow: out = front - correction - back
+The speed are clipped to [min_out=-16.6, max_out=16.6].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dt</strong> – control step duration</p>
+</dd>
+</dl>
+</dd></dl>
 
-    
-  </body>
+<dl class="py method">
+<dt id="examples.distribute_aligned_myts.DistributedThymio2.neighbors_distance">
+<code class="sig-name descname">neighbors_distance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#examples.distribute_aligned_myts.DistributedThymio2.neighbors_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if there is a robot ahead using the infrared sensor 2 (front-front).
+Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return back, front</dt>
+<dd class="field-odd"><p>response values of the rear and front sensors</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="examples.distribute_aligned_myts.run">
+<code class="sig-prename descclassname">examples.distribute_aligned_myts.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">world</span><span class="p">:</span> <span class="n">pyenki.pyenki.World</span></em>, <em class="sig-param"><span class="n">gui</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">T</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">10</span></em>, <em class="sig-param"><span class="n">dt</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#examples.distribute_aligned_myts.run" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>world</strong> – enki world</p></li>
+<li><p><strong>gui</strong> – variable that states if use the gui</p></li>
+<li><p><strong>T</strong> – duration of the simulation in seconds</p></li>
+<li><p><strong>dt</strong> – control step duration – update timestep in seconds, should be below 1 (typically .02-.1)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="examples.distribute_aligned_myts.setup">
+<code class="sig-prename descclassname">examples.distribute_aligned_myts.</code><code class="sig-name descname">setup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">aseba</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span> &#x2192; pyenki.pyenki.World<a class="headerlink" href="#examples.distribute_aligned_myts.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up the world as an unbounded world. Create multiple agents and position them such as all x-axes are aligned.
+The robots are already arranged in an ‘indian row’ (all x-axes aligned) and within the proximity sensor range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>aseba</strong> – states if use aseba (default: False)</p>
+</dd>
+<dt class="field-even">Return world</dt>
+<dd class="field-even"><p>enki world</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-examples.colour_aligned_myts">
+<span id="colour-agents"></span><h2>Colour Agents<a class="headerlink" href="#module-examples.colour_aligned_myts" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="examples.colour_aligned_myts.DistributedThymio2">
+<em class="property">class </em><code class="sig-prename descclassname">examples.colour_aligned_myts.</code><code class="sig-name descname">DistributedThymio2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">myt_quantity</span></em>, <em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#examples.colour_aligned_myts.DistributedThymio2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Superclass: <code class="docutils literal notranslate"><span class="pre">pyenki.Thymio2</span></code> -&gt; the world update step will automatically call the Thymio <code class="docutils literal notranslate"><span class="pre">controlStep</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>myt_quantity</strong> – number of agents</p></li>
+<li><p><strong>name</strong> – name of the agent</p></li>
+<li><p><strong>kwargs</strong> – other arguments</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="examples.colour_aligned_myts.DistributedThymio2.compute_difference">
+<code class="sig-name descname">compute_difference</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#examples.colour_aligned_myts.DistributedThymio2.compute_difference" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the difference between the response value of front and the rear sensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="examples.colour_aligned_myts.DistributedThymio2.controlStep">
+<code class="sig-name descname">controlStep</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#examples.colour_aligned_myts.DistributedThymio2.controlStep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform one control step:
+Move the robots not to the end of the line using the distributed controller, setting the target {left,
+right} wheel speed each at the same value in order to moves the robot straight ahead. This distributed
+controller is a simple proportional controller PID(-0.01, 0, 0, max_out=16.6, min_out=-16.6) that takes in
+input the difference between the response value of front and the rear sensor. To the distance measured by the
+rear sensors is applied a small correction since the front sensor used is at a different x coordinate from
+the point to which the rear sensor of the robot that follows points. This is because of the curved shape of
+the face of the Thymio.
+The response values are actually intensities: the front correspond to the frontal center sensor and the back
+to the mean of the response values of the rear sensors.
+The final difference is computed ad follow: out = front - correction - back
+The speed are clipped to [min_out=-16.6, max_out=16.6].
+Then, using communication, colour the robot half and half. They should understand on which side they are
+compared to the mid of the line</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dt</strong> – control step duration</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="examples.colour_aligned_myts.DistributedThymio2.neighbors_distance">
+<code class="sig-name descname">neighbors_distance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#examples.colour_aligned_myts.DistributedThymio2.neighbors_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if there is a robot ahead using the infrared sensor 2 (front-front).
+Check if there is a robot ahead using the infrared sensor 5 (back-left) and 6 (back-right).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return back, front</dt>
+<dd class="field-odd"><p>response values of the rear and front sensors</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="examples.colour_aligned_myts.run">
+<code class="sig-prename descclassname">examples.colour_aligned_myts.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">world</span><span class="p">:</span> <span class="n">pyenki.pyenki.World</span></em>, <em class="sig-param"><span class="n">gui</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">T</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">10</span></em>, <em class="sig-param"><span class="n">dt</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#examples.colour_aligned_myts.run" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>world</strong> – enki world</p></li>
+<li><p><strong>gui</strong> – variable that states if use the gui</p></li>
+<li><p><strong>T</strong> – duration of the simulation in seconds</p></li>
+<li><p><strong>dt</strong> – control step duration – update timestep in seconds, should be below 1 (typically .02-.1)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="examples.colour_aligned_myts.setup">
+<code class="sig-prename descclassname">examples.colour_aligned_myts.</code><code class="sig-name descname">setup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">aseba</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span> &#x2192; pyenki.pyenki.World<a class="headerlink" href="#examples.colour_aligned_myts.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up the world as an unbounded world. Create multiple Thymios and position them such as all x-axes are aligned.
+The robots are already arranged in an “indian row” (all x-axes aligned) and within the proximity sensor range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>aseba</strong> – states if use aseba (default: False)</p>
+</dd>
+<dt class="field-even">Return world</dt>
+<dd class="field-even"><p>enki world</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+  <div class="t-pagination clearfix">
+    <span>
+      ← <a href="imitation-learning-models.html" title="Imitation learning models">Imitation learning models</a>
+    </span>
+    <span style="float:right">
+      <a href="others.html" title="Others">Others</a> →
+    </span>
+  </div>
+
+    </div><footer class="t-foot">
+    &copy; Copyright 2020, Giorgia Adorni.
+    <br>
+    A <a href="https://typlog.com/">typlog</a> <a href="https://github.com/typlog/sphinx-typlog-theme">sphinx theme</a>,
+    designed by <a href="https://lepture.com/">Hsiaoming Yang</a>.
+</footer>
+  </div>
+  <script>$(function(){$(".t-head_menu").on("click",function(){$("body").addClass("_expand")});$(".t-body").on("click",function(){$("body").removeClass("_expand")});$(".t-sidebar_close").on("click",function(){$("body").removeClass("_expand")});$("a.footnote-reference").on("click",function(e){e.preventDefault();var id=$(this).attr("href");var html=$(id).find("td.label + td").html();var w=Math.max(document.documentElement.clientWidth,window.innerWidth||0);var style="top:"+e.pageY+"px;";if(w>560){style+="width:480px;";if(e.pageX>240&&e.pageX+240<w){style+="left:"+(e.pageX-240)+"px;"}else if(e.pageX<=240){style+="left:20px;"}else{style+="right:20px;"}}showFootnote(html,style)});function showFootnote(html,style){var CONTENT_ID="typlog-footnote-content";var content=document.getElementById(CONTENT_ID);if(!content){content=document.createElement("div");content.id=CONTENT_ID;$(".t-body").append(content)}var MASK_ID="typlog-footnote-mask";var mask=document.getElementById(MASK_ID);if(!mask){mask=document.createElement("div");mask.id=MASK_ID;document.body.appendChild(mask);mask.addEventListener("click",function(){content.className="";mask.className=""})}content.innerHTML=html;content.setAttribute("style",style);content.className="_active";mask.className="_active"}function fetchGitHubRepo(repo){var url="https://api.github.com/repos/"+repo;$.getJSON(url,function(data){var counts=[+new Date,data.stargazers_count,data.forks_count];localStorage.setItem("gh:"+repo,JSON.stringify(counts));updateGitHubStats(counts[1],counts[2])})}function updateGitHubStats(stars,forks){$(".github_stars strong").text(stars);$(".github_forks strong").text(forks)}function initGitHub(url){if(!url){return}var repo=url.replace("https://github.com/","");var cache=localStorage.getItem("gh:"+repo);if(cache){try{var counts=JSON.parse(cache);updateGitHubStats(counts[1],counts[2]);var delta=new Date-counts[0];if(delta<0||delta>9e5){fetchGitHubRepo(repo)}}catch(error){fetchGitHubRepo(repo)}}else{fetchGitHubRepo(repo)}}initGitHub($(".github").attr("href"))});</script>
+</body>
 </html>
