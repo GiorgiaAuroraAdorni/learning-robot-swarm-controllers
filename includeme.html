@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>&lt;no title&gt; &#8212; learning-robot-swarm-controllers 1.0.0 documentation</title>
+    <title>Intro &#8212; learning-robot-swarm-controllers 1.0.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -15,7 +15,7 @@
     <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Intro" href="intro.html" />
+    <link rel="next" title="Overview" href="overview.html" />
     <link rel="prev" title="Welcome to learning-robot-swarm-controllers’s documentation!" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -33,7 +33,104 @@
 
           <div class="body" role="main">
             
-  
+  <div class="section" id="intro">
+<h1>Intro<a class="headerlink" href="#intro" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="robot-swarms-simulation-for-learning-communication-aware-coordination">
+<h2>Robot swarms simulation for learning communication aware coordination<a class="headerlink" href="#robot-swarms-simulation-for-learning-communication-aware-coordination" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>Master thesis project that simulate robot swarms for learning communication-aware coordination.</p>
+<p>&#64; USI 19/20.</p>
+<p>See <a class="reference external" href="https://drive.google.com/drive/folders/1mUF_uHNvKKEePV2O_CP-Pd_aTXNxHpZR">https://drive.google.com/drive/folders/1mUF_uHNvKKEePV2O_CP-Pd_aTXNxHpZR</a> for datasets, models and report.</p>
+</div></blockquote>
+<div class="section" id="contributors">
+<h3>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h3>
+<p><strong>Giorgia Adorni</strong> - <a class="reference external" href="mailto:giorgia&#46;adorni&#37;&#52;&#48;usi&#46;ch">giorgia<span>&#46;</span>adorni<span>&#64;</span>usi<span>&#46;</span>ch</a>  <a class="reference external" href="https://github.com/GiorgiaAuroraAdorni">GiorgiaAuroraAdorni</a></p>
+</div>
+<div class="section" id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Python 3</p></li>
+<li><p>Enki</p></li>
+<li><p>PyTorch</p></li>
+</ul>
+</div>
+<div class="section" id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h3>
+<p>To install Enki follow the following instructions: <a class="reference external" href="https://jeguzzi.github.io/enki/intro.html">https://jeguzzi.github.io/enki/intro.html</a>.</p>
+<p>Clone our repository and install the requirements</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/GiorgiaAuroraAdorni/learning-robot-swarm-controllers
+$ <span class="nb">cd</span> learning-robot-swarm-controllers
+$ pip install -r requirements.txt
+</pre></div>
+</div>
+</div>
+<div class="section" id="usage">
+<h3>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h3>
+<p>To receive help on how to run the script, execute:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python source/run_distributed_no_communication.py --help
+
+&gt; usage: run_distributed_no_communication.py <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--gui<span class="o">]</span> <span class="o">[</span>--myt-quantity N<span class="o">]</span>
+                                             <span class="o">[</span>--n-simulations N<span class="o">]</span> <span class="o">[</span>--avg-gap N<span class="o">]</span>
+                                             <span class="o">[</span>--generate-dataset<span class="o">]</span>
+                                             <span class="o">[</span>--generate-split<span class="o">]</span>
+                                             <span class="o">[</span>--plots-dataset<span class="o">]</span> <span class="o">[</span>--check-dataset<span class="o">]</span>
+                                             <span class="o">[</span>--compare-all<span class="o">]</span>
+                                             <span class="o">[</span>--controller CONTROLLER<span class="o">]</span>
+                                             <span class="o">[</span>--dataset-folder DATASET_FOLDER<span class="o">]</span>
+                                             <span class="o">[</span>--dataset DATASET<span class="o">]</span>
+                                             <span class="o">[</span>--models-folder MODELS_FOLDER<span class="o">]</span>
+                                             <span class="o">[</span>--model-type MODEL_TYPE<span class="o">]</span>
+                                             <span class="o">[</span>--model MODEL<span class="o">]</span> <span class="o">[</span>--train-net<span class="o">]</span>
+                                             <span class="o">[</span>--net-input           <span class="o">{</span>prox_values,prox_comm,all_sensors<span class="o">}]</span>
+                                             <span class="o">[</span>--plots-net<span class="o">]</span>
+
+Imitation Learning - Distributed Controller No Communication
+
+optional arguments:
+  -h, --help            show this <span class="nb">help</span> message and <span class="nb">exit</span>
+  --gui                 Run simulation using the gui <span class="o">(</span>default: False<span class="o">)</span>
+  --myt-quantity N      Number of thymios <span class="k">for</span> the simulation <span class="o">(</span>default: <span class="m">5</span><span class="o">)</span>
+  --n-simulations N     Number of runs <span class="k">for</span> each simulation <span class="o">(</span>default: <span class="m">1000</span><span class="o">)</span>
+  --avg-gap N           Average gap distance between thymios <span class="o">(</span>default: <span class="m">8</span><span class="o">)</span>
+  --generate-dataset    Generate the dataset containing the simulations
+                        <span class="o">(</span>default: False<span class="o">)</span>
+  --generate-split      Generate the indices <span class="k">for</span> the split of the dataset
+                        <span class="o">(</span>default: False<span class="o">)</span>
+  --plots-dataset       Generate the plots of regarding the dataset <span class="o">(</span>default:
+                        False<span class="o">)</span>
+  --check-dataset       Generate the plots that check the dataset conformity
+                        <span class="o">(</span>default: False<span class="o">)</span>
+  --compare-all         Generate plots that compare all the experiments in
+                        terms of distance from goal <span class="o">(</span>default: False<span class="o">)</span>
+  --controller CONTROLLER
+                        Choose the controller <span class="k">for</span> the current execution.
+                        Usually between all, learned, manual and omniscient
+                        <span class="o">(</span>default: all<span class="o">)</span>
+  --dataset-folder DATASET_FOLDER
+                        Name of the directory containing the datasets
+                        <span class="o">(</span>default: datasets<span class="o">)</span>
+  --dataset DATASET     Choose the datasets to use in the current execution
+                        <span class="o">(</span>default: all<span class="o">)</span>
+  --models-folder MODELS_FOLDER
+                        Name of the directory containing the models <span class="o">(</span>default:
+                        models<span class="o">)</span>
+  --model-type MODEL_TYPE
+                        Name of the sub-directory containing the models
+                        <span class="o">(</span>default: distributed<span class="o">)</span>
+  --model MODEL         Name of the model <span class="o">(</span>default: net1<span class="o">)</span>
+  --train-net           Train the model <span class="o">(</span>default: False<span class="o">)</span>
+  --net-input <span class="o">{</span>prox_values,prox_comm,all_sensors<span class="o">}</span>
+                        Choose the input of the net between prox_values and
+                        prox_comm_events <span class="o">(</span>default: prox_values<span class="o">)</span>
+  --plots-net           Generate the plots of regarding the model <span class="o">(</span>default:
+                        False<span class="o">)</span>
+</pre></div>
+</div>
+<p>“</p>
+</div>
+</div>
+</div>
+
 
           </div>
           
@@ -52,8 +149,12 @@
 
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Intro</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#robot-swarms-simulation-for-learning-communication-aware-coordination">Robot swarms simulation for learning communication aware coordination</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enki-simulations.html">Enki simulations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="controllers.html">Controllers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="imitation-learning-models.html">Imitation learning models</a></li>
@@ -64,7 +165,7 @@
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="index.html" title="previous chapter">Welcome to learning-robot-swarm-controllers’s documentation!</a></li>
-      <li>Next: <a href="intro.html" title="next chapter">Intro</a></li>
+      <li>Next: <a href="overview.html" title="next chapter">Overview</a></li>
   </ul></li>
 </ul>
 </div>

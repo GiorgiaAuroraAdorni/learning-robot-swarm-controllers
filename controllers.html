@@ -184,7 +184,7 @@ a maximum of 16.6, calculating the distance from the actual pose to the target o
 </dl>
 <dl class="py method">
 <dt id="controllers.controllers_task1.OmniscientController.linear_vel">
-<code class="sig-name descname">linear_vel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span></em>, <em class="sig-param"><span class="n">constant</span><span class="o">=</span><span class="default_value">4</span></em><span class="sig-paren">)</span><a class="headerlink" href="#controllers.controllers_task1.OmniscientController.linear_vel" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">linear_vel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span></em>, <em class="sig-param"><span class="n">constant</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#controllers.controllers_task1.OmniscientController.linear_vel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the linear velocity as the <code class="docutils literal notranslate"><span class="pre">signed_distance</span></code> between the current and the goal position of the robot,
 along the current theta of the robot. The final velocity is then multiplied by a constant value.</p>
 <div class="math notranslate nohighlight">
@@ -193,7 +193,7 @@ along the current theta of the robot. The final velocity is then multiplied by a
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>state</strong> – object containing the agent information</p></li>
-<li><p><strong>constant</strong> – constant value (default: 4, but used also values as 1 or 10)</p></li>
+<li><p><strong>constant</strong> – constant value (default: 10, but used also values as 1 or 4)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return velocity</dt>
@@ -423,6 +423,8 @@ and use it to compute the velocity of the robot through a proportional controlle
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">Readme File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="includeme.html#robot-swarms-simulation-for-learning-communication-aware-coordination">Robot swarms simulation for learning communication aware coordination</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Intro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enki-simulations.html">Enki simulations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Controllers</a><ul>

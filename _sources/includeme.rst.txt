@@ -1,1 +1,5 @@
-.. include:: ../../README.rst
+-------
+Intro
+-------
+
+.. mdinclude:: ../../README.md
