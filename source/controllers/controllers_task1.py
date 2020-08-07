@@ -174,7 +174,7 @@ class OmniscientController:
         self.N = N
         self.net_input = net_input
 
-    def linear_vel(self, state, constant=4):
+    def linear_vel(self, state, constant=10):
         """
         Compute the linear velocity as the ``signed_distance`` between the current and the goal position of the robot,
         along the current theta of the robot. The final velocity is then multiplied by a constant value.
@@ -182,7 +182,7 @@ class OmniscientController:
         .. math:: velocity = constant * self.signed\_distance()
 
         :param state: object containing the agent information
-        :param constant: constant value (default: 4, but used also values as 1 or 10)
+        :param constant: constant value (default: 10, but used also values as 1 or 4)
         :return velocity: clipped linear velocity
         """
         velocity = constant * utils.signed_distance(state)

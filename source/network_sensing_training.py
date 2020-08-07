@@ -179,4 +179,4 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
         else:
             dummy_input = torch.randn(1, width)
 
-        export_network(model_dir, model, dummy_input)
+        export_network(model_dir, model, dummy_input, dummy_input)

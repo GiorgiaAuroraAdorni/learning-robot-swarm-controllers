@@ -10,6 +10,7 @@ from torch.utils.data import TensorDataset
 
 class ThymioState:
     """
+    Object containing all the agent information
     :param state_dict
     """
     def __init__(self, state_dict):
@@ -31,7 +32,7 @@ def directory_for_dataset(dataset, controller):
 
     :param dataset: name of the dataset
     :param controller: name of the controller
-    :return run_dir, run_img_dir, run_video_dir: output directories
+    :return run_dir, run_img_dir, run_video_dir: output directories for the simulations
     """
     run_dir = os.path.join(dataset, controller)
 
@@ -47,8 +48,8 @@ def directory_for_dataset(dataset, controller):
 def directory_for_model(args):
     """
 
-    :param args:
-    :return model_dir, model_img_dir, model_video_dir, metrics_path:
+    :param args: command line arguments
+    :return model_dir, model_img_dir, model_video_dir, metrics_path: output directories for the models
     """
     model_dir = os.path.join(args.models_folder, args.task, args.model_type, args.model)
 
@@ -66,8 +67,8 @@ def directory_for_model(args):
 def cartesian_product(*arrays):
     """
 
-    :param arrays:
-    :return arr.reshape(-1, la):
+    :param arrays: arrays used to compute the cartesian product
+    :return arr.reshape(-1, la): cartesian product
     """
     la = len(arrays)
     dtype = np.result_type(*arrays)
@@ -80,8 +81,8 @@ def cartesian_product(*arrays):
 
 def signed_distance(state):
     """
-    :param state:
-    :return b - a: Signed distance between current and the goal position, along the current theta of the robot
+    :param state: object containing all the agent information
+    :return b - a: signed distance between current and the goal position, along the current theta of the robot
     """
     a = state.position[0] * np.cos(state.angle) + state.position[1] * np.sin(state.angle)
     b = state.goal_position[0] * np.cos(state.angle) + state.goal_position[1] * np.sin(state.angle)
@@ -215,10 +216,10 @@ def dataset_split(file_name, num_run=1000):
 def get_input_sensing(in_label, myt, normalise=True):
     """
 
-    :param in_label:
-    :param myt:
-    :param normalise
-    :return sensing:
+    :param in_label: input of the net between prox_values, prox_comm or all_sensors
+    :param myt: agent
+    :param normalise: states if normalise the input sensing (default: True)
+    :return sensing: sensing perceived by the agent
     """
     from thymio import DistributedThymio2
 
@@ -260,9 +261,11 @@ def get_key_value_of_nested_dict(nested_dict):
     """
     Access a nested dictionary and return a list of tuples (rv) and values. Used to return the list of intensities
     given a prox_comm dictionary containing multiple senders.
-    :param nested_dict
-    :return rv, values: rv is a list of tuples where, in each of these, the first element is a list of keys and the
-    second is the final value. values is the list of inner values.
+
+    :param nested_dict: nested dictionary, usually containing prox_comm_events
+    :return rv, values: rv is a list of tuples where, in each of these, the first element
+                        is a list of keys and the second is the final value.
+                        Values is the list of inner values.
     """
     rv = []
     values = []
@@ -280,10 +283,10 @@ def get_key_value_of_nested_dict(nested_dict):
 
 def prepare_dataset(run_dir, split, num_run):
     """
-    :param run_dir
-    :param split
-    :param num_run
-    :return file, indices
+    :param run_dir: directory containing the simulation runs
+    :param split: states if generate or load the split file
+    :param num_run: number of runs used in the simulation
+    :return file, indices: file containing the splits and the splits indices
     """
     file = os.path.join(run_dir, 'dataset_split.npy')
     # Uncomment the following line to generate a new dataset split
@@ -306,12 +309,13 @@ def prepare_dataset(run_dir, split, num_run):
 def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False):
     """
     :param runs_dir: directory containing the simulations
-    :param train_indices
-    :param validation_indices
-    :param test_indices
-    :param net_input
-    :param communication
-    :return: (train_sample, valid_sample, test_sample), train_target, valid_target, test_target, train_quantities, valid_quantities, test_quantities
+    :param train_indices: indices of the sample belonging to the training set
+    :param validation_indices: indices of the sample belonging to the validation set
+    :param test_indices: indices of the sample belonging to the testing set
+    :param net_input: input of the net between prox_values, prox_comm or all_sensors
+    :param communication: states if the communication is used by the network
+    :return: (train_sample, valid_sample, test_sample), train_target, valid_target, test_target, train_quantities, valid_quantities, test_quantities:
+             all the train, validation and test samples, targets and masks
     """
     runs = load_dataset(runs_dir, 'simulation.pkl')
 
@@ -350,16 +354,16 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
 def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_target, test_sample, test_target, q_train, q_valid, q_test):
     """
 
-    :param train_sample:
-    :param train_target:
-    :param valid_sample:
-    :param valid_target:
-    :param test_sample:
-    :param test_target:
-    :param q_train:
-    :param q_valid:
-    :param q_test:
-    :return test, train, valid
+    :param train_sample: training set samples
+    :param train_target: training set targets
+    :param valid_sample: validation set samples
+    :param valid_target: validation set targets
+    :param test_sample: testing set samples
+    :param test_target: testing set targets
+    :param q_train: mask containing the number of agents for each sample of the training set
+    :param q_valid: mask containing the number of agents for each sample of the validation set
+    :param q_test: mask containing the number of agents for each sample of the testing set
+    :return test, train, valid: test, train and valid TensorDataset
     """
     x_train_tensor = torch.tensor(train_sample, dtype=torch.float32)
     x_valid_tensor = torch.tensor(valid_sample, dtype=torch.float32)
@@ -383,8 +387,8 @@ def from_dataset_to_tensors(train_sample, train_target, valid_sample, valid_targ
 def get_input_columns(in_label):
     """
 
-    :param in_label:
-    :return columns:
+    :param in_label: input of the net between prox_values, prox_comm or all_sensors
+    :return columns: columns of the dataframe referred to the input label
     """
     if in_label == 'all_sensors':
         columns = ['pv_fll', 'pv_fl', 'pv_fc', 'pv_fr', 'pv_frr', 'pv_bl', 'pv_br',
@@ -402,13 +406,19 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
     The input is normalised so that the average is around 1 or a constant (e.g. for all (dividing by 1000)).
     The output is the speed of the wheels (which we assume equals left and right) [array of 1 float].
     There is no need to normalize the outputs.
-    :param runs:
-    :param in_label:
-    :param N
-    :param communication
-    :param input_combination
-    :param myt_quantities
-    :return input_, output_, runs, columns
+
+    :param runs: dataframe containing all the simulation runs
+    :param in_label: input of the net between prox_values, prox_comm or all_sensors
+    :param N: number of agents
+    :param communication: states if the communication is used by the network
+    :param input_combination: states if using the input combination of the sensors,
+                              that means using only the central frontal sensor and
+                              the mean of the rear sensors
+    :param myt_quantities: array containing the number agents for each simulation run
+    :return in_put, out_put, out_myt_quantities, runs, columns: input and output arrays for the network,
+                                               array with the number of agents, dataframe
+                                               with the runs and columns of the dataframe
+                                               referred to the input label
     """
     inputs = ['prox_values', 'prox_comm', 'all_sensors']
     inputs.remove(in_label)
@@ -432,9 +442,9 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
 
         runs[full_columns] = runs[full_columns].div(1000)
 
-        input_ = np.array(runs.x)
-        output_ = np.array(runs.motor_left_target)
-        myt_quantities_ = None
+        in_put = np.array(runs.x)
+        out_put = np.array(runs.motor_left_target)
+        out_myt_quantities = None
     else:
         runs[columns] = runs[columns].div(1000)
 
@@ -444,9 +454,9 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
             tmp = np.array(runs[['run', 'timestep']].drop_duplicates().groupby(['run']).max()).squeeze()
             timesteps = np.sum(tmp) - tmp.shape[0]
 
-            input_ = np.empty(shape=(timesteps, 2, N, runs[columns].shape[1]), dtype='float32')
-            output_ = np.empty(shape=(timesteps, 2, N), dtype='float32')
-            myt_quantities_ = np.empty(shape=(timesteps, 2, N), dtype='float32')
+            in_put = np.empty(shape=(timesteps, 2, N, runs[columns].shape[1]), dtype='float32')
+            out_put = np.empty(shape=(timesteps, 2, N), dtype='float32')
+            out_myt_quantities = np.empty(shape=(timesteps, 2, N), dtype='float32')
 
             init_counter = 0
             for i in simulations:
@@ -474,29 +484,32 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
                 out_array = np.pad(out_array, ((0, 0), (0, 0), (0, N - N_sim)), 'constant', constant_values=np.nan)
                 myt = np.full(shape=(size, 2, N), fill_value=N_sim, dtype='float32')
 
-                input_[init_counter:final_counter] = in_array
-                output_[init_counter:final_counter] = out_array
-                myt_quantities_[init_counter:final_counter] = myt
+                in_put[init_counter:final_counter] = in_array
+                out_put[init_counter:final_counter] = out_array
+                out_myt_quantities[init_counter:final_counter] = myt
 
                 init_counter = final_counter
         else:
-            input_ = np.array(runs[columns])
-            output_ = np.array(runs.motor_left_target)
-            myt_quantities_ = np.array(runs.myt_quantity)
+            in_put = np.array(runs[columns])
+            out_put = np.array(runs.motor_left_target)
+            out_myt_quantities = np.array(runs.myt_quantity)
 
-    return input_, output_, myt_quantities_, runs, columns
+    return in_put, out_put, out_myt_quantities, runs, columns
 
 
 def extract_colour_output(runs, communication=False, input_combination=True):
     """
     The output is the colour of the top led that depends by the position of the robot in the row.
-    :param runs:
-    :param communication
-    :param input_combination
-    :return output_, runs
+
+    :param runs: dataframe containing all the simulation runs
+    :param communication: states if the communication is used by the network
+    :param input_combination: states if using the input combination of the sensors,
+                              that means using only the central frontal sensor and
+                              the mean of the rear sensors
+    :return out_put, runs: output array for the network and dataframe with the runs
     """
     if input_combination:
-        output_ = np.array(runs.goal_colour)
+        out_put = np.array(runs.goal_colour)
     else:
         if communication:
             simulations = runs['run'].unique()
@@ -504,7 +517,7 @@ def extract_colour_output(runs, communication=False, input_combination=True):
             tmp = np.array(runs[['run', 'timestep']].drop_duplicates().groupby(['run']).max()).squeeze()
             timesteps = np.sum(tmp) - tmp.shape[0]
 
-            output_ = np.empty(shape=(timesteps, 2, 3), dtype='float32')
+            out_put = np.empty(shape=(timesteps, 2, 3), dtype='float32')
 
             init_counter = 0
             for i in simulations:
@@ -520,22 +533,22 @@ def extract_colour_output(runs, communication=False, input_combination=True):
                 out_array[:, 0, ...] = out_run_[:-1, ...]
                 out_array[:, 1, ...] = out_run_[1:, ...]
 
-                output_[init_counter:final_counter] = out_array
+                out_put[init_counter:final_counter] = out_array
 
                 init_counter = final_counter
         else:
-            output_ = np.array(runs.motor_left_target)
+            out_put = np.array(runs.motor_left_target)
 
-    return output_, runs
+    return out_put, runs
 
 
-def export_network(model_dir, model, input_):
+def export_network(model_dir, model, in_put, input_shape):
     """
 
-    :param model_dir:
-    :param model:
-    :param input_:
-    :return:
+    :param model_dir: directory containing the model
+    :param model: name of the model
+    :param in_put: array of the same shape of the first network input
+    :param input_shape: array of the same shape of the second network input
     """
     net = torch.load('%s/%s' % (model_dir, model), map_location='cpu')
 
@@ -543,7 +556,7 @@ def export_network(model_dir, model, input_):
 
     # Export the model
     torch.onnx.export(net,                                        # model being run
-                      input_,                                     # model input (or a tuple for multiple inputs)
+                      (in_put, input_shape),                                     # model input (or a tuple for multiple inputs)
                       "%s/%s.onnx" % (model_dir, model),           # where to save the model (can be a file or file-like object)
                       do_constant_folding=True,
                       # export_params=True,                         # store the trained parameter weights inside the model file
@@ -553,27 +566,14 @@ def export_network(model_dir, model, input_):
                       )
 
 
-def write_graph(model_dir, model, dummy_input_graph):
-    """
-    FIXME
-    :param model_dir:
-    :param model:
-    :param input_:
-    :return:
-    """
-    from torch.utils.tensorboard import SummaryWriter
-
-    # default `log_dir` is "runs" - we'll be more specific here
-    writer = SummaryWriter('%s/tb' % model_dir)
-
-    net = torch.load('%s/%s' % (model_dir, model))
-
-    writer.add_graph(net, dummy_input_graph)
-    writer.close()
-
-
 def generate_fake_simulations(run_dir, model, initial_positions, myt_quantity):
     """
+
+    :param run_dir: directory containing the simulation runs
+    :param model: name of the model
+    :param initial_positions: initial position for the agents
+    :param myt_quantity: number of agents
+    :return out_dirs: directory containing the simulation run
     """
 
     from controllers import controllers_task1 as controllers

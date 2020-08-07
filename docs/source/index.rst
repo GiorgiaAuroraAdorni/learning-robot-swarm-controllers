@@ -15,7 +15,7 @@ Welcome to learning-robot-swarm-controllers's documentation!
    enki-simulations
    controllers
    imitation-learning-models
-.. examples
+   examples
    others
 
 

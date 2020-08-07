@@ -1,20 +1,20 @@
 Examples
 ========
 
-.. currentmodule:: learning-robot-swarm-controllers.tests
+.. currentmodule:: learning-robot-swarm-controllers
 
 
 
 Distribute Agents
 ------------------
 
-.. automodule:: distribute_aligned_myts
+.. automodule:: examples.distribute_aligned_myts
    :members:
 
 
 Colour Agents
 --------------
 
-.. automodule:: colour_aligned_myts
+.. automodule:: examples.colour_aligned_myts
    :members:
 

@@ -60,6 +60,7 @@ class DistributedThymio2(pyenki.Thymio2):
         """
         Enable communication and send at each timestep a message decided by the controller.
         Set the top led colour based on the controller decision.
+
         :param dt: control step duration
         """
         colour, message = self.controller.perform_control(self, dt)
@@ -80,6 +81,7 @@ class DistributedThymio2(pyenki.Thymio2):
         """
         Enable communication and send at each timestep a message decided by the controller.
         Set the velocity of the wheels based on the controller decision.
+
         :param dt: control step duration
         """
         speed, communication = self.controller.perform_control(self, dt)
@@ -95,6 +97,7 @@ class DistributedThymio2(pyenki.Thymio2):
         Perform one control step:
                 If distribute move the robots in such a way they stand at equal distances from each other.
                 If colour color the first half of robot in a different way from the second half.
+
         :param dt: control step duration
         """
 

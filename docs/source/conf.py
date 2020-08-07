@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import sphinx_typlog_theme
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../source'))
@@ -36,6 +37,8 @@ extensions = [
 	'm2r2'
 ]
 
+pygments_style = 'sphinx'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -50,7 +53,11 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_typlog_theme'
+html_theme_path = [sphinx_typlog_theme.get_path()]
+html_theme_options = {
+    'color': '#4db742'
+    }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

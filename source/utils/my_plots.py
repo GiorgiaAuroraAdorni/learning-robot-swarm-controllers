@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -7,7 +8,6 @@ import seaborn as sns
 from matplotlib.collections import LineCollection
 from sklearn.linear_model import LinearRegression
 
-import matplotlib.animation as animation
 import utils
 
 sns.set(style="white")
@@ -15,9 +15,10 @@ sns.set(style="white")
 
 def make_space_above(axes, topmargin=1):
     """
-    Increase figure size to make topmargin (in inches) space for titles, without changing the axes sizes
-    :param axes:
-    :param topmargin:
+    Increase figure size to make topmargin (in inches) space for titles, without changing the axes sizes.
+
+    :param axes: axes of the image
+    :param topmargin: topmargin
     """
     fig = axes.flatten()[0].figure
     s = fig.subplotpars
@@ -31,11 +32,10 @@ def make_space_above(axes, topmargin=1):
 def save_visualisation(filename, img_dir, make_space=False, axes=None):
     """
 
-    :param filename:
-    :param img_dir:
-    :param make_space:
-    :param axes:
-
+    :param filename: name of the image
+    :param img_dir: path where to save the image
+    :param make_space: if make space above the image
+    :param axes: axes of the image
     """
     file = os.path.join(img_dir, '%s.pdf' % filename)
     img = os.path.join(img_dir, '%s.png' % filename)
@@ -49,10 +49,11 @@ def save_visualisation(filename, img_dir, make_space=False, axes=None):
 
 def plot_distance_from_goal(runs_dir, img_dir, title, filename):
     """
-    :param runs_dir:
-    :param img_dir:
-    :param title
-    :param filename
+    
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image
+    :param filename: name of the image
     """
 
     runs = utils.utils.load_dataset(runs_dir, 'simulation.pkl')
@@ -69,14 +70,7 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
 
     for idx, m in enumerate(myts):
         myt = position_distances[position_distances['name'] == m].drop(columns='name')
-
-        # mean = myt.groupby(['timestep']).mean().squeeze()
-        # std = myt.groupby(['timestep']).std().squeeze()
-        #
-        # ln, = plt.plot(time_steps, mean, label='mean')
-        # plt.fill_between(time_steps, mean - std, mean + std, alpha=0.2, label='+/- 1 std',
-        #                  color=ln.get_color())
-
+        
         q1 = myt.groupby(['timestep']).quantile(0.25).squeeze()
         q2 = myt.groupby(['timestep']).quantile(0.75).squeeze()
         q3 = myt.groupby(['timestep']).quantile(0.10).squeeze()
@@ -102,9 +96,9 @@ def plot_distance_from_goal(runs_dir, img_dir, title, filename):
 def get_position_distances(runs_sub, with_run=False):
     """
 
-    :param runs_sub:
-    :param with_run
-    :return position_distances:
+    :param runs_sub: directory containing the simulation runs 
+    :param with_run: boolean, default False
+    :return position_distances: array containing distances from goal
     """
     v = utils.utils.cartesian_product(runs_sub.timestep.unique(), runs_sub.run.unique(), runs_sub.name.unique())
     idx = pd.MultiIndex.from_arrays([v[:, 0], v[:, 1], v[:, 2]])
@@ -122,11 +116,11 @@ def get_position_distances(runs_sub, with_run=False):
 def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename, absolute=True):
     """
 
-    :param dataset_folders:
-    :param img_dir:
-    :param title:
-    :param filename:
-    :param absolute
+    :param dataset_folders: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image 
+    :param filename:  name of the image 
+    :param absolute: boolean value that states is use absolute distances from goal (default: True)
     """
 
     utils.utils.check_dir(img_dir)
@@ -203,11 +197,11 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename, 
 def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
     """
 
-    :param runs_dir:
-    :param img_dir:
-    :param simulation:
-    :param title:
-    :param net_input:
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param simulation: simulation to use
+    :param title: title of the image 
+    :param net_input: input of the net between prox_values, prox_comm or all_sensors  
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
@@ -266,11 +260,11 @@ def visualise_simulation(runs_dir, img_dir, simulation, title, net_input):
 def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_input):
     """
 
-    :param runs_dir:
-    :param img_dir:
-    :param simulation:
-    :param title:
-    :param net_input:
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param simulation: simultion to use
+    :param title: title of the image 
+    :param net_input: input of the net between prox_values, prox_comm or all_sensors
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
@@ -327,10 +321,11 @@ def visualise_simulation_all_sensors(runs_dir, img_dir, simulation, title, net_i
 
 def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     """
-    :param runs_dir:
-    :param img_dir:
-    :param title
-    :param net_input:
+
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image
+    :param net_input: input of the net between prox_values, prox_comm or all_sensors  
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
@@ -410,10 +405,10 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
 
 def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_input):
     """
-    :param runs_dir:
-    :param img_dir:
-    :param title
-    :param net_input:
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image
+    :param net_input: input of the net between prox_values, prox_comm or all_sensors  
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
@@ -427,7 +422,6 @@ def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_i
     target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
     runs_myt2 = runs[runs['name'] == 'myt2'].drop(columns='name').reset_index()
-    # FIXME
     _, _, _, runs_myt2, proximity_sensors = utils.utils.extract_input_output(runs_myt2, net_input, N=1)
 
     plt.figure(constrained_layout=True)
@@ -482,15 +476,14 @@ def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_i
     save_visualisation(filename, img_dir, make_space=True, axes=axes)
 
 
-def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
+def plot_losses(train_loss, valid_loss, img_dir, title, filename):
     """
 
     :param train_loss: the training losses
     :param valid_loss: the testing losses
     :param img_dir: directory for the output image
-    :param title:
-    :param filename:
-    :param scale:
+    :param title: title of the image 
+    :param filename: name of the image
     """
     x = np.arange(1, len(train_loss) + 1, dtype=int)
 
@@ -514,14 +507,15 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename, scale=None):
 
 def my_scatterplot(x, y, x_label, y_label, img_dir, title, filename):
     """
-     Plot a scatter plot. Usually with the groundtruth on x-axis and prediction on y-axis
-    :param x:
-    :param y:
-    :param x_label:
-    :param y_label:
-    :param img_dir:
-    :param title:
-    :param filename:
+     Plot a scatter plot. Usually with the groundtruth on x-axis and prediction on y-axis.
+
+    :param x: values for the x-axis
+    :param y: values for the y-axis
+    :param x_label: label for the x-axis
+    :param y_label: label for the y-axis
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image 
+    :param filename: name of the image
     """
     plt.figure()
     plt.xlabel(x_label, fontsize=11)
@@ -536,12 +530,12 @@ def my_scatterplot(x, y, x_label, y_label, img_dir, title, filename):
 def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
     """
     
-    :param prediction:
-    :param x_label:
-    :param img_dir:
-    :param title:
-    :param filename:
-    :param label:
+    :param prediction: predictions
+    :param x_label: label for the x-axis
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image 
+    :param filename: name of the image
+    :param label: label for the plot, default None
     """
     plt.figure(constrained_layout=True)
 
@@ -563,11 +557,11 @@ def my_histogram(prediction, x_label, img_dir, title, filename, label=None):
 def plot_target_distribution(y_g, y_p, img_dir, title, filename):
     """
     
-    :param y_g:
-    :param y_p:
-    :param img_dir:
-    :param title
-    :param filename:
+    :param y_g: validation groundtruth
+    :param y_p: validation prediction
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image
+    :param filename: name of the image
     """
     labels = ['groundtruth', 'prediction']
 
@@ -586,13 +580,13 @@ def plot_target_distribution(y_g, y_p, img_dir, title, filename):
 def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
     """
 
-    :param x:
-    :param y:
-    :param x_label:
-    :param y_label:
-    :param img_dir:
-    :param title:
-    :param filename:
+    :param x: values for the x-axis
+    :param y: values for the y-axis
+    :param x_label: label for the x-axis
+    :param y_label: label for the y-axis
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image 
+    :param filename: name of the image
     """
     lr = LinearRegression()
 
@@ -619,16 +613,17 @@ def plot_regressor(x, y, x_label, y_label, img_dir, title, filename):
     save_visualisation(filename, img_dir)
 
 
-def plot_response(x, y, x_label, img_dir, title, filename, index=None):
+def plot_response(x, y, x_label, img_dir, title, filename, index=None, y_label='control'):
     """
 
-    :param x
-    :param y
-    :param x_label
-    :param img_dir
-    :param title
-    :param filename
+    :param x: values for the x-axis
+    :param y: values for the y-axis
+    :param x_label: label for the x-axis
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image
+    :param filename: name of the image
     :param index: this parameter is different from None only when x is the input sensing, otherwise, x is a 1D vector
+    :param y_label: label for the y-axis (optional, default: 'control')
     """
 
     if index is not None:
@@ -637,7 +632,7 @@ def plot_response(x, y, x_label, img_dir, title, filename, index=None):
 
     plt.figure()
     plt.xlabel(x_label, fontsize=11)
-    plt.ylabel('control', fontsize=11)
+    plt.ylabel(y_label, fontsize=11)
 
     plt.plot(x.tolist(), y)
 
@@ -649,17 +644,16 @@ def plot_response(x, y, x_label, img_dir, title, filename, index=None):
 def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
     """
 
-    :param runs_dir
-    :param img_dir
-    :param net_input
-    :param model
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param net_input: input of the net between prox_values, prox_comm or all_sensors
+    :param model: model to be used
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['timestep', 'run', 'prox_values', 'prox_comm', 'all_sensors', 'motor_left_target']]
 
     max_time_step = runs_sub['timestep'].max()
     time_steps = np.arange(max_time_step)
-    # FIXME
     _, _, _, runs_, proximity_sensors = utils.utils.extract_input_output(runs_sub, net_input, N=1)
 
     # Mean of the sensing of each run, among all the robots
@@ -692,10 +686,10 @@ def plot_sensing_timestep(runs_dir, img_dir, net_input, model):
 def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
     """
 
-    :param runs_dir:
-    :param img_dir:
-    :param simulation:
-    :param title:
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param simulation: simulation to use
+    :param title: title of the image 
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'transmitted_comm']]
@@ -755,12 +749,12 @@ def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
 def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title, filename, absolute=True):
     """
 
-    :param dataset_folders:
-    :param img_dir:
-    :param datasets
-    :param title:
-    :param filename:
-    :param absolute
+    :param dataset_folders: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param datasets: names of the datasets to be uses
+    :param title: title of the image 
+    :param filename: name of the image
+    :param absolute: boolean value that states is use absolute distances from goal (default: True)
     """
 
     utils.utils.check_dir(img_dir)
@@ -803,8 +797,8 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
         plt.fill_between(timesteps[d_idx], q1, q2, alpha=0.2, label='interquartile range (%s)' % d, color=ln.get_color())
         plt.fill_between(timesteps[d_idx], q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
 
-    # plt.xlim(0, 17)
     # FIXME depends if it is used goal_position_distance or goal_position_distance_absolute
+    # plt.xlim(0, 17)
     # plt.ylim(0, 10)
 
     ax = fig.gca()
@@ -829,9 +823,9 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
 def visualise_communication_vs_control(runs_dir, img_dir, title):
     """
 
-    :param runs_dir:
-    :param img_dir:
-    :param title:
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image 
     """
 
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
@@ -846,9 +840,9 @@ def visualise_communication_vs_control(runs_dir, img_dir, title):
 def visualise_communication_vs_distance(runs_dir, img_dir, title):
     """
 
-    :param runs_dir:
-    :param img_dir:
-    :param title:
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image 
     """
 
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
@@ -871,10 +865,10 @@ def visualise_communication_vs_distance(runs_dir, img_dir, title):
 def visualise_simulation_over_time_all_sensors(runs_dir, img_dir, simulation, title):
     """
 
-    :param runs_dir:
-    :param img_dir:
-    :param simulation:
-    :param title:
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param simulation: simulation to use
+    :param title: title of the image 
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
@@ -918,10 +912,10 @@ def visualise_simulation_over_time_all_sensors(runs_dir, img_dir, simulation, ti
 def thymio_quantity_distribution(runs_dir, img_dir, title, filename):
     """
 
-    :param runs_dir:
-    :param img_dir:
-    :param title:
-    :param filename:
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image 
+    :param filename: name of the image
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['run', 'myt_quantity']]
@@ -940,7 +934,8 @@ def thymio_quantity_distribution(runs_dir, img_dir, title, filename):
 def animate_simulation(out_dirs, myt_quantity):
     """
 
-    :param out_dirs:
+    :param out_dirs: directory containing the simulation runs
+    :param myt_quantity: number of agents
     """
     run_states = []
     max_timestep = 0
@@ -1037,7 +1032,8 @@ def animate_simulation(out_dirs, myt_quantity):
 def plot_simulations(out_dirs, myt_quantity):
     """
 
-    :param out_dirs:
+    :param out_dirs: directory containing the simulation runs
+    :param myt_quantity: number of agents
     """
     run_states = []
     max_timestep = 0

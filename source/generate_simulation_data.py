@@ -55,6 +55,7 @@ class GenerateSimulationData:
         The distance between the first and the last robot is usually computed as follow:
 
         .. math:: (min\_distance + avg\_gap) * (myt\_quantity - 1)
+
         In case of the extended task this quantity it is not initialised.
 
         Usually, the distances among the robots are computed by drawing (myt_quantity - 1) real random gaps in using a normal
@@ -95,10 +96,8 @@ class GenerateSimulationData:
 
         if not extension:
             if variate_pose:
-                initial_positions = np.zeros(myt_quantity)
-                initial_positions[-1] = last_x
-                distances = [min_distance + x]
-                initial_positions[1] = np.cumsum(distances)
+                initial_positions = np.array([0, min_distance + x, (min_distance + x) * 2],
+                                             dtype=np.float64)
             else:
                 distances = min_distance + np.clip(np.random.normal(avg_gap, std, myt_quantity - 1), 1, maximum_gap)
                 distances = distances / np.sum(distances) * last_x
@@ -426,7 +425,7 @@ class GenerateSimulationData:
         :param myt_quantity: number of agents
         :param args: arguments from command line
         :param model: model to be used
-        :param communication:  states if the communication is used by the network
+        :param communication: states if the communication is used by the network
         """
         comm = False
         if communication:
@@ -448,15 +447,16 @@ class GenerateSimulationData:
 
         for n_sim in tqdm(range(n_simulations)):
             # if the number of agents is not defined randomly generate a simulation with N robots with N \in [5, 10]
-            if not hasattr(args, 'myt_quantity'):
+            if args.myt_quantity == 'variable':
                 myt_quantity = np.random.randint(5, 11)
-                extension = True
+            else:
+                myt_quantity = int(args.myt_quantity)
 
             # if average gap is not defined randomly generate a simulation with avg_gap \in [5, 25]
-            if hasattr(args, 'avg_gap'):
-                avg_gap = args.avg_gap
+            if args.avg_gap == 'variable':
+                avg_gap = np.random.randint(5, 26)
             else:
-                avg_gap = np.random.randint(5, 20)
+                avg_gap = int(args.avg_gap)
 
             try:
                 controller_factory = cls.get_controller(controller, controllers, goal, myt_quantity, args.net_input, communication, model, model_dir)

@@ -204,14 +204,13 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     my_plots.plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
 
 
-def test_controller_given_init_positions(model_img, net, model, net_input, avg_gap, goal, communication, controllers):
+def test_controller_given_init_positions(model_img, net, model, net_input, goal, communication, controllers):
     """
 
     :param model_img: directory for the output image of the model
     :param net: model used
     :param model: name of the model
     :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
-    :param avg_gap: average gap among the robots
     :param goal: task to perform (in this case distribute)
     :param communication: states if the communication is used by the network
     :param controllers: reference to the controller class
@@ -227,16 +226,15 @@ def test_controller_given_init_positions(model_img, net, model, net_input, avg_g
 
     simulations = 17 * 10
 
-    range = 2 * avg_gap
+    range = 48
 
     x = np.linspace(0, range, num=simulations)
     control_predictions = []
 
     for simulation in tqdm.tqdm(x):
-        g.init_positions(myts, net_input, avg_gap, variate_pose=True, x=simulation)
+        g.init_positions(myts, net_input, range/2, variate_pose=True, x=simulation)
 
         world.step(dt=0.1)
-        # myts[1].learned_controller()
         control = myts[1].motor_left_target
         control_predictions.append(control)
 
@@ -311,6 +309,4 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
                          'rear proximity sensors', goal, communication, controllers)
 
         # Evaluate the learned controller by passing a specific initial position configuration
-        if avg_gap is None:
-            avg_gap = np.random.randint(5, 26)
-        test_controller_given_init_positions(model_img, net, model, net_input, avg_gap, goal, communication, controllers)
+        test_controller_given_init_positions(model_img, net, model, net_input, goal, communication, controllers)

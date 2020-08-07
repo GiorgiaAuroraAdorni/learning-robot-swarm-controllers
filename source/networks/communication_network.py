@@ -52,14 +52,14 @@ def input_from(ss, comm, i, sim=False):
     :param comm: communication vector
     :param i: index of the thymio in the row
     :param sim: boolean True if executed in simulation, False otherwise
-    :return input_: parsed input containing the sensing values and the communication received
+    :return in_put: parsed input containing the sensing values and the communication received
     """
     if sim:
-        input_ = torch.cat((ss, comm[i].view(1), comm[i + 2].view(1)), 0)
+        in_put = torch.cat((ss, comm[i].view(1), comm[i + 2].view(1)), 0)
     else:
-        input_ = torch.cat((ss[i], comm[i].view(1), comm[i + 2].view(1)), 0)
+        in_put = torch.cat((ss[i], comm[i].view(1), comm[i + 2].view(1)), 0)
 
-    return input_
+    return in_put
 
 
 def input_from_no_sensing(comm, i):
@@ -68,11 +68,11 @@ def input_from_no_sensing(comm, i):
 
     :param comm: communication vector
     :param i: index of the thymio in the row
-    :return input_: parsed input containing the communication received
+    :return in_put: parsed input containing the communication received
     """
-    input_ = torch.cat((comm[i].view(1), comm[i + 2].view(1)), 0)
+    in_put = torch.cat((comm[i].view(1), comm[i + 2].view(1)), 0)
 
-    return input_
+    return in_put
 
 
 class SingleNet(nn.Module):
@@ -89,13 +89,13 @@ class SingleNet(nn.Module):
         self.fc2 = torch.nn.Linear(22, 2)
         self.sigmoid = torch.nn.Sigmoid()
 
-    def forward(self, input_):
+    def forward(self, in_put):
         """
-        :param input_: input of the network, vector containing the sensing and the messages received by the robot
+        :param in_put: input of the network, vector containing the sensing and the messages received by the robot
                        (can be multidimensional, that means a row for each robot)
         :return output: output of the network containing the control and the message to communicate (shape: 1 x 2)
         """
-        hidden = self.fc1(input_)
+        hidden = self.fc1(in_put)
         tanh = self.tanh(hidden)
         output = self.fc2(tanh)
 

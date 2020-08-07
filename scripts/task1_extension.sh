@@ -117,4 +117,4 @@
 #
 #python3 source/task1_extension.py --n-simulations 5000 --model-type communication --compare-all --dataset mixed-5000simulations-slow-huge
 
-python3 source/task1_extension.py --n-simulations 5000 --generate-animations --dataset mixed-5000simulations-slow-huge --model net1-extension-5000-slow-huge
+#python3 source/task1_extension.py --n-simulations 5000 --generate-animations --dataset mixed-5000simulations-slow-huge --model net1-extension-5000-slow-huge

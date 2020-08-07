@@ -11,12 +11,16 @@ def parse_args():
     usage: task1_extensions.py [--args]
 
     :return args:
-                  --help            Show this help message and exit
+                  --help                Show this help message and exit
                   --gui                 Run simulation using the gui (default: False)
                   --n-simulations N     Number of runs for each simulation (default: 1000)
                   --task TASK
                                         Choose the task to perform in the current execution
                                         between task1 and task2 (default: task1)
+                  --myt-quantity MYT_QUANTITY
+                                        Number of thymios for the simulation (default: variable)
+                  --avg-gap AVG_GAP
+                                        Average gap distance between thymios (default: variable)
                   --generate-dataset    Generate the dataset containing the simulations
                                         (default: False)
                   --generate-split      Generate the indices for the split of the dataset
@@ -63,6 +67,11 @@ def parse_args():
                         help='Number of runs for each simulation (default: 1000)')
     parser.add_argument('--task', default='task1', choices=['task1', 'task2'],
                         help='Choose the task to perform in the current execution between task1 and task2 (default: task1)')
+
+    parser.add_argument('--myt-quantity', default='variable', type=str,
+                        help='Number of thymios for the simulation (default: variable)')
+    parser.add_argument('--avg-gap', default='variable', type=str,
+                        help='Average gap distance between thymios (default: variable)')
 
     parser.add_argument('--generate-dataset', action="store_true",
                         help='Generate the dataset containing the simulations (default: False)')
