@@ -1,5 +1,5 @@
-Intro
-======
+Overview
+========
 
 .. currentmodule:: learning-robot-swarm-controllers
 
