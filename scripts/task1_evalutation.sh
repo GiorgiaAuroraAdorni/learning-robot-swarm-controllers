@@ -1,10 +1,23 @@
+#PLOTS net
+
+python3 source/task1_extension.py --controller omniscient --plots-net --dataset avg_gap-8-N-5 --model net-v1 --myt-quantity 5 --avg-gap 8
+python3 source/task1_extension.py --controller omniscient --plots-net --dataset avg_gap-20-N-5 --model net-v2 --avg-gap 20 --myt-quantity 5
+python3 source/task1_extension.py --controller omniscient --plots-net --dataset avg_gap-8-N-8 --model net-v3 --myt-quantity 8 --avg-gap 8
+python3 source/task1_extension.py --controller omniscient --plots-net --dataset avg_gap-20-N-8 --model net-v4 --avg-gap 20 --myt-quantity 8
+python3 source/task1_extension.py --controller omniscient --plots-net --dataset avg_gap-variable-N-5 --model net-v5 --myt-quantity 5
+python3 source/task1_extension.py --controller omniscient --plots-net --dataset avg_gap-variable-N-8 --model net-v6 --myt-quantity 8
+python3 source/task1_extension.py --controller omniscient --plots-net --dataset avg_gap-8-N-variable --model net-v7 --avg-gap 8
+python3 source/task1_extension.py --controller omniscient --plots-net --dataset avg_gap-20-N-variable --model net-v8 --avg-gap 20
+python3 source/task1_extension.py --controller omniscient --plots-net --dataset avg_gap-variable-N-variable --model net-v9
+
+
 # Fixed avg_gap, fixed N
-# avg_gap = 8, N = 5
+ avg_gap = 8, N = 5
 
 python3 source/task1_extension.py --controller omniscient --generate-dataset --plots-dataset --check-dataset --dataset avg_gap-8-N-5 --myt-quantity 5 --avg-gap 8
 python3 source/task1_extension.py --controller omniscient --generate-split --plots-net --train-net --save-net --dataset avg_gap-8-N-5 --model net-v1 --myt-quantity 5 --avg-gap 8
 python3 source/task1_extension.py --controller manual --generate-dataset --plots-dataset --check-dataset --dataset avg_gap-8-N-5 --myt-quantity 5 --avg-gap 8
-python3 source/task1_extension.py --controller learned --generate-dataset --plots-dataset --check-dataset --dataset avg_gap-8-N-5 --model net-v1 --myt-quantity 5 --avg-gap 8
+python3 sourcee/task1_extension.py --controller learned --generate-dataset --plots-dataset --check-dataset --dataset avg_gap-8-N-5 --model net-v1 --myt-quantity 5 --avg-gap 8
 
 
 # Fixed avg_gap, fixed N

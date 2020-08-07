@@ -96,16 +96,18 @@ class GenerateSimulationData:
 
         if not extension:
             if variate_pose:
-                initial_positions = np.array([0, min_distance + x, (min_distance + x) * 2],
-                                             dtype=np.float64)
+                initial_positions = np.array([first_x, min_distance + x, last_x], dtype=np.float64)
+                last_x = initial_positions[-1]
             else:
                 distances = min_distance + np.clip(np.random.normal(avg_gap, std, myt_quantity - 1), 1, maximum_gap)
                 distances = distances / np.sum(distances) * last_x
-                initial_positions = np.cumsum(distances)
+
+                initial_positions = np.zeros(myt_quantity)
+                initial_positions[1:] = np.cumsum(distances)
         else:
             initial_positions = np.zeros(myt_quantity)
 
-            gaps = np.random.uniform(0, maximum_gap, myt_quantity - 1)
+            gaps = np.random.uniform(first_x, maximum_gap, myt_quantity - 1)
 
             distances = np.round(gaps + min_distance, 2)
             initial_positions[1:] = np.cumsum(distances)
@@ -121,13 +123,7 @@ class GenerateSimulationData:
 
         for i, myt in enumerate(myts):
             # Position the first and last robot at a fixed distance
-            if i == 0:
-                myt.position = (first_x, 0)
-            elif i == myt_quantity - 1:
-                myt.position = (last_x, 0)
-            else:
-                myt.position = (initial_positions[i], 0)
-
+            myt.position = (initial_positions[i], 0)
             myt.initial_position = myt.position
 
             #  Reset the parameters
