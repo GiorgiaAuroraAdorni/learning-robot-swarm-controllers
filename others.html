@@ -160,7 +160,13 @@
 <dl class="py function">
 <dt id="utils.my_plots.plot_compared_distance_compressed">
 <code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_compared_distance_compressed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset_folders</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">datasets</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">absolute</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_compared_distance_compressed" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Limits on x and y axes have not yet been fixed.
+Their value depends if it is used <code class="docutils literal notranslate"><span class="pre">goal_position_distance</span></code> or
+<code class="docutils literal notranslate"><span class="pre">goal_position_distance_absolute</span></code>.</p>
+</div>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset_folders</strong> – directory containing the simulation runs</p></li>
@@ -312,6 +318,20 @@
 <li><p><strong>img_dir</strong> – path where to save the image</p></li>
 <li><p><strong>make_space</strong> – if make space above the image</p></li>
 <li><p><strong>axes</strong> – axes of the image</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utils.my_plots.test_controller_given_init_positions">
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">test_controller_given_init_positions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_img</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">net_input</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.test_controller_given_init_positions" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_img</strong> – directory for the output image of the model</p></li>
+<li><p><strong>model</strong> – name of the model</p></li>
+<li><p><strong>net_input</strong> – input of the network (between: prox_values, prox_comm and all_sensors)</p></li>
 </ul>
 </dd>
 </dl>

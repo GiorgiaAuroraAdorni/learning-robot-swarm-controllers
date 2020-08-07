@@ -198,7 +198,12 @@ The Tanh non-linear activation function is applied to the first and the second l
 <dl class="py method">
 <dt id="networks.communication_network.CommunicationNet.step">
 <code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xs</span></em>, <em class="sig-param"><span class="n">comm</span></em>, <em class="sig-param"><span class="n">sync</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#networks.communication_network.Sync" title="networks.communication_network.Sync">networks.communication_network.Sync</a></span></em>, <em class="sig-param"><span class="n">sim</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">i</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#networks.communication_network.CommunicationNet.step" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p>Sync of types ‘random’, ‘sequential’ and ‘random_sequential’
+are actually not working in simulation.</p>
+</div>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>xs</strong> – input sensing of a certain timestep (shape: 1 x N x sensing)</p></li>
@@ -563,24 +568,6 @@ Train the model and save it.</p>
 <li><p><strong>x_train</strong> – train input</p></li>
 <li><p><strong>y_valid</strong> – validation output</p></li>
 <li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="network_evaluation.test_controller_given_init_positions">
-<code class="sig-prename descclassname">network_evaluation.</code><code class="sig-name descname">test_controller_given_init_positions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_img</span></em>, <em class="sig-param"><span class="n">net</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">communication</span></em>, <em class="sig-param"><span class="n">controllers</span></em><span class="sig-paren">)</span><a class="headerlink" href="#network_evaluation.test_controller_given_init_positions" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model_img</strong> – directory for the output image of the model</p></li>
-<li><p><strong>net</strong> – model used</p></li>
-<li><p><strong>model</strong> – name of the model</p></li>
-<li><p><strong>net_input</strong> – input of the network (between: prox_values, prox_comm and all_sensors)</p></li>
-<li><p><strong>goal</strong> – task to perform (in this case distribute)</p></li>
-<li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
-<li><p><strong>controllers</strong> – reference to the controller class</p></li>
 </ul>
 </dd>
 </dl>
