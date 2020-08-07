@@ -439,7 +439,7 @@ class GenerateSimulationData:
             goal = 'colour'
             net_input = None
 
-        extension = False
+        extension = True
 
         for n_sim in tqdm(range(n_simulations)):
             # if the number of agents is not defined randomly generate a simulation with N robots with N \in [5, 10]

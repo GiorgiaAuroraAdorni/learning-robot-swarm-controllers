@@ -1,11 +1,9 @@
 import numpy as np
 import pandas as pd
 import torch
-import tqdm
 
-from utils import utils
 from utils import my_plots
-from generate_simulation_data import GenerateSimulationData as g
+from utils import utils
 from utils.utils import ThymioState
 
 
@@ -204,47 +202,6 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     my_plots.plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
 
 
-def test_controller_given_init_positions(model_img, net, model, net_input, goal, communication, controllers):
-    """
-
-    :param model_img: directory for the output image of the model
-    :param net: model used
-    :param model: name of the model
-    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
-    :param goal: task to perform (in this case distribute)
-    :param communication: states if the communication is used by the network
-    :param controllers: reference to the controller class
-    """
-    myt_quantity = 3
-
-    def controller_factory(**kwargs):
-        return controllers.LearnedController(net=net, net_input=net_input, name='learned', goal=goal, N=1,
-                                             communication=communication, **kwargs)
-
-    # FIXME do not use simulation
-    world, myts = g.setup(controller_factory, myt_quantity)
-
-    simulations = 17 * 10
-
-    range = 48
-
-    x = np.linspace(0, range, num=simulations)
-    control_predictions = []
-
-    for simulation in tqdm.tqdm(x):
-        g.init_positions(myts, net_input, range/2, variate_pose=True, x=simulation)
-
-        world.step(dt=0.1)
-        control = myts[1].motor_left_target
-        control_predictions.append(control)
-
-    title = 'Response %s by varying init position' % model
-    file_name = 'response-%s-varying_init_position' % model
-
-    # Plot the output of the network
-    my_plots.plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
-
-
 def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication, net_input, avg_gap=None, task='Task1'):
     """
 
@@ -307,6 +264,3 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
             sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
             evaluate_net(model_img, model, net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
                          'rear proximity sensors', goal, communication, controllers)
-
-        # Evaluate the learned controller by passing a specific initial position configuration
-        test_controller_given_init_positions(model_img, net, model, net_input, goal, communication, controllers)

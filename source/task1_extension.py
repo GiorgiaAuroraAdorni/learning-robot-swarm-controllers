@@ -219,7 +219,9 @@ if __name__ == '__main__':
                                    'omniscient', 'manual', communication, net_input=args.net_input, task=args.task)
 
     if args.compare_all:
-        from utils.my_plots import plot_compared_distance_from_goal, plot_compared_distance_compressed
+        from utils.my_plots import plot_compared_distance_from_goal, plot_compared_distance_compressed, \
+            test_controller_given_init_positions
+
         print('\nGenerating comparison plots among all datasets of type %s…' % (args.net_input))
         runs_img_dir = os.path.join(d, 'images')
         dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist, runs_dir_learned_comm]
@@ -231,6 +233,8 @@ if __name__ == '__main__':
         plot_compared_distance_compressed(dataset_folders, runs_img_dir, datasets,
                                          'Robot distances from goal - %s' % (args.net_input),
                                          'distances-from-goal-compressed')
+        # Evaluate the learned controller by passing a specific initial position configuration
+        test_controller_given_init_positions(runs_img_dir, args.model, args.net_input)
 
     if args.generate_animations:
         from utils.my_plots import animate_simulation, plot_simulations
@@ -239,8 +243,7 @@ if __name__ == '__main__':
         animations_dir = os.path.join(d, 'animations')
         check_dir(animations_dir)
 
-        # create a simulation for each of the controller using the same initial position
-
+        # Create a simulation for each of the controller using the same initial position
         myt_quantity = 8
         initial_positions = [0, 14, 59, 104, 135, 173, 203, 214]
 
@@ -248,7 +251,7 @@ if __name__ == '__main__':
         check_dir(dir1)
 
         out_dirs = generate_fake_simulations(dir1, args.model, initial_positions, myt_quantity)
-        # animate_simulation(out_dirs, myt_quantity)
+        animate_simulation(out_dirs, myt_quantity)
         plot_simulations(out_dirs, myt_quantity)
 
         myt_quantity = 5
