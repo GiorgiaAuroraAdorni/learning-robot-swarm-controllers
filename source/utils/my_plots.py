@@ -129,6 +129,7 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename, 
 
     positions = []
     timesteps = []
+    max_time_step = None
 
     for el in dataset_folders:
         runs = utils.utils.load_dataset(el, 'simulation.pkl')
@@ -371,7 +372,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
         axes[1].plot(time_steps, mean_myt2_sensing, label=s)  # , color='black')
         axes[1].fill_between(time_steps,
                              mean_myt2_sensing - std_myt2_sensing,
-                             mean_myt2_sensing+ std_myt2_sensing,
+                             mean_myt2_sensing + std_myt2_sensing,
                              alpha=0.2)
     axes[1].legend(loc='lower center', fontsize='small', bbox_to_anchor=(0.5, -0.23),
                    ncol=len(proximity_sensors), title="proximity sensor")
@@ -1138,6 +1139,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
     from controllers import controllers_task1 as controllers
 
     myt_quantity = 3
+    min_distance = 10.9
 
     omniscient_controller_factory = g.get_controller('omniscient', controllers, 'distribute', 1, net_input)
 
@@ -1152,26 +1154,58 @@ def test_controller_given_init_positions(model_img, model, net_input):
                             (manual_controller_factory, 'manual'),
                             (distributed_controller_factory, 'distributed')]
 
-    for factory, name in controller_factories:
+    controllers_predictions = []
+    std_controllers_predictions = []
+
+    simulations = 17 * 10
+    max_range = 48
+    x = np.linspace(0, max_range, num=simulations)
+
+    for factory, _ in controller_factories:
         world, myts = g.setup(factory, myt_quantity)
 
-        simulations = 17 * 10
-
-        range = 48
-
-        x = np.linspace(0, range, num=simulations)
         control_predictions = []
+        std_control_predictions = []
 
         for simulation in tqdm.tqdm(x):
-            g.init_positions(myts, net_input, range/2, variate_pose=True, x=simulation)
+            control_prediction = []
 
-            world.step(dt=0.1)
-            control = myts[1].motor_left_target
-            control_predictions.append(control)
+            for _ in range(100):
+                epsilon = np.random.uniform(-0.5, 0.5)
+                g.init_positions(myts, net_input, max_range/2, variate_pose=True, x=simulation, epsilon=epsilon)
 
-        title = 'Response %s by varying init position - %s' % (model, name)
-        file_name = 'response-%s-varying_init_position-%s' % (model, name)
+                world.step(dt=0.1)
+                control = myts[1].motor_left_target
+                control_prediction.append(control)
 
-        # Plot the output of the network
-        utils.utils.check_dir(model_img)
-        plot_response(x, control_predictions, 'init avg gap', model_img, title, file_name)
+            prediction = np.mean(control_prediction)
+            std_prediction = np.std(control_prediction)
+
+            control_predictions.append(prediction)
+            std_control_predictions.append(std_prediction)
+
+        controllers_predictions.append(control_predictions)
+        std_controllers_predictions.append(std_control_predictions)
+
+    title = 'Controllers response by varying init position - %s' % model
+    file_name = 'controllers-response-varying_init_position-%s' % model
+
+    # Plot the output of the network
+    utils.utils.check_dir(model_img)
+
+    plt.figure()
+    plt.xlabel('x position', fontsize=11)
+    plt.ylabel('control', fontsize=11)
+    plt.xticks(np.linspace(0 + min_distance, max_range + min_distance, 9), rotation=45, ha="right")
+
+    for idx, el in enumerate(controllers_predictions):
+        plt.plot(x + min_distance, el, label='%s mean' % controller_factories[idx][1])
+        plt.fill_between(x + min_distance,
+                         np.array(el) - np.array(std_controllers_predictions[idx]),
+                         np.array(el) + np.array(std_controllers_predictions[idx]),
+                         alpha=0.2, label='%s +/- 1 std' % controller_factories[idx][1])
+
+    plt.title(title, weight='bold', fontsize=12)
+    plt.legend(loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.4), ncol=2)
+    plt.grid()
+    save_visualisation(file_name, model_img)

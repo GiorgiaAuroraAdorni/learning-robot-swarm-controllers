@@ -45,7 +45,7 @@ class GenerateSimulationData:
         return world, myts
 
     @classmethod
-    def init_positions(cls, myts, net_input, avg_gap, variate_pose=False, min_distance=10.9, extension=False, x=None):
+    def init_positions(cls, myts, net_input, avg_gap, variate_pose=False, min_distance=10.9, extension=False, x=None, epsilon=None):
         """
         Given the agents, position them such as all x-axes are aligned.
         Arrange the robots in a "single file" (all x-axes aligned) and within the proximity sensor range
@@ -123,12 +123,17 @@ class GenerateSimulationData:
 
         for i, myt in enumerate(myts):
             # Position the first and last robot at a fixed distance
-            myt.position = (initial_positions[i], 0)
+            if variate_pose:
+                myt.position = (initial_positions[i] + epsilon, epsilon)
+                myt.angle = epsilon
+            else:
+                myt.position = (initial_positions[i], 0)
+                myt.angle = 0
+
             myt.initial_position = myt.position
 
             #  Reset the parameters
             myt.dictionary = None
-            myt.angle = 0
             myt.goal_position = (goal_positions[i], 0)
 
             if myt.colour is not None:

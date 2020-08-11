@@ -233,7 +233,9 @@ if __name__ == '__main__':
         plot_compared_distance_compressed(dataset_folders, runs_img_dir, datasets,
                                          'Robot distances from goal - %s' % (args.net_input),
                                          'distances-from-goal-compressed')
-        # Evaluate the learned controller by passing a specific initial position configuration
+
+        # Evaluate the learned controllers by passing a specific initial position configuration and compare them with
+        # the omniscient and the manual controllers
         test_controller_given_init_positions(runs_img_dir, args.model, args.net_input)
 
     if args.generate_animations:
