@@ -1137,6 +1137,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
     """
     from generate_simulation_data import GenerateSimulationData as g
     from controllers import controllers_task1 as controllers
+    import matplotlib.patches as mpatches
 
     myt_quantity = 3
     min_distance = 10.9
@@ -1150,11 +1151,10 @@ def test_controller_given_init_positions(model_img, model, net_input):
                                                       model=model, model_dir=distributed_net_dir,
                                                       communication=False)
 
-    controller_factories = [omniscient_controller_factory,
-                            manual_controller_factory,
-                            distributed_controller_factory]
-
-    controller_factorie_names = ['omniscient', 'manual', 'distributed', 'distributed (control * 5)']
+    controller_factories = [(omniscient_controller_factory, 'omniscient'),
+                            (manual_controller_factory, 'manual'),
+                            (distributed_controller_factory, 'distributed'),
+                            (distributed_controller_factory, 'distributed (control * 5)')]
 
     controllers_predictions = []
     std_controllers_predictions = []
@@ -1163,7 +1163,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
     max_range = 48
     x = np.linspace(0, max_range, num=simulations)
 
-    for factory in controller_factories:
+    for factory, name in controller_factories:
         world, myts = g.setup(factory, myt_quantity)
 
         control_predictions = []
@@ -1178,6 +1178,10 @@ def test_controller_given_init_positions(model_img, model, net_input):
 
                 world.step(dt=0.1)
                 control = myts[1].motor_left_target
+
+                if name == 'distributed (control * 5)':
+                    control = control * 5
+
                 control = min(max(-16.6, control), 16.6)
                 control_prediction.append(control)
 
@@ -1201,19 +1205,28 @@ def test_controller_given_init_positions(model_img, model, net_input):
     plt.ylabel('control', fontsize=11)
     plt.xticks(np.linspace(0 + min_distance, max_range + min_distance, 9), rotation=45, ha="right")
 
-    for idx, el in enumerate(controller_factorie_names):
-        if el == 'distributed (control * 5)':
-            y = np.array(controllers_predictions[idx - 1]) * 5
-            std = np.array(std_controllers_predictions[idx - 1]) * 5
-        else:
-            y = np.array(controllers_predictions[idx])
-            std = np.array(std_controllers_predictions[idx])
+    for idx, el in enumerate(controllers_predictions):
+        y = np.array(el)
+        std = np.array(std_controllers_predictions[idx])
 
-        plt.plot(x + min_distance, y.clip(-16.6, 16.6), label='%s mean' % el)
-        plt.fill_between(x + min_distance, (y - std).clip(-16.6, 16.6), (y + std).clip(-16.6, 16.6),
-                         alpha=0.2, label='%s +/- 1 std' % el)
+        plt.plot(x + min_distance, y, label=controller_factories[idx][1])
+        plt.fill_between(x + min_distance,
+                         (y - std).clip(-16.6, 16.6),
+                         (y + std).clip(-16.6, 16.6),
+                         alpha=0.2, label=controller_factories[idx][1])
 
     plt.title(title, weight='bold', fontsize=12)
-    plt.legend(loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=2)
+
+    colors = ["w", "w"]
+    texts = ["mean", "+/- 1 std"]
+    patches = [mpatches.Patch(color=colors[i], label="{:s}".format(texts[i])) for i in range(len(texts))]
+
+    ax = plt.gca()
+    handles, labels = ax.get_legend_handles_labels()
+
+    handles = [patches[0], handles[0], handles[1], handles[2], handles[3], patches[1], handles[4], handles[5], handles[6], handles[7]]
+    labels = [texts[0], labels[0], labels[1], labels[2], labels[3], texts[1], labels[4], labels[5], labels[6], labels[7]]
+
+    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.55), ncol=2)
     plt.grid()
     save_visualisation(file_name, model_img)
