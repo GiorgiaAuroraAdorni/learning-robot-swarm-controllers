@@ -1150,18 +1150,20 @@ def test_controller_given_init_positions(model_img, model, net_input):
                                                       model=model, model_dir=distributed_net_dir,
                                                       communication=False)
 
-    controller_factories = [(omniscient_controller_factory, 'omniscient'),
-                            (manual_controller_factory, 'manual'),
-                            (distributed_controller_factory, 'distributed')]
+    controller_factories = [omniscient_controller_factory,
+                            manual_controller_factory,
+                            distributed_controller_factory]
+
+    controller_factorie_names = ['omniscient', 'manual', 'distributed', 'distributed (control * 5)']
 
     controllers_predictions = []
     std_controllers_predictions = []
 
-    simulations = 17 * 10
+    simulations = 10 * 10
     max_range = 48
     x = np.linspace(0, max_range, num=simulations)
 
-    for factory, _ in controller_factories:
+    for factory in controller_factories:
         world, myts = g.setup(factory, myt_quantity)
 
         control_predictions = []
@@ -1176,6 +1178,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
 
                 world.step(dt=0.1)
                 control = myts[1].motor_left_target
+                control = min(max(-16.6, control), 16.6)
                 control_prediction.append(control)
 
             prediction = np.mean(control_prediction)
@@ -1198,14 +1201,19 @@ def test_controller_given_init_positions(model_img, model, net_input):
     plt.ylabel('control', fontsize=11)
     plt.xticks(np.linspace(0 + min_distance, max_range + min_distance, 9), rotation=45, ha="right")
 
-    for idx, el in enumerate(controllers_predictions):
-        plt.plot(x + min_distance, el, label='%s mean' % controller_factories[idx][1])
-        plt.fill_between(x + min_distance,
-                         np.array(el) - np.array(std_controllers_predictions[idx]),
-                         np.array(el) + np.array(std_controllers_predictions[idx]),
-                         alpha=0.2, label='%s +/- 1 std' % controller_factories[idx][1])
+    for idx, el in enumerate(controller_factorie_names):
+        if el == 'distributed (control * 5)':
+            y = np.array(controllers_predictions[idx - 1]) * 5
+            std = np.array(std_controllers_predictions[idx - 1]) * 5
+        else:
+            y = np.array(controllers_predictions[idx])
+            std = np.array(std_controllers_predictions[idx])
+
+        plt.plot(x + min_distance, y.clip(-16.6, 16.6), label='%s mean' % el)
+        plt.fill_between(x + min_distance, (y - std).clip(-16.6, 16.6), (y + std).clip(-16.6, 16.6),
+                         alpha=0.2, label='%s +/- 1 std' % el)
 
     plt.title(title, weight='bold', fontsize=12)
-    plt.legend(loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.4), ncol=2)
+    plt.legend(loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=2)
     plt.grid()
     save_visualisation(file_name, model_img)
