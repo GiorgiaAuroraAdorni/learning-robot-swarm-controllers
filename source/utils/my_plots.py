@@ -1159,7 +1159,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
     controllers_predictions = []
     std_controllers_predictions = []
 
-    simulations = 10 * 10
+    simulations = 1 * 10
     max_range = 48
     x = np.linspace(0, max_range, num=simulations)
 
@@ -1203,7 +1203,6 @@ def test_controller_given_init_positions(model_img, model, net_input):
     plt.figure()
     plt.xlabel('x position', fontsize=11)
     plt.ylabel('control', fontsize=11)
-    plt.xticks(np.linspace(0 + min_distance, max_range + min_distance, 9), rotation=45, ha="right")
 
     for idx, el in enumerate(controllers_predictions):
         y = np.array(el)
@@ -1228,5 +1227,29 @@ def test_controller_given_init_positions(model_img, model, net_input):
     labels = [texts[0], labels[0], labels[1], labels[2], labels[3], texts[1], labels[4], labels[5], labels[6], labels[7]]
 
     plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.55), ncol=2)
-    plt.grid()
+
+    major_xticks = [(max_range + min_distance * 2) / 2]
+    minor_xticks = np.linspace(0 + min_distance, max_range + min_distance, 9)
+    minor_xticks = np.setdiff1d(minor_xticks, major_xticks)
+    major_yticks = [0]
+    minor_yticks = np.round(np.linspace(-16.6, 16.6, 7), 2)
+    minor_yticks = np.setdiff1d(minor_yticks, major_yticks)
+
+    ax.minorticks_on()
+
+    ax.set_xticks(major_xticks)
+    ax.set_yticks(major_yticks)
+
+    ax.set_xticks(minor_xticks, minor=True)
+    ax.set_yticks(minor_yticks, minor=True)
+
+    ax.set_xticklabels(minor_xticks, minor=True)
+    ax.set_yticklabels(minor_yticks, minor=True)
+
+    ax.tick_params(axis='x', which='both', labelrotation=45, labelright=True)
+    ax.tick_params(axis='y', which='both')
+
+    # Specify different settings for major and minor grids
+    ax.grid(which='major')
+
     save_visualisation(file_name, model_img)
