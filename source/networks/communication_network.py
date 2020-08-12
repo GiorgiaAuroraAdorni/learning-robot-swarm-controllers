@@ -84,9 +84,15 @@ class SingleNet(nn.Module):
     """
     def __init__(self, input_size):
         super(SingleNet, self).__init__()
-        self.fc1 = torch.nn.Linear(input_size + 2, 22)  # (7 + 2) or (14 + 2)
+        # self.fc1 = torch.nn.Linear(input_size + 2, 22)  # (7 + 2) or (14 + 2)
+        # self.tanh = torch.nn.Tanh()
+        # self.fc2 = torch.nn.Linear(22, 2)
+        # self.sigmoid = torch.nn.Sigmoid()
+
+        self.fc1 = torch.nn.Linear(input_size + 2, 10)
         self.tanh = torch.nn.Tanh()
-        self.fc2 = torch.nn.Linear(22, 2)
+        self.fc2 = torch.nn.Linear(10, 10)
+        self.fc3 = torch.nn.Linear(10, 2)
         self.sigmoid = torch.nn.Sigmoid()
 
     def forward(self, in_put):
@@ -95,9 +101,15 @@ class SingleNet(nn.Module):
                        (can be multidimensional, that means a row for each robot)
         :return output: output of the network containing the control and the message to communicate (shape: 1 x 2)
         """
+        # hidden = self.fc1(in_put)
+        # tanh = self.tanh(hidden)
+        # output = self.fc2(tanh)
+
         hidden = self.fc1(in_put)
         tanh = self.tanh(hidden)
-        output = self.fc2(tanh)
+        hidden2 = self.fc2(tanh)
+        tanh2 = self.tanh(hidden2)
+        output = self.fc3(tanh2)
 
         # Convert the communication in values between 0 and 1 using the Sigmoid activation function
         speed = output[:, 0, None]
