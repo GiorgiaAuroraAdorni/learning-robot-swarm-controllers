@@ -51,7 +51,7 @@ class DistributedThymio2(pyenki.Thymio2):
 
         self.colour = None
 
-        if self.index > (self.controller.N / 2) - 1:
+        if self.index > (self.controller.N // 2):
             self.goal_colour = 0  # red
         else:
             self.goal_colour = 1  # blue
