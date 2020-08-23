@@ -219,16 +219,12 @@ if __name__ == '__main__':
                                    'omniscient', 'manual', communication, net_input=args.net_input, task=args.task)
 
     if args.compare_all:
-        from utils.my_plots import plot_compared_distance_from_goal, plot_compared_distance_compressed, \
-            test_controller_given_init_positions
+        from utils.my_plots import plot_compared_distance_compressed, test_controller_given_init_positions
 
         print('\nGenerating comparison plots among all datasets of type %s…' % (args.net_input))
         runs_img_dir = os.path.join(d, 'images')
         dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist, runs_dir_learned_comm]
         datasets = ['omniscient', 'manual', 'distributed', 'communication']
-
-        plot_compared_distance_from_goal(dataset_folders, runs_img_dir,
-                                         'Robot distances from goal - %s' % (args.net_input), 'distances-from-goal')
 
         plot_compared_distance_compressed(dataset_folders, runs_img_dir, datasets,
                                          'Robot distances from goal - %s' % (args.net_input),
@@ -263,7 +259,7 @@ if __name__ == '__main__':
         check_dir(dir2)
 
         out_dirs = generate_fake_simulations(dir2, args.model, initial_positions, myt_quantity)
-        # animate_simulation(out_dirs, myt_quantity)
+        animate_simulation(out_dirs, myt_quantity)
         plot_simulations(out_dirs, myt_quantity)
 
         myt_quantity = 6
@@ -273,5 +269,5 @@ if __name__ == '__main__':
         check_dir(dir3)
 
         out_dirs = generate_fake_simulations(dir3, args.model, initial_positions, myt_quantity)
-        # animate_simulation(out_dirs, myt_quantity)
+        animate_simulation(out_dirs, myt_quantity)
         plot_simulations(out_dirs, myt_quantity)
