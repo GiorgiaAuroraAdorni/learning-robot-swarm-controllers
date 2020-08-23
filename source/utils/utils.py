@@ -593,15 +593,15 @@ def generate_fake_simulations(run_dir, model, initial_positions, myt_quantity):
                                                       model=model, model_dir=distributed_net_dir,
                                                       communication=False)
 
-    # communication_net_dir = os.path.join('models', 'task1', 'communication', model)
-    # communication_controller_factory = g.get_controller('learned', controllers, goal, myt_quantity, net_input,
-    #                                                     model=model, model_dir=communication_net_dir,
-    #                                                     communication=True)
+    communication_net_dir = os.path.join('models', 'task1', 'communication', model)
+    communication_controller_factory = g.get_controller('learned', controllers, goal, myt_quantity, net_input,
+                                                        model=model, model_dir=communication_net_dir,
+                                                        communication=True)
 
     controller_factories = [(omniscient_controller_factory, 'omniscient'),
                             (manual_controller_factory, 'manual'),
-                            (distributed_controller_factory, 'distributed')]#,
-                            # (communication_controller_factory, 'communication')]
+                            (distributed_controller_factory, 'distributed'),
+                            (communication_controller_factory, 'communication')]
 
     out_dirs = []
     for factory, name in controller_factories:

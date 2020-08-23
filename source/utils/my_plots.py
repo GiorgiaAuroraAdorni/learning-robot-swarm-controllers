@@ -125,7 +125,7 @@ def plot_compared_distance_from_goal(dataset_folders, img_dir, title, filename, 
     """
 
     utils.utils.check_dir(img_dir)
-    datasets = ['omniscient', 'manual', 'distributed', 'communication']
+    datasets = ['omniscient', 'manual', 'distributed', 'distributed (control * 5)', 'communication', 'communication (control * 5)']
 
     positions = []
     timesteps = []
@@ -766,6 +766,7 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
 
     positions = []
     timesteps = []
+    max_timestep = 0
 
     for el in dataset_folders:
 
@@ -777,6 +778,9 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
 
         position_distances = get_position_distances(runs_sub, with_run=True)
         max_time_step = runs_sub['timestep'].max()
+        if max_time_step > max_timestep:
+            max_timestep = max_time_step
+
         time_steps = np.arange(max_time_step)
 
         positions.append(position_distances)
@@ -798,9 +802,15 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
         q4 = position_distances.quantile(0.90).squeeze()
         median = position_distances.median().squeeze()
 
-        ln, = plt.plot(timesteps[d_idx], median, label='median (%s)' % d)
-        plt.fill_between(timesteps[d_idx], q1, q2, alpha=0.2, label='interquartile range (%s)' % d, color=ln.get_color())
-        plt.fill_between(timesteps[d_idx], q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
+        median = np.pad(median, ((0, max_timestep - len(median))), mode='edge')
+        q1 = np.pad(q1, ((0, max_timestep - len(q1))), mode='edge')
+        q2 = np.pad(q2, ((0, max_timestep - len(q2))), mode='edge')
+        q3 = np.pad(q3, ((0, max_timestep - len(q3))), mode='edge')
+        q4 = np.pad(q4, ((0, max_timestep - len(q4))), mode='edge')
+
+        ln, = plt.plot(np.arange(max_timestep), median, label='median (%s)' % d)
+        plt.fill_between(np.arange(max_timestep), q1, q2, alpha=0.2, label='interquartile range (%s)' % d, color=ln.get_color())
+        plt.fill_between(np.arange(max_timestep), q3, q4, alpha=0.1, label='interdecile range (%s)' % d, color=ln.get_color())
 
     # FIXME
     # plt.xlim(0, 17)
@@ -991,8 +1001,13 @@ def animate_simulation(out_dirs, myt_quantity):
     lines = []
     inits_l = np.full([32, max_timestep], np.nan)
 
+    # colours = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
+    # labels = ['omniscient controller', 'manual controller', 'distributed controller', 'distributed controller (* 5)',
+    #           'communication controller', 'communication controller (* 5)']
+
     colours = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
     labels = ['omniscient controller', 'manual controller', 'distributed controller', 'communication controller']
+
     for c, controller in enumerate(run_states):
         for i, name in enumerate(controller.name.unique()):
             if i == 0 or i == myt_quantity - 1:
@@ -1006,14 +1021,17 @@ def animate_simulation(out_dirs, myt_quantity):
 
             x = np.array(controller[controller['name'] == name].apply(lambda row: list(row.position)[0], axis=1))
             x = np.pad(x, ((0, len(timesteps) - len(x))), mode='edge')
-            line, = ax.plot(timesteps, x, color=colour, label=label, alpha=alpha)
+            if name == 'distributed controller (* 5)' or name == 'communication controller (* 5)':
+                line, = ax.plot(timesteps, x, color=colour, label=label, alpha=alpha, ls='--')
+            else:
+                line, = ax.plot(timesteps, x, color=colour, label=label, alpha=alpha)
 
             xs.append(x)
             lines.append(line)
 
     handles, labels = ax.get_legend_handles_labels()
-    handles = [handles[0], handles[6], handles[12]]#, handles[18]]
-    labels = [labels[0], labels[6], labels[12]]#, labels[18]]
+    handles = [handles[0], handles[6], handles[12], handles[18]] #, handles[24], handles[30]] #FIXME
+    labels = [labels[0], labels[6], labels[12], labels[18]] #, labels[24], labels[30]]
 
     lgd = ax.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=2)
 
@@ -1057,19 +1075,18 @@ def plot_simulations(out_dirs, myt_quantity):
 
     timesteps = np.arange(max_timestep)
 
-    colours = ['tab:blue', 'tab:orange', 'tab:green']#, 'tab:red']
-    labels = ['omniscient controller', 'manual controller', 'distributed controller']#, 'communication controller']
+    colours = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
+    labels = ['omniscient controller', 'manual controller', 'distributed controller', 'communication controller']
 
     thymio_names = []
     for i in range(myt_quantity):
         thymio_names.append('myt%d' % (i + 1))
 
-    # fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(figsize=(10.8, 6.8), constrained_layout=True, nrows=2, ncols=2)
-    fig, axes = plt.subplots(figsize=(6.8, 10.8), constrained_layout=True, nrows=3)
-    # axes = [ax1, ax2, ax3, ax4]
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(figsize=(10.8, 6.8), constrained_layout=True, nrows=2, ncols=2)
+    # fig, axes = plt.subplots(figsize=(6.8, 10.8), constrained_layout=True, nrows=3)
+    axes = [ax1, ax2, ax3, ax4]
 
     for c, controller in enumerate(run_states):
-
         axes[c].set_title('%s' % labels[c], weight='bold', fontsize=12)
 
         for i, name in enumerate(controller.name.unique()):
@@ -1142,24 +1159,31 @@ def test_controller_given_init_positions(model_img, model, net_input):
     myt_quantity = 3
     min_distance = 10.9
 
-    omniscient_controller_factory = g.get_controller('omniscient', controllers, 'distribute', 1, net_input)
+    omniscient_controller_factory = g.get_controller('omniscient', controllers, 'distribute', 3, net_input)
 
-    manual_controller_factory = g.get_controller('manual', controllers, 'distribute', 1, net_input)
+    manual_controller_factory = g.get_controller('manual', controllers, 'distribute', 3, net_input)
 
     distributed_net_dir = os.path.join('models', 'task1', 'distributed', model)
-    distributed_controller_factory = g.get_controller('learned', controllers, 'distribute', 1, net_input,
+    distributed_controller_factory = g.get_controller('learned', controllers, 'distribute', 3, net_input,
                                                       model=model, model_dir=distributed_net_dir,
                                                       communication=False)
+
+    communication_net_dir = os.path.join('models', 'task1', 'communication', model)
+    communication_controller_factory = g.get_controller('learned', controllers, 'distribute', 3, net_input,
+                                                        model=model, model_dir=communication_net_dir,
+                                                        communication=True)
 
     controller_factories = [(omniscient_controller_factory, 'omniscient'),
                             (manual_controller_factory, 'manual'),
                             (distributed_controller_factory, 'distributed'),
-                            (distributed_controller_factory, 'distributed (control * 5)')]
+                            (distributed_controller_factory, 'distributed (control * 5)'),
+                            (communication_controller_factory, 'communication'),
+                            (communication_controller_factory, 'communication (control * 5)')]
 
     controllers_predictions = []
     std_controllers_predictions = []
 
-    simulations = 1 * 10
+    simulations = 10 * 10
     max_range = 48
     x = np.linspace(0, max_range, num=simulations)
 
@@ -1179,7 +1203,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
                 world.step(dt=0.1)
                 control = myts[1].motor_left_target
 
-                if name == 'distributed (control * 5)':
+                if name == 'distributed (control * 5)' or name == 'communication (control * 5)':
                     control = control * 5
 
                 control = min(max(-16.6, control), 16.6)
@@ -1208,11 +1232,14 @@ def test_controller_given_init_positions(model_img, model, net_input):
         y = np.array(el)
         std = np.array(std_controllers_predictions[idx])
 
-        plt.plot(x + min_distance, y, label=controller_factories[idx][1])
+        if controller_factories[idx][1] == 'distributed (control * 5)' or controller_factories[idx][1] == 'communication (control * 5)':
+            plt.plot(x + min_distance, y, label=controller_factories[idx][1], ls='--')
+        else:
+            plt.plot(x + min_distance, y, label=controller_factories[idx][1])
         plt.fill_between(x + min_distance,
                          (y - std).clip(-16.6, 16.6),
                          (y + std).clip(-16.6, 16.6),
-                         alpha=0.2, label=controller_factories[idx][1])
+                         alpha=0.15, label=controller_factories[idx][1])
 
     plt.title(title, weight='bold', fontsize=12)
 
@@ -1223,10 +1250,12 @@ def test_controller_given_init_positions(model_img, model, net_input):
     ax = plt.gca()
     handles, labels = ax.get_legend_handles_labels()
 
-    handles = [patches[0], handles[0], handles[1], handles[2], handles[3], patches[1], handles[4], handles[5], handles[6], handles[7]]
-    labels = [texts[0], labels[0], labels[1], labels[2], labels[3], texts[1], labels[4], labels[5], labels[6], labels[7]]
+    handles = [patches[0], handles[0], handles[1], handles[2], handles[3], handles[4], handles[5],
+               patches[1], handles[6], handles[7], handles[8], handles[9], handles[10], handles[11]]
+    labels = [texts[0], labels[0], labels[1], labels[2], labels[3], labels[4], labels[5],
+              texts[1], labels[6], labels[7], labels[8], labels[9], labels[10], labels[11]]
 
-    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.55), ncol=2)
+    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.7), ncol=2)
 
     major_xticks = [(max_range + min_distance * 2) / 2]
     minor_xticks = np.linspace(0 + min_distance, max_range + min_distance, 9)
