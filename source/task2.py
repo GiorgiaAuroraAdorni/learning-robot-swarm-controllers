@@ -9,19 +9,19 @@ def parse_args():
 
     :return args
     """
-    parser = argparse.ArgumentParser(description='Imitation Learning - Distributed Controller No Communication')
+    parser = argparse.ArgumentParser(description='Imitation Learning - Task 2 with Communication')
 
     parser.add_argument('--gui', action="store_true",
                         help='Run simulation using the gui (default: False)')
-    parser.add_argument('--myt-quantity', type=int, default=6, metavar='N',
-                        help='Number of thymios for the simulation (default: 6)')
     parser.add_argument('--n-simulations', type=int, default=1000, metavar='N',
                         help='Number of runs for each simulation (default: 1000)')
     parser.add_argument('--task', default='task2', choices=['task1', 'task2'],
                         help='Choose the task to perform in the current execution between task1 and task2 (default: task2)')
 
-    parser.add_argument('--avg-gap', type=int, default=8, metavar='N',
-                        help='Average gap distance between thymios (default: 8)')
+    parser.add_argument('--myt-quantity', type=str, default='variable',
+                        help='Number of thymios for the simulation (default: variable)')
+    parser.add_argument('--avg-gap', type=str, default='variable',
+                        help='Average gap distance between thymios (default: variable)')
 
     parser.add_argument('--generate-dataset', action="store_true",
                         help='Generate the dataset containing the simulations (default: False)')
@@ -35,6 +35,8 @@ def parse_args():
     parser.add_argument('--compare-all', action="store_true",
                         help='Generate plots that compare all the experiments in terms of distance from goal '
                              '(default: False)')
+    parser.add_argument('--generate-animations', action="store_true",
+                        help='Generate animations that compare the controllers (default: False)')
 
     parser.add_argument('--controller', default='all', type=str,
                         help='Choose the controller for the current execution. Usually between all, learned, '
@@ -53,7 +55,9 @@ def parse_args():
 
     parser.add_argument('--train-net', action='store_true', help='Train the model (default: False)')
     parser.add_argument('--save-net', action='store_true', help='Save the model in onnx format (default: False)')
-
+    parser.add_argument('--net-input', default='all_sensors', choices=['prox_values', 'prox_comm', 'all_sensors'],
+                        help='Choose the input of the net between prox_values and prox_comm_events (default: '
+                             'all_sensors)')
     parser.add_argument('--plots-net', action="store_true",
                         help='Generate the plots of regarding the model (default: False)')
 
@@ -75,7 +79,7 @@ if __name__ == '__main__':
 
     runs_dir_omniscient = os.path.join(d, 'omniscient')
     runs_dir_manual = os.path.join(d, 'manual')
-    runs_dir_learned_dist = os.path.join(d, 'learned')
+    runs_dir_learned_comm = os.path.join(d, 'learned_communication')
 
     for c in controllers:
         run_dir, run_img_dir, run_video_dir = directory_for_dataset(d, c)
@@ -97,12 +101,14 @@ if __name__ == '__main__':
 
             if c == 'learned':
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=myt_quantity, args=args, model_dir=model_dir, model=args.model,
+                                        myt_quantity=None, args=args, model_dir=model_dir, model=args.model,
                                         communication=communication)
             else:
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=myt_quantity, args=args, communication=communication)
+                                        myt_quantity=None, args=args, communication=communication)
 
+        # TODO
+        #  add some plot for the dataset
         if args.train_net or args.plots_net:
             from utils.utils import prepare_dataset
 
@@ -113,4 +119,10 @@ if __name__ == '__main__':
                 from network_nosensing_training import network_train
                 network_train(indices, file_losses, runs_dir_omniscient, model_dir, args.model, communication,
                               save_net=args.save_net)
+
+            if args.plots_net:
+                from network_evaluation import network_evaluation
+                network_evaluation(indices, file_losses, runs_dir_omniscient, model_dir, args.model, model_img_dir,
+                                   'omniscient', 'manual', communication, net_input=args.net_input, task=args.task)
+
 

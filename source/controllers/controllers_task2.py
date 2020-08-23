@@ -1,8 +1,13 @@
 from utils import utils
+import os
+
+import numpy as np
+
+from controllers.pid import PID
 
 
 class ManualController:
-    def __init__(self, name, goal, N, **kwargs):
+    def __init__(self, name, goal, N, net_input, **kwargs):
         """
 
         :param name
@@ -15,6 +20,7 @@ class ManualController:
         self.name = name
         self.goal = goal
         self.N = N
+        self.net_input = net_input
 
     def perform_control(self, state, dt):
         """
@@ -41,44 +47,85 @@ class ManualController:
         else:
             communication = utils.get_received_communication(state, goal=self.goal)
 
+            # if no communication is received yet, do not send any message and colour the top led randomly
             if communication == [0, 0]:
-                # if no communication is received yet do not send any message and colour the top led randomly
                 colour = 2
                 message = 0
 
-            elif communication[0] == 0:
-                if communication[1] == self.N // 2:
-                    message = communication[1]
-                    # message = np.random.choice([communication[1], communication[1] - 1])
-                    colour = 1
-                else:
-                    message = communication[1] + 1
-                    colour = 0
-            elif communication[1] == 0:
-                if communication[0] == self.N // 2:
-                    message = communication[0]
-                    # message = np.random.choice([communication[0], communication[0] - 1])
-                    colour = 0
-                    # case of even robots
-                    if self.N % 2 == 1:
-                        colour = 1
-                else:
-                    message = communication[0] + 1
-                    colour = 1
+            # if some communication is received...
             else:
-                if communication[0] > communication[1]:
-                    colour = 0
-                    message = communication[1] + 1
-                elif communication[0] < communication[1]:
-                    colour = 1
-                    message = communication[0] + 1
-                else:
-                    if self.N % 2 == 1:
-                        colour = 1
-                        message = communication[0] + 1
+                # if the number of robots is odd
+                if self.N % 2 == 1:
+                    # if no communication is received from left...
+                    if communication[0] == 0:
+                        if communication[1] > self.N // 2:
+                            message = communication[1] - 1
+                            colour = 1
+                        elif communication[1] == self.N // 2:
+                            message = communication[1] + 1
+                            colour = 1
+                        else:
+                            message = communication[1] + 1
+                            colour = 0
+
+                    # if no communication is received from right...
+                    elif communication[1] == 0:
+                        if communication[0] > self.N // 2:
+                            message = communication[0] - 1
+                            colour = 0
+                        elif communication[0] == self.N // 2:
+                            message = communication[0] + 1
+                            colour = 1
+                        else:
+                            message = communication[0] + 1
+                            colour = 1
+
+                    # if the communication is received from both sides...
                     else:
-                        colour = 2
-                        message = 0
+                        if communication[0] > communication[1]:
+                            message = communication[1] + 1
+                            colour = 0
+                        else:
+                            message = communication[0] + 1
+                            colour = 1
+
+                # if the number of robots is even
+                elif self.N % 2 == 0:
+                    # if no communication is received from left...
+                    if communication[0] == 0:
+                        if communication[1] > self.N // 2:
+                            # WARNING
+                            #  message = communication[1] or communication[1] - 1
+                            message = communication[1]
+                            colour = 1
+                        else:
+                            message = communication[1] + 1
+                            colour = 0
+
+                    # if no communication is received from right...
+                    elif communication[1] == 0:
+                        if communication[0] < self.N // 2:
+                            message = communication[0] + 1
+                            colour = 1
+                        else:
+                            # WARNING
+                            #  message = communication[0] or communication[0] - 1
+                            message = communication[0]
+                            colour = 0
+
+                    # if the communication is received from both sides...
+                    else:
+                        if communication[0] > communication[1]:
+                            message = communication[1] + 1
+                            colour = 0
+                        elif communication[0] < communication[1]:
+                            message = communication[0] + 1
+                            colour = 1
+                        else:
+                            raise ValueError('This case should not happen. '
+                                             'The communication received cannot '
+                                             'be the same from left and right '
+                                             'since the number of agents is even.')
 
         return colour, int(message)
 
@@ -90,19 +137,21 @@ class OmniscientController:
     half with a colour and the others with another.
     """
 
-    def __init__(self, name, goal, N, **kwargs):
+    def __init__(self, name, goal, N, net_input, **kwargs):
         """
 
-        :param name
-        :param goal
-        :param N: number of thymios in the simulation
-        :param kwargs:
+        :param name: name of the controller used (in this case omniscient)
+        :param goal: task to perform (in this case distribute)
+        :param N: number of agents in the simulation
+        :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+        :param kwargs: other arguments
         """
         super().__init__(**kwargs)
 
         self.name = name
         self.goal = goal
         self.N = N
+        self.net_input = net_input
 
     def perform_control(self, state, dt):
         """
