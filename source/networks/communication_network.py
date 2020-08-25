@@ -62,7 +62,7 @@ def input_from(ss, comm, i, sim=False):
     return in_put
 
 
-def input_from_no_sensing(comm, i):
+def input_from_no_sensing(_, comm, i):
     """
     Prepare the communication vector to be the input on the single net.
 
@@ -271,3 +271,66 @@ class CommunicationNet(nn.Module):
                 return control, comm[1:-1].clone().numpy().flatten()
 
         return f
+
+
+class SingleNetNoSensing(nn.Module):
+    """
+    Low-level module that works on the communication received by a single agent (in a certain timestep),
+    producing as output the communication to transmit and the probability of a certain colour.
+
+    :param _: dimension of the sensing vector
+
+    """
+    def __init__(self, _):
+
+        super(SingleNetNoSensing, self).__init__()
+
+        self.fc1 = torch.nn.Linear(2, 10)
+        self.tanh = torch.nn.Tanh()
+        self.fc2 = torch.nn.Linear(10, 10)
+        self.fc3 = torch.nn.Linear(10, 2)
+        self.sigmoid = torch.nn.Sigmoid()
+
+    def forward(self, in_put):
+        """
+
+        :param in_put: input of the network, vector containing the messages received by the robot
+                       (can be multidimensional, that means a row for each robot)
+        :return output: output of the network containing the message to communicate
+                        and the probability of a certain colour (shape: 1 x 2)
+        """
+        hidden = self.fc1(in_put)
+        tanh = self.tanh(hidden)
+        hidden2 = self.fc2(tanh)
+        tanh2 = self.tanh(hidden2)
+        output = self.fc3(tanh2)
+
+        # Convert the communication and the colour in values between 0 and 1 using the Sigmoid activation function
+        output = self.sigmoid(output)
+
+        return output
+
+
+class CommunicationNetNoSensing(CommunicationNet):
+    """
+    High-level module that handle the sensing of the agents.
+
+    :param input_size: dimension of the sensing vector (can be 7 or 14)
+    :param device: device used (cpu or gpu)
+    :param sync: kind of synchronisation
+    :param module: SingleNetNoSensing
+    :param input_fn: input function
+
+    :var self.tmp_indices: communication indices
+    :var self.distribution: distribution used for the initialisation of the communication
+    """
+    def __init__(self, input_size, device, sync: Sync = Sync.sequential, module: nn.Module = SingleNetNoSensing,
+                 input_fn=input_from_no_sensing) -> None:
+        super(CommunicationNet, self).__init__()
+        self.input_size = input_size
+        self.single_net = module(self.input_size)
+        self.device = device
+        self.sync = sync
+        self.input_fn = input_fn
+        self.tmp_indices = None
+        self.distribution = None

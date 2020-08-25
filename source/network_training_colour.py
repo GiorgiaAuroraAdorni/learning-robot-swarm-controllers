@@ -4,8 +4,7 @@ import torch
 import tqdm
 from torch.utils import data
 
-from networks.communication_network import Sync, CommunicationNet
-from networks.distributed_network import DistributedNet
+from networks.communication_network import Sync, CommunicationNetNoSensing
 from networks.metrics import StreamingMean, NetMetrics
 from utils import utils
 from utils.utils import export_network
@@ -20,7 +19,7 @@ def train_net(epochs: int,
               device,
               batch_size: int = 100,
               learning_rate: float = 0.01,
-              criterion=torch.nn.MSELoss()
+              criterion=torch.nn.BCELoss()
               ) -> NetMetrics:
     """
     :param epochs: number of epochs
@@ -130,7 +129,7 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     x_train, x_valid, x_test, \
     y_train, y_valid, y_test, \
     q_train, q_valid, q_test = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
-                                                             test_indices, net_input, communication)
+                                                             test_indices, net_input, communication, 'colour')
 
     # Generate the tensors
     test, train, valid = utils.from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test, q_train,
@@ -141,30 +140,18 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device('cpu')
 
-    if communication:
-        net = CommunicationNet(x_train.shape[3], device=device, sync=Sync.sync)
-        net.to(device)
+    net = CommunicationNetNoSensing(x_train.shape[3], device=device, sync=Sync.sync)
+    net.to(device)
 
-        metrics = train_net(epochs=500,
-                            train_dataset=train,
-                            valid_dataset=valid,
-                            test_dataset=test,
-                            batch_size=10,
-                            learning_rate=0.001,
-                            net=net,
-                            metrics_path=file_losses,
-                            device=device)
-    else:
-        net = DistributedNet(x_train.shape[1])
-        net.to(device)
-
-        metrics = train_net(epochs=50,
-                            train_dataset=train,
-                            valid_dataset=valid,
-                            test_dataset=test,
-                            net=net,
-                            metrics_path=file_losses,
-                            device=device)
+    metrics = train_net(epochs=10,  # FIXME
+                        train_dataset=train,
+                        valid_dataset=valid,
+                        test_dataset=test,
+                        batch_size=10,
+                        learning_rate=0.001,
+                        net=net,
+                        metrics_path=file_losses,
+                        device=device)
 
     torch.save(net, '%s/%s' % (model_dir, model))
     metrics.finalize()
