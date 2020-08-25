@@ -210,7 +210,7 @@ if __name__ == '__main__':
             file_losses = os.path.join(model_dir, 'losses.npy')
 
             if args.train_net:
-                from network_sensing_training import network_train
+                from network_training_distribute import network_train
                 network_train(indices, file_losses, runs_dir_omniscient, model_dir, args.model, communication,
                               net_input=args.net_input, save_net=args.save_net)
 

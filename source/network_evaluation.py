@@ -8,7 +8,7 @@ from utils.utils import ThymioState
 
 
 def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid,
-                  communication):
+                  communication, goal):
     """
     :param model_img: directory for the output image of the model
     :param dataset: name of the dataset
@@ -27,7 +27,7 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
     # Plot train and validation losses
     title = 'Loss %s' % model
     file_name = 'loss-%s' % model
-    my_plots.plot_losses(training_loss, validation_loss, model_img, title, file_name)
+    my_plots.plot_losses(training_loss, validation_loss, model_img, title, file_name, goal)
 
     # Plot target distribution
     title = 'Distribution Target Validation Set %s' % model
@@ -235,7 +235,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     x_train, x_valid, x_test, \
     y_train, y_valid, y_test,\
     q_train, q_valid, q_test = utils.from_indices_to_dataset(runs_dir, train_indices, validation_indices,
-                                                             test_indices, net_input, communication)
+                                                             test_indices, net_input, communication, goal)
 
     # Load the metrics
     losses = pd.read_pickle(file_losses)
@@ -244,7 +244,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
 
     prediction = net(torch.FloatTensor(x_valid), torch.FloatTensor(q_valid))
 
-    network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication)
+    network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication, goal)
 
     # Evaluate prediction of the distributed controller with the omniscient groundtruth
     evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication, goal, controllers)

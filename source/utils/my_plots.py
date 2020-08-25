@@ -475,7 +475,7 @@ def visualise_simulations_comparison_all_sensors(runs_dir, img_dir, title, net_i
     save_visualisation(filename, img_dir, make_space=True, axes=axes)
 
 
-def plot_losses(train_loss, valid_loss, img_dir, title, filename):
+def plot_losses(train_loss, valid_loss, img_dir, title, filename, goal):
     """
 
     :param train_loss: the training losses
@@ -493,7 +493,10 @@ def plot_losses(train_loss, valid_loss, img_dir, title, filename):
     plt.plot(x, train_loss, label='train')
     plt.plot(x, valid_loss, label='validation')
 
-    plt.ylim(0, max(min(train_loss), min(valid_loss)) + 50)
+    if goal == 'colour':
+        plt.ylim(0, 1)
+    else:
+        plt.ylim(0, max(min(train_loss), min(valid_loss)) + 50)
 
     xint = range(1, np.ceil(max(x)).astype(int) + 1, np.ceil(max(x)/10).astype(int))
     plt.xticks(xint)

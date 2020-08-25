@@ -306,7 +306,7 @@ def prepare_dataset(run_dir, split, num_run):
     return file, indices
 
 
-def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False):
+def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_indices, net_input, communication=False, task='distribute'):
     """
     :param runs_dir: directory containing the simulations
     :param train_indices: indices of the sample belonging to the training set
@@ -314,6 +314,7 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     :param test_indices: indices of the sample belonging to the testing set
     :param net_input: input of the net between prox_values, prox_comm or all_sensors
     :param communication: states if the communication is used by the network
+    :param task: task to perform (can be distribute or colour)
     :return: (train_sample, valid_sample, test_sample), train_target, valid_target, test_target, train_quantities, valid_quantities, test_quantities:
              all the train, validation and test samples, targets and masks
     """
@@ -327,9 +328,9 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     # myt_quantities = np.full(shape=(1000,), fill_value=N, dtype='float32')
 
     if communication:
-        runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
+        runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'goal_colour', 'prox_values', 'prox_comm', 'all_sensors']]
     else:
-        runs_sub = runs[['timestep', 'myt_quantity', 'run', 'motor_left_target', 'prox_values', 'prox_comm', 'all_sensors']]
+        runs_sub = runs[['timestep', 'myt_quantity', 'run', 'motor_left_target', 'goal_colour', 'prox_values', 'prox_comm', 'all_sensors']]
 
     train_runs = runs_sub[runs_sub['run'].isin(train_indices)].reset_index()
     valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
@@ -338,15 +339,18 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     train_sample, train_target, train_quantities, _, _ = extract_input_output(train_runs, net_input, N=N,
                                                                               communication=communication,
                                                                               input_combination=False,
-                                                                              myt_quantities=myt_quantities)
+                                                                              myt_quantities=myt_quantities,
+                                                                              task=task)
     valid_sample, valid_target, valid_quantities, _, _ = extract_input_output(valid_runs, net_input, N=N,
                                                                               communication=communication,
                                                                               input_combination=False,
-                                                                              myt_quantities=myt_quantities)
+                                                                              myt_quantities=myt_quantities,
+                                                                              task=task)
     test_sample, test_target, test_quantities, _, _ = extract_input_output(test_runs, net_input, N=N,
                                                                            communication=communication,
                                                                            input_combination=False,
-                                                                           myt_quantities=myt_quantities)
+                                                                           myt_quantities=myt_quantities,
+                                                                              task=task)
 
     return train_sample, valid_sample, test_sample, train_target, valid_target, test_target, train_quantities, valid_quantities, test_quantities
 
@@ -399,7 +403,7 @@ def get_input_columns(in_label):
     return columns
 
 
-def extract_input_output(runs, in_label, N, communication=False, input_combination=True, myt_quantities=None):
+def extract_input_output(runs, in_label, N, communication=False, input_combination=True, myt_quantities=None, task='distribute'):
     """
     Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
     sensors [array of 7 floats].
@@ -415,6 +419,7 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
                               that means using only the central frontal sensor and
                               the mean of the rear sensors
     :param myt_quantities: array containing the number agents for each simulation run
+    :param task: task to perform (can be distribute or colour)
     :return in_put, out_put, out_myt_quantities, runs, columns: input and output arrays for the network,
                                                array with the number of agents, dataframe
                                                with the runs and columns of the dataframe
@@ -443,7 +448,12 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
         runs[full_columns] = runs[full_columns].div(1000)
 
         in_put = np.array(runs.x)
-        out_put = np.array(runs.motor_left_target)
+
+        if task == 'colour':
+            out_put = np.array(runs.goal_colour)
+        else:
+            out_put = np.array(runs.motor_left_target)
+
         out_myt_quantities = None
     else:
         runs[columns] = runs[columns].div(1000)
@@ -465,7 +475,12 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
 
                 in_run_ = np.array(run[columns])
                 in_run_ = in_run_.reshape([-1, N_sim, run[columns].shape[1]])
-                out_run_ = np.array(run.motor_left_target)
+
+                if task == 'colour':
+                    out_run_ = np.array(run.goal_colour)
+                else:
+                    out_run_ = np.array(run.motor_left_target)
+
                 out_run_ = out_run_.reshape([-1, N_sim])
 
                 size = in_run_.shape[0] - 1
@@ -491,7 +506,12 @@ def extract_input_output(runs, in_label, N, communication=False, input_combinati
                 init_counter = final_counter
         else:
             in_put = np.array(runs[columns])
-            out_put = np.array(runs.motor_left_target)
+
+            if task == 'colour':
+                out_put = np.array(runs.goal_colour)
+            else:
+                out_put = np.array(runs.motor_left_target)
+
             out_myt_quantities = np.array(runs.myt_quantity)
 
     return in_put, out_put, out_myt_quantities, runs, columns
