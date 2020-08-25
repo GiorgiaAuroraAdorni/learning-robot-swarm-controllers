@@ -45,7 +45,11 @@ Adapted from https://github.com/GiorgiaAuroraAdorni/learning-relative-interactio
 Training 
 --------
 
-.. automodule:: network_sensing_training
+.. automodule:: network_training_distribute
+   :members:
+
+
+.. automodule:: network_training_colour
    :members:
 
 

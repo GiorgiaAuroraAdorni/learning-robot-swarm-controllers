@@ -213,7 +213,7 @@ Their value depends if it is used <code class="docutils literal notranslate"><sp
 
 <dl class="py function">
 <dt id="utils.my_plots.plot_losses">
-<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_losses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_loss</span></em>, <em class="sig-param"><span class="n">valid_loss</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_losses" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utils.my_plots.</code><code class="sig-name descname">plot_losses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_loss</span></em>, <em class="sig-param"><span class="n">valid_loss</span></em>, <em class="sig-param"><span class="n">img_dir</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">goal</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.my_plots.plot_losses" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -585,7 +585,7 @@ the mean of the rear sensors</p></li>
 
 <dl class="py function">
 <dt id="utils.utils.extract_input_output">
-<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">extract_input_output</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs</span></em>, <em class="sig-param"><span class="n">in_label</span></em>, <em class="sig-param"><span class="n">N</span></em>, <em class="sig-param"><span class="n">communication</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">input_combination</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">myt_quantities</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.extract_input_output" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">extract_input_output</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs</span></em>, <em class="sig-param"><span class="n">in_label</span></em>, <em class="sig-param"><span class="n">N</span></em>, <em class="sig-param"><span class="n">communication</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">input_combination</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">myt_quantities</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">task</span><span class="o">=</span><span class="default_value">'distribute'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.extract_input_output" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether the input is prox_values, prox_comm or all sensors, it corresponds to the response values of ​​the
 sensors [array of 7 floats].
 The input is normalised so that the average is around 1 or a constant (e.g. for all (dividing by 1000)).
@@ -602,6 +602,7 @@ There is no need to normalize the outputs.</p>
 that means using only the central frontal sensor and
 the mean of the rear sensors</p></li>
 <li><p><strong>myt_quantities</strong> – array containing the number agents for each simulation run</p></li>
+<li><p><strong>task</strong> – task to perform (can be distribute or colour)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return in_put, out_put, out_myt_quantities, runs, columns</dt>
@@ -638,7 +639,7 @@ referred to the input label</p>
 
 <dl class="py function">
 <dt id="utils.utils.from_indices_to_dataset">
-<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">from_indices_to_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">train_indices</span></em>, <em class="sig-param"><span class="n">validation_indices</span></em>, <em class="sig-param"><span class="n">test_indices</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">communication</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.from_indices_to_dataset" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utils.utils.</code><code class="sig-name descname">from_indices_to_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">runs_dir</span></em>, <em class="sig-param"><span class="n">train_indices</span></em>, <em class="sig-param"><span class="n">validation_indices</span></em>, <em class="sig-param"><span class="n">test_indices</span></em>, <em class="sig-param"><span class="n">net_input</span></em>, <em class="sig-param"><span class="n">communication</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">task</span><span class="o">=</span><span class="default_value">'distribute'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.utils.from_indices_to_dataset" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -648,6 +649,7 @@ referred to the input label</p>
 <li><p><strong>test_indices</strong> – indices of the sample belonging to the testing set</p></li>
 <li><p><strong>net_input</strong> – input of the net between prox_values, prox_comm or all_sensors</p></li>
 <li><p><strong>communication</strong> – states if the communication is used by the network</p></li>
+<li><p><strong>task</strong> – task to perform (can be distribute or colour)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
