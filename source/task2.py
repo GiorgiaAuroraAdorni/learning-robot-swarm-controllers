@@ -7,7 +7,57 @@ from utils.utils import directory_for_dataset, directory_for_model
 def parse_args():
     """
 
-    :return args
+    Imitation Learning - Task 2 with Communication
+
+    usage: task2.py [--args]
+
+    :return args:
+                  --help                Show this help message and exit
+                  --gui                 Run simulation using the gui (default: False)
+                  --n-simulations N     Number of runs for each simulation (default: 1000)
+                  --task TASK
+                                        Choose the task to perform in the current execution
+                                        between task1 and task2 (default: task2)
+                  --myt-quantity MYT_QUANTITY
+                                        Number of thymios for the simulation (default: variable)
+                  --avg-gap AVG_GAP
+                                        Average gap distance between thymios (default: variable)
+                  --generate-dataset    Generate the dataset containing the simulations
+                                        (default: False)
+                  --generate-split      Generate the indices for the split of the dataset
+                                        (default: False)
+                  --plots-dataset       Generate the plots of regarding the dataset
+                                        (default: False)
+                  --check-dataset       Generate the plots that check the dataset conformity
+                                        (default: False)
+                  --compare-all         Generate plots that compare all the experiments in
+                                        terms of distance from goal (default: False)
+                  --generate-animations
+                                        Generate animations that compare the controllers
+                                        (default: False)
+                  --controller CONTROLLER
+                                        Choose the controller for the current execution.
+                                        Usually between all, learned, manual and omniscient
+                                        (default: all)
+                  --dataset-folder DATASET_FOLDER
+                                        Name of the directory containing the datasets
+                                        (default: datasets)
+                  --dataset DATASET     Choose the datasets to use in the current execution
+                                        (default: all)
+                  --models-folder MODELS_FOLDER
+                                        Name of the directory containing the models
+                                        (default: models)
+                  --model-type MODEL_TYPE
+                                        Name of the sub-directory containing the models
+                                        (default: distributed)
+                  --model MODEL         Name of the model (default: net1)
+                  --train-net           Train the model (default: False)
+                  --save-net            Save the model in onnx format (default: False)
+                  --net-input SENSING
+                                        Choose the input of the net between prox_values,
+                                        prox_comm or all_sensors (default: all_sensors)
+                  --plots-net           Generate the plots of regarding the model
+                                        (default: False)
     """
     parser = argparse.ArgumentParser(description='Imitation Learning - Task 2 with Communication')
 

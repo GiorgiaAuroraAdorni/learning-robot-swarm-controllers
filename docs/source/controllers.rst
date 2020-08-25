@@ -4,10 +4,17 @@ Controllers
 .. currentmodule:: learning-robot-swarm-controllers
 
 
-Controller Task 1
+Controllers Task 1
 ------------------
 
 .. automodule:: controllers.controllers_task1
+   :members:
+
+
+Controllers Task 2
+------------------
+
+.. automodule:: controllers.controllers_task2
    :members:
 
 

@@ -28,3 +28,9 @@ Task 1 Extension
 .. automodule:: task1_extension
    :members:
 
+
+Task 2
+^^^^^^^^^^^^^^^^^
+
+.. automodule:: task2
+   :members:
