@@ -1,20 +1,23 @@
 from utils import utils
-import os
-
-import numpy as np
-
-from controllers.pid import PID
 
 
 class ManualController:
-    def __init__(self, name, goal, N, net_input, **kwargs):
-        """
+    """
+    Using the sensing of the robots, decide which robots are the first and the last and start sending a
+    communication message containing a value that is incremented by each robot that received it.
+    Each robot can receive two messages, if the count received from the right is higher than the one from the left,
+    then the agent is in the first half, otherwise it is in the second.
+    When the robot is sure about is position (it is able to understand on which side of the row it is, compared to
+    the mid of the line) then the robot can turn on the top led using different colours depending if it is
+    positioned in the first or second half of the row.
 
-        :param name
-        :param goal
-        :param N: number of thymios in the simulation
-        :param kwargs:
-        """
+    :param name: name of the controller used (in this case manual)
+    :param goal: task to perform (in this case colour)
+    :param N: number of thymios in the simulation
+    :param kwargs: other arguments
+    """
+
+    def __init__(self, name, goal, N, net_input, **kwargs):
         super().__init__(**kwargs)
 
         self.name = name
@@ -24,16 +27,10 @@ class ManualController:
 
     def perform_control(self, state, dt):
         """
-        Using the sensing of thw robots, decide which robots are the first and the last and start sending a
-        communication message containing a value that is incremented by each robot that received it.
-        Each robot can receive two messages, if the count received from the right is higher than the one from the left,
-        then the agent is in the first half, otherwise it is in the second.
-        When the robot is sure about is position (it is able to understand on which side of the row it is, compared to
-        the mid of the line) then the robot can turn on the top led using different colours depending if it is
-        positioned in the first or second half of the row.
-        :param state:
+        :param state: object containing the agent information
         :param dt: control step duration
 
+        :return colour, communication: the colour and the message to communicate
         """
 
         if state.index == 0:
@@ -135,17 +132,15 @@ class OmniscientController:
     The robots can turn on and colour the top led also following an optimal “omniscient” controller.
     In this case, based on the position of the robots in the line, the omniscient control colour the robots in the first
     half with a colour and the others with another.
+
+    :param name: name of the controller used (in this case omniscient)
+    :param goal: task to perform (in this case colour)
+    :param N: number of agents in the simulation
+    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+    :param kwargs: other arguments
     """
 
     def __init__(self, name, goal, N, net_input, **kwargs):
-        """
-
-        :param name: name of the controller used (in this case omniscient)
-        :param goal: task to perform (in this case distribute)
-        :param N: number of agents in the simulation
-        :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
-        :param kwargs: other arguments
-        """
         super().__init__(**kwargs)
 
         self.name = name
@@ -157,8 +152,11 @@ class OmniscientController:
         """
         Do not move the robots but just colour the robots belonging to the first half with a certain colour and
         the other half with a different colour.
-        :param state
-        :param dt
+
+        :param state: object containing the agent information
+        :param dt: control step duration
+
+        :return colour, communication: the colour and the message to communicate
         """
 
         return state.goal_colour, 0

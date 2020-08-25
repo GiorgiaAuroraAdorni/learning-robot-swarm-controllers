@@ -143,6 +143,8 @@ class ManualController:
         :param state: object containing the agent information
         :param dt: control step duration
 
+        :return speed, communication: the velocity and the message to communicate
+
         """
         # Don't move the first and last robots in the line
         # if state.index == 0 or state.index == self.N - 1:
@@ -248,6 +250,8 @@ class LearnedController:
 
         :param state: object containing the agent information
         :param dt: control step duration
+
+        :return speed, communication: the velocity and the message to communicate
         """
 
         sensing = utils.get_input_sensing(self.net_input, state)
