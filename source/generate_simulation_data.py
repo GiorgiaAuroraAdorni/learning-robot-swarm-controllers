@@ -171,7 +171,8 @@ class GenerateSimulationData:
                             * 'goal_position_distance': myt.goal_position[0] - myt.position[0],
                             * 'goal_position_distance_absolute': abs(myt.goal_position[0] - myt.position[0])
                             * 'transmitted_comm': communication transmitted two the neighbours
-                            * 'colour': colour of the top led
+                            * 'goal_colour': myt.goal_colour colour of the top led
+                            * 'colour': myt.colour
         """
         prox_values = myt.prox_values
         prox_comm = utils.get_prox_comm(myt)
@@ -202,9 +203,8 @@ class GenerateSimulationData:
             transmitted_comm = utils.get_transmitted_communication(myt)
             myt.dictionary['transmitted_comm'] = transmitted_comm
 
-        if myt.controller.goal == 'colour':
-            myt.dictionary['goal_colour'] = myt.goal_colour
-            myt.dictionary['colour'] = myt.colour
+        myt.dictionary['goal_colour'] = myt.goal_colour
+        myt.dictionary['colour'] = myt.colour
 
         dictionary = myt.dictionary.copy()
         return dictionary
@@ -238,8 +238,7 @@ class GenerateSimulationData:
             transmitted_comm = utils.get_transmitted_communication(myt)
             myt.dictionary['transmitted_comm'] = transmitted_comm
 
-        if myt.controller.goal == 'colour':
-            myt.dictionary['colour'] = myt.colour
+        myt.dictionary['colour'] = myt.colour
 
         dictionary = myt.dictionary.copy()
 
