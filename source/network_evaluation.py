@@ -247,9 +247,10 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication, goal)
 
     # Evaluate prediction of the distributed controller with the omniscient groundtruth
+    # FIXME for task 2
     evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication, goal, controllers)
 
-    if not communication:
+    if not communication and not goal == 'colour':
         if not net_input == 'all_sensors':
             # Evaluate the learned controller by passing a specific input sensing configuration
             x, s = generate_sensing()
