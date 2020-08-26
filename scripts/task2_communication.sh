@@ -1,12 +1,24 @@
 # Experiment A
 
-python3 source/task2.py --controller omniscient --generate-dataset --avg-gap 8 --dataset avg_gap-8 #--plots-dataset --check-dataset
-python3 source/task2.py --controller manual --generate-dataset --avg-gap 8 --dataset avg_gap-8 #--plots-dataset --check-dataset
-# Experiment B
+python3 source/task2.py --dataset avg_gap-8-N-5 --model net-v1 --myt-quantity 5 --avg-gap 8 --controller omniscient --generate-dataset --plots-dataset
+python3 source/task2.py --dataset avg_gap-20-N-5 --model net-v2 --avg-gap 20 --myt-quantity 5 --controller omniscient --generate-dataset --plots-dataset
+python3 source/task2.py --dataset avg_gap-8-N-8 --model net-v3 --myt-quantity 8 --avg-gap 8 --controller omniscient --generate-dataset --plots-dataset
+python3 source/task2.py --dataset avg_gap-20-N-8 --model net-v4 --avg-gap 20 --myt-quantity 8 --controller omniscient --generate-dataset --plots-dataset
+python3 source/task2.py --dataset avg_gap-variable-N-5 --model net-v5 --myt-quantity 5 --controller omniscient --generate-dataset --plots-dataset
+python3 source/task2.py --dataset avg_gap-variable-N-8 --model net-v6 --myt-quantity 8 --controller omniscient --generate-dataset --plots-dataset
+python3 source/task2.py --dataset avg_gap-8-N-variable --model net-v7 --avg-gap 8 --controller omniscient --generate-dataset --plots-dataset
+python3 source/task2.py --dataset avg_gap-20-N-variable --model net-v8 --avg-gap 20 --controller omniscient --generate-dataset --plots-dataset
+python3 source/task2.py --dataset avg_gap-variable-N-variable --model net-v9 --controller omniscient --generate-dataset --plots-dataset
 
-python3 source/task2.py --controller omniscient --generate-dataset --avg-gap 13 --dataset avg_gap-13 #--plots-dataset --check-dataset
-python3 source/task2.py --controller manual --generate-dataset --avg-gap 13 --dataset avg_gap-13 #--plots-dataset --check-dataset
-#Experiment C
 
-python3 source/task2.py --controller omniscient --generate-dataset --avg-gap 25 --dataset avg_gap-25 #--plots-dataset --check-dataset
-python3 source/task2.py --controller manual --generate-dataset --avg-gap 25 --dataset avg_gap-25 #--plots-dataset --check-dataset
+
+python3 source/task2.py --dataset avg_gap-8-N-5 --model net-v1 --myt-quantity 5 --avg-gap 8 --controller omniscient --generate-split --train-net --plots-net
+python3 source/task2.py --dataset avg_gap-20-N-5 --model net-v2 --avg-gap 20 --myt-quantity 5 --controller omniscient --generate-split --train-net --plots-net
+python3 source/task2.py --dataset avg_gap-8-N-8 --model net-v3 --myt-quantity 8 --avg-gap 8 --controller omniscient --generate-split --train-net --plots-net
+python3 source/task2.py --dataset avg_gap-20-N-8 --model net-v4 --avg-gap 20 --myt-quantity 8 --controller omniscient --generate-split --train-net --plots-net
+python3 source/task2.py --dataset avg_gap-variable-N-5 --model net-v5 --myt-quantity 5 --controller omniscient --generate-split --train-net --plots-net
+python3 source/task2.py --dataset avg_gap-variable-N-8 --model net-v6 --myt-quantity 8 --controller omniscient --generate-split --train-net --plots-net
+python3 source/task2.py --dataset avg_gap-8-N-variable --model net-v7 --avg-gap 8 --controller omniscient --generate-split --train-net --plots-net
+python3 source/task2.py --dataset avg_gap-20-N-variable --model net-v8 --avg-gap 20 --controller omniscient --generate-split --train-net --plots-net
+python3 source/task2.py --dataset avg_gap-variable-N-variable --model net-v9 --controller omniscient --generate-split --train-net --plots-net
+
