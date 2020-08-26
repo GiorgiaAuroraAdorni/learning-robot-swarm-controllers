@@ -209,7 +209,7 @@ class CommunicationNet(nn.Module):
         :return robots_control: network output
         """
         robots_control = []
-        self.distribution = uniform.Uniform(torch.Tensor([0.0]), torch.Tensor([1.0]))
+        self.distribution = uniform.Uniform(0, 1)
         for idx, sequence in enumerate(batch):
             max_shape_size = int(sequence[0].shape[0])
             true_shape_size = int(batch_size[idx][0][0])
