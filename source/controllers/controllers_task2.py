@@ -119,10 +119,8 @@ class ManualController:
                             message = communication[0] + 1
                             colour = 1
                         else:
-                            raise ValueError('This case should not happen. '
-                                             'The communication received cannot '
-                                             'be the same from left and right '
-                                             'since the number of agents is even.')
+                            message = communication[0]
+                            colour = 0
 
         return colour, int(message)
 
