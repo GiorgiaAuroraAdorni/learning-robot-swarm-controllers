@@ -157,6 +157,39 @@ if __name__ == '__main__':
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
                                         myt_quantity=None, args=args, communication=communication)
 
+        if args.plots_dataset:
+            from utils.my_plots import thymio_quantity_distribution, visualise_communication_simulation, \
+                                       visualise_communication_vs_control, visualise_communication_vs_distance, \
+                                       plot_predicted_colour, plot_predicted_message
+
+            print('Generating plots for %s %s controller…' % (d, c))
+            thymio_quantity_distribution(run_dir, run_img_dir, 'Thymio quantity distribution - %s' % (args.net_input),
+                                         'thymio-quantity-distribution')
+
+            if c == 'omniscient':
+                target = 'goal_colour'
+            else:
+                target = 'colour'
+
+            for i in range(5):
+                plot_predicted_colour(run_dir, run_img_dir, i,
+                                      'Simulation run %d - %s %s - colour' % (i, args.net_input, c), target=target)
+
+            if not c == 'omniscient':
+                for i in range(5):
+                    plot_predicted_message(run_dir, run_img_dir, i,
+                                          'Simulation run %d - %s %s - message' % (i, args.net_input, c))
+
+                    visualise_communication_simulation(run_dir, run_img_dir, i,
+                                                       'Simulation run %d - %s %s - communication' %
+                                                       (i, args.net_input, c))
+
+                visualise_communication_vs_control(run_dir, run_img_dir,
+                                                   'Communication vs Control - %s %s' % (args.net_input, c))
+
+                visualise_communication_vs_distance(run_dir, run_img_dir,
+                                                    'Communication vs Distance from goal - %s %s' % (args.net_input, c))
+
         # TODO
         #  add some plot for the dataset
         if args.train_net or args.plots_net:
@@ -173,6 +206,7 @@ if __name__ == '__main__':
             if args.plots_net:
                 from network_evaluation import network_evaluation
                 network_evaluation(indices, file_losses, runs_dir_omniscient, model_dir, args.model, model_img_dir,
-                                   'omniscient', 'manual', communication, net_input=args.net_input, task=args.task)
+                                   'omniscient', 'manual', communication, net_input=args.net_input, task=args.task,
+                                   runs_dir_manual=runs_dir_manual)
 
 

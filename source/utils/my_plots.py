@@ -8,7 +8,7 @@ import seaborn as sns
 import tqdm
 from matplotlib.collections import LineCollection
 from sklearn.linear_model import LinearRegression
-
+from matplotlib import colors
 import utils
 
 sns.set(style="white")
@@ -1285,3 +1285,68 @@ def test_controller_given_init_positions(model_img, model, net_input):
     ax.grid(which='major')
 
     save_visualisation(file_name, model_img)
+
+
+def plot_predicted_colour(runs_dir, img_dir, simulation, title, target='colour'):
+    """
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param simulation: simulation to use
+    :param title: title of the image
+    """
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['name', 'timestep', 'run', target]]
+    run = runs_sub[runs_sub['run'] == simulation]
+    run = run[['name', 'timestep', target]]
+
+    myts = np.array(run.name.unique())
+
+    for idx, el in enumerate(myts):
+        run = run.replace([el], idx + 1)
+
+    run = run.pivot('name', 'timestep', target)
+    plt.figure(figsize=(8, 6))
+
+    cmap = colors.ListedColormap(['Blue', 'red'])
+
+    sns.heatmap(run, cmap=cmap, linewidths=1, square=True, yticklabels=myts, cbar=False)
+
+    plt.ylabel('agent', fontsize=11)
+
+    filename = 'plot-simulation-colour-%d' % simulation
+    save_visualisation(filename, img_dir)
+
+
+def plot_predicted_message(runs_dir, img_dir, simulation, title):
+    """
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param simulation: simulation to use
+    :param title: title of the image
+    """
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['name', 'timestep', 'run', 'transmitted_comm']]
+
+    if runs_sub.transmitted_comm.max() > 100:
+        dividend = (2 ** 10)
+    else:
+        dividend = runs_sub.transmitted_comm.max()
+
+
+    run = runs_sub[runs_sub['run'] == simulation]
+    run = run[['name', 'timestep', 'transmitted_comm']]
+
+    myts = np.array(run.name.unique())
+
+    for idx, el in enumerate(myts):
+        run = run.replace([el], idx + 1)
+
+    run = run.pivot('name', 'timestep', 'transmitted_comm')
+    plt.figure()
+
+    sns.heatmap(run / dividend, cmap='viridis', linewidths=1, square=True, yticklabels=myts, vmin=0, vmax=1)
+
+    plt.ylabel('agent', fontsize=11)
+
+    filename = 'plot-simulation-message-%d' % simulation
+    save_visualisation(filename, img_dir)
