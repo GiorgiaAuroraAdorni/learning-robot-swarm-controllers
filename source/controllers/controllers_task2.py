@@ -159,3 +159,67 @@ class OmniscientController:
 
         return state.goal_colour, 0
 
+
+class LearnedController:
+    """
+    The robots can be moved following a controller learned by a neural network.
+
+    :param name: name of the controller used (in this case omniscient)
+    :param goal: task to perform (in this case distribute)
+    :param N: number of agents in the simulation
+    :param net: network to be used by the controller
+    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+    :param communication: states if the communication is used by the network
+    :param kwargs: other arguments
+    """
+
+    def __init__(self, name, goal, N, net, net_input, communication, **kwargs):
+        super().__init__(**kwargs)
+
+        self.name = name
+        self.goal = goal
+        self.N = N
+
+        self.net = net
+        if self.net is None:
+            raise ValueError("Value for net not provided")
+
+        self.communication = communication
+        self.net_controller = net.controller(thymio=self.N)
+        self.net_input = net_input
+
+    def perform_control(self, state, dt):
+        """
+        Extract the input sensing from the list of (7 or 14) proximity sensor readings, one for each sensor.
+        The first 5 entries are from frontal sensors ordered from left to right.
+        The last two entries are from rear sensors ordered from left to right.
+        In case of all sensors the first 7 values refers to ``prox_values`` and the following 7 to ``prox_comm``.
+        Each value is normalised dividing it by 1000, that is the mean value of the sensors.
+
+        The obtained sensing is passed as input to the net and obtain the speed and the eventual communication to be transmitted.
+
+        .. note:: Keep still the robots at the ends of the line and send for them alway 0 as message.
+
+
+        :param state: object containing the agent information
+        :param dt: control step duration
+
+        :return speed, communication: the velocity and the message to communicate
+        """
+
+        communication = utils.get_received_communication(state)
+        colour, comm = self.net_controller([0, 0, 0, 0, 0, 0, 0], communication, state.index)
+
+        if colour > 0.5:
+            colour = 1
+        else:
+            colour = 0
+
+        comm = int(comm[state.index] * (2 ** 10))
+
+        if state.index == 0:
+            return 1, 0
+        elif state.index == self.N - 1:
+            return 0, 0
+        else:
+            return colour, comm
