@@ -62,7 +62,7 @@ def input_from(ss, comm, i, sim=False):
     return in_put
 
 
-def input_from_no_sensing(_, comm, i):
+def input_from_no_sensing(_, comm, i, sim=None):
     """
     Prepare the communication vector to be the input on the single net.
 

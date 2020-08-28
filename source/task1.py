@@ -218,8 +218,7 @@ if __name__ == '__main__':
                 from network_evaluation import network_evaluation
 
                 network_evaluation(indices, file_losses, runs_dir_omniscient, model_dir, args.model, model_img_dir,
-                                   'omniscient', 'manual', communication, net_input=args.net_input,
-                                   avg_gap=args.avg_gap, task=args.task)
+                                   'omniscient', 'manual', communication, net_input=args.net_input, task=args.task)
 
                 if not args.net_input == 'all_sensors':
                     from utils.my_plots import plot_sensing_timestep
