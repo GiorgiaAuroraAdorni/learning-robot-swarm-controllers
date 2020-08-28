@@ -20,6 +20,7 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
     :param x_train: train input
     :param y_valid: validation output
     :param communication: states if the communication is used by the network
+    :param goal: task to be performed (can be colour or distribute)
     """
     y_p = prediction.squeeze().tolist()
     y_g = y_valid.squeeze().tolist()
@@ -132,7 +133,7 @@ def evaluate_controller(model_dir, ds, ds_eval, groundtruth, sensing, net_input,
             raise AttributeError("Invalid value for net_input")
 
         state_dict = {'initial_position': (0, 0), 'goal_position': (10, 0), 'prox_values': prox_values,
-                      'prox_comm': prox_comm}
+                      'prox_comm': prox_comm, 'index': 1}
 
         state = ThymioState(state_dict)
 
@@ -202,12 +203,13 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     my_plots.plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
 
 
-def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication, net_input, avg_gap=None, task='Task1'):
+def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication,
+                       net_input, task='task1', runs_dir_manual=None):
     """
 
     :param indices: sample indices
     :param file_losses: file where to save the metrics
-    :param runs_dir: directory containing the simulation runs
+    :param runs_dir: directory containing the simulation runs generated with the omniscient controller
     :param model_dir: directory containing the network data
     :param model: network
     :param model_img: directory for the output image of the model
@@ -215,8 +217,8 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     :param ds_eval: name of the dataset  for the evaluation (usually the manual one)
     :param communication: states if the communication is used by the network
     :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
-    :param avg_gap: average distance among the robots
     :param task: task to be performed
+    :param runs_dir_manual: directory containing the simulation runs generated with the manual controller
     """
     if task == 'task1':
         from controllers import controllers_task1 as controllers
@@ -246,21 +248,34 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
 
     network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication, goal)
 
-    # Evaluate prediction of the distributed controller with the omniscient groundtruth
-    # FIXME for task 2
-    evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication, goal, controllers)
+    if goal == 'colour':
+        y_target, y = utils.extract_targets(runs_dir_manual, validation_indices)
 
-    if not communication and not goal == 'colour':
-        if not net_input == 'all_sensors':
-            # Evaluate the learned controller by passing a specific input sensing configuration
-            x, s = generate_sensing()
-            sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
-            index = 2
+        # Evaluate prediction of the manual controller to the omniscient groundtruth
+        # Plot R^2 of the regressor between prediction and ground truth on the validation set
+        title = 'Regression %s vs %s' % (ds_eval, ds)
+        file_name = 'regression-%s-vs-%s' % (ds_eval, ds)
 
-            evaluate_net(model_img, model, net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
-                         'center proximity sensor', goal, communication, controllers)
+        x_label = 'groundtruth'
+        y_label = 'prediction'
 
-            index = -1
-            sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
-            evaluate_net(model_img, model, net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
-                         'rear proximity sensors', goal, communication, controllers)
+        my_plots.plot_regressor(y_target, y, x_label, y_label, model_img, title, file_name)
+
+    else:
+        # Evaluate prediction of the distributed controller with the omniscient groundtruth
+        evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication, goal, controllers)
+
+        if not communication:
+            if not net_input == 'all_sensors':
+                # Evaluate the learned controller by passing a specific input sensing configuration
+                x, s = generate_sensing()
+                sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
+                index = 2
+
+                evaluate_net(model_img, model, net, net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
+                             'center proximity sensor', goal, communication, controllers)
+
+                index = -1
+                sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
+                evaluate_net(model_img, model, net, net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
+                             'rear proximity sensors', goal, communication, controllers)

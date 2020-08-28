@@ -350,7 +350,7 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
                                                                            communication=communication,
                                                                            input_combination=False,
                                                                            myt_quantities=myt_quantities,
-                                                                              task=task)
+                                                                           task=task)
 
     return train_sample, valid_sample, test_sample, train_target, valid_target, test_target, train_quantities, valid_quantities, test_quantities
 
@@ -560,6 +560,23 @@ def extract_colour_output(runs, communication=False, input_combination=True):
             out_put = np.array(runs.motor_left_target)
 
     return out_put, runs
+
+
+def extract_targets(runs_dir, validation_indices):
+    """
+    Extract the target from a certain dataset dataset (the omniscient and the manual)
+    :param runs_dir: directory containing the simulations run
+    :param validation_indices: indices of the sample belonging to the validation set
+    :return y_target, y: the true target and the one predicted in the dataset
+    """
+    runs = load_dataset(runs_dir, 'simulation.pkl')
+    runs_sub = runs[['timestep', 'name', 'run', 'colour', 'goal_colour']]
+    valid_runs = runs_sub[runs_sub['run'].isin(validation_indices)].reset_index()
+
+    y = np.array(valid_runs.colour)
+    y_target = np.array(valid_runs.goal_colour)
+
+    return y_target, y
 
 
 def export_network(model_dir, model, in_put, input_shape):
