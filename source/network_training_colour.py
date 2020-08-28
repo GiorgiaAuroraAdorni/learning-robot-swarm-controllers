@@ -143,7 +143,7 @@ def network_train(indices, file_losses, runs_dir, model_dir, model, communicatio
     net = CommunicationNetNoSensing(x_train.shape[3], device=device, sync=Sync.sync)
     net.to(device)
 
-    metrics = train_net(epochs=10,  # FIXME
+    metrics = train_net(epochs=500,
                         train_dataset=train,
                         valid_dataset=valid,
                         test_dataset=test,
