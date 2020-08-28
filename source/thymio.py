@@ -54,7 +54,10 @@ class DistributedThymio2(pyenki.Thymio2):
         if self.index > (self.controller.N // 2):
             self.goal_colour = 0  # red
         else:
-            self.goal_colour = 1  # blue
+            if self.index == (self.controller.N // 2) and self.controller.N % 2 == 0:
+                self.goal_colour = 0  # blue
+            else:
+                self.goal_colour = 1  # blue
 
     def colour_thymios(self, dt: float):
         """
