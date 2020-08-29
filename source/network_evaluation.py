@@ -7,6 +7,19 @@ from utils import utils
 from utils.utils import ThymioState
 
 
+def binary_acc(y_pred, y_test):
+    """
+    :param y_pred: prediction
+    :param y_test: target
+    :return acc: accuracy
+    """
+    correct_results_sum = float(np.sum(y_pred == y_test))
+    acc = correct_results_sum / y_test.shape[0]
+    acc = np.round(acc * 100, 2)
+
+    return acc
+
+
 def network_plots(model_img, dataset, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid,
                   communication, goal):
     """
@@ -49,21 +62,22 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
         label = ['fll', 'fl', 'fc', 'fr', 'frr', 'bl', 'br']
         my_plots.my_histogram(x, 'sensing (%s)' % net_input, model_img, title, file_name, label)
 
-    # Evaluate prediction of the learned controller to the omniscient groundtruth
-    # Plot R^2 of the regressor between prediction and ground truth on the validation set
-    title = 'Regression %s vs %s' % (model, dataset)
-    file_name = 'regression-%s-vs-%s' % (model, dataset)
+    if not goal == 'colour':
+        # Evaluate prediction of the learned controller to the omniscient groundtruth
+        # Plot R^2 of the regressor between prediction and ground truth on the validation set
+        title = 'Regression %s vs %s' % (model, dataset)
+        file_name = 'regression-%s-vs-%s' % (model, dataset)
 
-    x_label = 'groundtruth'
-    y_label = 'prediction'
-    if communication:
-        y_g = np.reshape(np.array(y_g).flat, [-1])
-        y_p = np.reshape(np.array(y_p).flat, [-1])
+        x_label = 'groundtruth'
+        y_label = 'prediction'
+        if communication:
+            y_g = np.reshape(np.array(y_g).flat, [-1])
+            y_p = np.reshape(np.array(y_p).flat, [-1])
 
-        y_g = y_g[~np.isnan(y_g)]
-        y_p = y_p[~np.isnan(y_p)]
+            y_g = y_g[~np.isnan(y_g)]
+            y_p = y_p[~np.isnan(y_p)]
 
-    my_plots.plot_regressor(y_g, y_p, x_label, y_label, model_img, title, file_name)
+        my_plots.plot_regressor(y_g, y_p, x_label, y_label, model_img, title, file_name)
 
 
 def controller_plots(model_dir, ds, ds_eval, groundtruth, prediction, communication):
@@ -204,7 +218,7 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
 
 
 def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_img, ds, ds_eval, communication,
-                       net_input, task='task1', runs_dir_manual=None):
+                       net_input, task='task1', runs_dir_manual=None, runs_dir_learned=None):
     """
 
     :param indices: sample indices
@@ -219,6 +233,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
     :param task: task to be performed
     :param runs_dir_manual: directory containing the simulation runs generated with the manual controller
+    :param runs_dir_learned: directory containing the simulation runs generated with the learned controller
     """
     if task == 'task1':
         from controllers import controllers_task1 as controllers
@@ -249,17 +264,28 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     network_plots(model_img, ds, model, net_input, prediction, training_loss, validation_loss, x_train, y_valid, communication, goal)
 
     if goal == 'colour':
-        y_target, y = utils.extract_targets(runs_dir_manual, validation_indices)
-
-        # Evaluate prediction of the manual controller to the omniscient groundtruth
-        # Plot R^2 of the regressor between prediction and ground truth on the validation set
-        title = 'Regression %s vs %s' % (ds_eval, ds)
-        file_name = 'regression-%s-vs-%s' % (ds_eval, ds)
-
         x_label = 'groundtruth'
         y_label = 'prediction'
 
-        my_plots.plot_regressor(y_target, y, x_label, y_label, model_img, title, file_name)
+        # Evaluate prediction of the manual controller to the omniscient groundtruth
+        # Plot R^2 of the regressor between prediction and ground truth on the validation set
+        # Plot accuracy of manual controller
+        y_target_m, y_m = utils.extract_targets(runs_dir_manual, validation_indices)
+
+        acc = binary_acc(y_target_m, y_m)
+        title = 'Accuracy %s vs %s' % (ds_eval, ds)
+        file_name = 'accuracy-%s-vs-%s' % (ds_eval, ds)
+        my_plots.plot_accuracy(y_target_m, y_m, acc, x_label, y_label, model_img, title, file_name)
+
+        # Evaluate prediction of the learned controller to the omniscient groundtruth
+        # Plot R^2 of the regressor between prediction and ground truth on the validation set
+        # Plot accuracy of learned controller
+        y_target_n, y_n = utils.extract_targets(runs_dir_learned, validation_indices)
+
+        acc = binary_acc(y_target_n, y_n)
+        title = 'Accuracy %s vs %s' % (model, ds)
+        file_name = 'accuracy-%s-vs-%s' % (model, ds)
+        my_plots.plot_accuracy(y_target_n, y_n, acc, x_label, y_label, model_img, title, file_name)
 
         # Model heatmap
         controller = controllers.LearnedController(net_input=net_input, name='learned', goal=goal, N=3,

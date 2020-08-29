@@ -1381,3 +1381,45 @@ def plot_heatmap(heat1, heat2, img_dir):
 
     filename = 'plot-model-heatmap'
     save_visualisation(filename, img_dir)
+
+
+def plot_accuracy(x, y, accuracy, x_label, y_label, img_dir, title, filename):
+    """
+
+    :param x: values for the x-axis
+    :param y: values for the y-axis
+    :param accuracy: accuracy of the controller
+    :param x_label: label for the x-axis
+    :param y_label: label for the y-axis
+    :param img_dir: directory containing the simulation images
+    :param title: title of the image
+    :param filename: name of the image
+    """
+    plt.figure(figsize=(7, 4), constrained_layout=True)
+
+    lr = LinearRegression()
+
+    lr.fit(np.reshape(x, [-1, 1]), np.reshape(y, [-1, 1]))
+    score = lr.score(np.reshape(x, [-1, 1]), np.reshape(y, [-1, 1]))
+
+    plt.xlabel(x_label, fontsize=11)
+    plt.ylabel(y_label, fontsize=11)
+
+    nonzeroind = np.nonzero(x)[0]
+
+    plt.scatter(x[nonzeroind], y[nonzeroind], alpha=0.3, marker='.', c='blue')
+    plt.scatter(x[~nonzeroind], y[~nonzeroind], alpha=0.3, marker='.', c='red')
+    y_hat = lr.predict(np.reshape(x, [-1, 1]))
+
+    if len(y_hat.shape) > 1:
+        y_hat = y_hat.squeeze()
+    plt.plot(x, y_hat, color="orange", label='regressor')
+
+    plt.xticks([0, 1])
+    plt.title(title, weight='bold', fontsize=12)
+    plt.legend()
+
+    plt.text(1.1, y.max(), '$accuracy={:.2f}\%$'.format(accuracy), bbox=dict(facecolor='grey', alpha=0.1), fontsize=11)
+    plt.text(1.1, y.max() - 0.2, '$R^2=%.3f$' % score, bbox=dict(facecolor='grey', alpha=0.1), fontsize=11)
+
+    save_visualisation(filename, img_dir)

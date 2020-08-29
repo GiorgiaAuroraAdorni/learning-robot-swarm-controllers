@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
     runs_dir_omniscient = os.path.join(d, 'omniscient')
     runs_dir_manual = os.path.join(d, 'manual')
-    runs_dir_learned_comm = os.path.join(d, 'learned_communication')
+    runs_dir_learned = os.path.join(d, 'learned')
 
     for c in controllers:
         run_dir, run_img_dir, run_video_dir = directory_for_dataset(d, c)
@@ -203,4 +203,4 @@ if __name__ == '__main__':
                 from network_evaluation import network_evaluation
                 network_evaluation(indices, file_losses, runs_dir_omniscient, model_dir, args.model, model_img_dir,
                                    'omniscient', 'manual', communication, net_input=args.net_input, task=args.task,
-                                   runs_dir_manual=runs_dir_manual)
+                                   runs_dir_manual=runs_dir_manual, runs_dir_learned=runs_dir_learned)
