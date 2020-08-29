@@ -172,13 +172,11 @@ if __name__ == '__main__':
                 target = 'colour'
 
             for i in range(5):
-                plot_predicted_colour(run_dir, run_img_dir, i,
-                                      'Simulation run %d - %s %s - colour' % (i, args.net_input, c), target=target)
+                plot_predicted_colour(run_dir, run_img_dir, i, target=target)
 
             if not c == 'omniscient':
                 for i in range(5):
-                    plot_predicted_message(run_dir, run_img_dir, i,
-                                          'Simulation run %d - %s %s - message' % (i, args.net_input, c))
+                    plot_predicted_message(run_dir, run_img_dir, i)
 
                     visualise_communication_simulation(run_dir, run_img_dir, i,
                                                        'Simulation run %d - %s %s - communication' %
@@ -206,5 +204,3 @@ if __name__ == '__main__':
                 network_evaluation(indices, file_losses, runs_dir_omniscient, model_dir, args.model, model_img_dir,
                                    'omniscient', 'manual', communication, net_input=args.net_input, task=args.task,
                                    runs_dir_manual=runs_dir_manual)
-
-

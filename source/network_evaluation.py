@@ -261,6 +261,32 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
 
         my_plots.plot_regressor(y_target, y, x_label, y_label, model_img, title, file_name)
 
+        # Model heatmap
+        controller = controllers.LearnedController(net_input=net_input, name='learned', goal=goal, N=3,
+                                                   net=net, communication=communication)
+
+        input1 = np.linspace(0, 1)
+        input2 = np.linspace(0, 1)
+        inputs = np.array(np.meshgrid(input1, input2)).T.reshape(-1, 2)
+
+        output1 = []
+        output2 = []
+        for i in range(len(inputs)):
+            state_dict = {'sim': True, 'prox_values': np.zeros(7), 'prox_comm': np.zeros(7),
+                          'messages': inputs[i], 'index': 1}
+
+            state = ThymioState(state_dict)
+
+            colour, comm = controller.perform_control(state, dt=0.1)
+
+            output1.append(colour.item())
+            output2.append(comm)
+
+        heat1 = pd.DataFrame(np.hstack((inputs, np.atleast_2d(output1).T)), columns=['rear communication', 'front communication', 'colour'])
+        heat2 = pd.DataFrame(np.hstack((inputs, np.atleast_2d(output2).T)), columns=['rear communication', 'front communication', 'transmitted communication'])
+
+        my_plots.plot_heatmap(heat1, heat2, model_img)
+
     else:
         # Evaluate prediction of the distributed controller with the omniscient groundtruth
         evaluate_controller(model_dir, ds, ds_eval, y_valid, x_valid, net_input, communication, goal, controllers)

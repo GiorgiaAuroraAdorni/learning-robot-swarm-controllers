@@ -1287,12 +1287,12 @@ def test_controller_given_init_positions(model_img, model, net_input):
     save_visualisation(file_name, model_img)
 
 
-def plot_predicted_colour(runs_dir, img_dir, simulation, title, target='colour'):
+def plot_predicted_colour(runs_dir, img_dir, simulation, target='colour'):
     """
     :param runs_dir: directory containing the simulation runs
     :param img_dir: directory containing the simulation images
     :param simulation: simulation to use
-    :param title: title of the image
+    :param target: task to be performed (can be colour or distribute)
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', target]]
@@ -1318,12 +1318,11 @@ def plot_predicted_colour(runs_dir, img_dir, simulation, title, target='colour')
     save_visualisation(filename, img_dir)
 
 
-def plot_predicted_message(runs_dir, img_dir, simulation, title):
+def plot_predicted_message(runs_dir, img_dir, simulation):
     """
     :param runs_dir: directory containing the simulation runs
     :param img_dir: directory containing the simulation images
     :param simulation: simulation to use
-    :param title: title of the image
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'transmitted_comm']]
@@ -1351,4 +1350,34 @@ def plot_predicted_message(runs_dir, img_dir, simulation, title):
     plt.ylabel('agent', fontsize=11)
 
     filename = 'plot-simulation-message-%d' % simulation
+    save_visualisation(filename, img_dir)
+
+
+def plot_heatmap(heat1, heat2, img_dir):
+    """
+    :param heat1: dataframe containing the data for the first plot, that are the inputs and the colour in output
+    :param heat2: dataframe containing the data for the second plot, that are the inputs and the communication
+                  to transmitt in output
+    :param img_dir: directory containing the simulation images
+    """
+    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(8.8, 4.8), sharey=True, constrained_layout=True)
+
+    heat1 = heat1.round(2)
+    heat2 = heat2.round(2)
+
+    heat1 = heat1.pivot('rear communication', 'front communication', 'colour')
+    heat2 = heat2.pivot('rear communication', 'front communication', 'transmitted communication')
+
+    a = sns.heatmap(heat1[::-1], cmap='viridis', linewidths=1, xticklabels=8, yticklabels=8, square=True,
+                    vmin=0, vmax=1, ax=ax1, cbar=False)
+    sns.heatmap(heat2[::-1], cmap='viridis', linewidths=1, xticklabels=8, yticklabels=8, square=True,
+                vmin=0, vmax=1, ax=ax2, cbar=False)
+
+    ax1.set_title('Predicted colour')
+    ax2.set_title('Predicted communication')
+
+    plt.setp(a.get_yticklabels(), rotation=0)
+    ax2.label_outer()
+
+    filename = 'plot-model-heatmap'
     save_visualisation(filename, img_dir)
