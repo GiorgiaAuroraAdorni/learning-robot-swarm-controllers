@@ -206,20 +206,21 @@ class LearnedController:
 
         :return speed, communication: the velocity and the message to communicate
         """
+        sensing = utils.get_input_sensing(self.net_input, state)
 
         communication = utils.get_received_communication(state)
-        colour, comm = self.net_controller([0, 0, 0, 0, 0, 0, 0], communication, state.index)
+        colour, comm = self.net_controller(sensing, communication, state.index)
 
         if colour > 0.5:
             colour = 1
         else:
             colour = 0
 
-        comm = int(comm[state.index] * (2 ** 10))
+        t_comm = int(comm[state.index] * (2 ** 10))
 
         if state.index == 0:
             return 1, 0
         elif state.index == self.N - 1:
             return 0, 0
         else:
-            return colour, comm
+            return colour, t_comm

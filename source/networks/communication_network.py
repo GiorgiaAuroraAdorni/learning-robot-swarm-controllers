@@ -263,7 +263,8 @@ class CommunicationNet(nn.Module):
 
             with torch.no_grad():
                 sensing = torch.FloatTensor(sensing)
-                if communication is not None:
+                # if communication is not None:
+                if communication != [0, 0]:
                     comm[i] = communication[0]
                     comm[i + 2] = communication[1]
                 control = self.step(sensing, comm, sync=sync, sim=True, i=i).numpy()
