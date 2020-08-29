@@ -1,6 +1,10 @@
+import itertools
+
 import numpy as np
 import pandas as pd
 import torch
+from sklearn.metrics import roc_curve, roc_auc_score
+from torch.utils import data
 
 from utils import my_plots
 from utils import utils
@@ -246,6 +250,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
     net = torch.load('%s/%s' % (model_dir, model), map_location='cpu')
     # Ensure that the network is loaded in evaluation mode by default.
     net.eval()
+    device = torch.device('cpu')
 
     train_indices, validation_indices, test_indices = indices[1]
 
@@ -312,6 +317,35 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
         heat2 = pd.DataFrame(np.hstack((inputs, np.atleast_2d(output2).T)), columns=['rear communication', 'front communication', 'transmitted communication'])
 
         my_plots.plot_heatmap(heat1, heat2, model_img)
+        # Plot ROC curve and accuracy
+        _, _, valid = utils.from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test, q_train,
+                                                           q_valid, q_test)
+
+        valid_minibatch = data.DataLoader(valid, batch_size=100, shuffle=False)
+        probs = []
+        targets = []
+
+        with torch.no_grad():
+            net.eval()
+
+            for batch in valid_minibatch:
+                inputs, labels, size = (tensor.to(device) for tensor in batch)
+                outputs = net(inputs, size)
+
+                output_flatten = torch.flatten(outputs)[~torch.isnan(torch.flatten(outputs))]
+                labels_flatten = torch.flatten(labels)[~torch.isnan(torch.flatten(labels))]
+
+                probs.append(output_flatten.tolist())
+                targets.append(labels_flatten.tolist())
+
+        probs = np.array(list(itertools.chain.from_iterable(probs)))
+        targets = np.array(list(itertools.chain.from_iterable(targets)))
+
+        fpr, tpr, thresholds = roc_curve(targets, probs)
+        auc = roc_auc_score(targets, probs)
+        filename = 'roc-%s' % model
+
+        my_plots.plot_roc_curve(fpr, tpr, auc, acc, model_img, filename, model)
 
     else:
         # Evaluate prediction of the distributed controller with the omniscient groundtruth

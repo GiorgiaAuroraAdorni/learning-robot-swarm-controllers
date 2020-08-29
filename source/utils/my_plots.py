@@ -1423,3 +1423,29 @@ def plot_accuracy(x, y, accuracy, x_label, y_label, img_dir, title, filename):
     plt.text(1.1, y.max() - 0.2, '$R^2=%.3f$' % score, bbox=dict(facecolor='grey', alpha=0.1), fontsize=11)
 
     save_visualisation(filename, img_dir)
+
+
+def plot_roc_curve(fpr, tpr, auc, accuracy, img_dir, filename, model):
+    """
+    :param fpr: false positive rate
+    :param tpr: true positive rate
+    :param auc: area under curve
+    :param accuracy: accuracy of the controller
+    :param img_dir: directory containing the simulation images
+    :param filename: name of the image
+    :param model: model to be used
+    """
+    plt.figure()
+
+    plt.plot(fpr, tpr, label='ROC %s' % model, color='tab:orange')
+    # plt.plot(1, 0.5, c='white', label='$AUC={:.2f}$\n$accuracy={:.2f}\%$'.format(auc, accuracy))
+    plt.plot([0, 1], [0, 1], linestyle='--', color='tab:blue', label='random guess')
+
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+
+    plt.title('Receiver Operating Characteristic Curve based on BCELoss\n'
+              '\n$AUC={:.2f}$, $accuracy={:.2f}\%$'.format(auc, accuracy), weight='bold', fontsize=12)
+    plt.legend(loc='lower right')
+
+    save_visualisation(filename, img_dir)
