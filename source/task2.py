@@ -190,8 +190,6 @@ if __name__ == '__main__':
                 visualise_communication_vs_distance(run_dir, run_img_dir,
                                                     'Communication vs Distance from goal - %s %s' % (args.net_input, c))
 
-        # TODO
-        #  add some plot for the dataset
         if args.train_net or args.plots_net:
             from utils.utils import prepare_dataset
 

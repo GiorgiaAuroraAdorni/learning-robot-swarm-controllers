@@ -1309,7 +1309,8 @@ def plot_predicted_colour(runs_dir, img_dir, simulation, title, target='colour')
 
     cmap = colors.ListedColormap(['Blue', 'red'])
 
-    sns.heatmap(run, cmap=cmap, linewidths=1, square=True, yticklabels=myts, cbar=False)
+    g = sns.heatmap(run, cmap=cmap, linewidths=1, square=True, yticklabels=myts, cbar=False)
+    plt.setp(g.get_yticklabels(), rotation=0)
 
     plt.ylabel('agent', fontsize=11)
 
@@ -1344,7 +1345,8 @@ def plot_predicted_message(runs_dir, img_dir, simulation, title):
     run = run.pivot('name', 'timestep', 'transmitted_comm')
     plt.figure()
 
-    sns.heatmap(run / dividend, cmap='viridis', linewidths=1, square=True, yticklabels=myts, vmin=0, vmax=1)
+    g = sns.heatmap(run / dividend, cmap='viridis', linewidths=1, square=True, yticklabels=myts, vmin=0, vmax=1)
+    plt.setp(g.get_yticklabels(), rotation=0)
 
     plt.ylabel('agent', fontsize=11)
 
