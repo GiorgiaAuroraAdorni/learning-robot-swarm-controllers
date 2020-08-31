@@ -204,3 +204,13 @@ if __name__ == '__main__':
                 network_evaluation(indices, file_losses, runs_dir_omniscient, model_dir, args.model, model_img_dir,
                                    'omniscient', 'manual', communication, net_input=args.net_input, task=args.task,
                                    runs_dir_manual=runs_dir_manual, runs_dir_learned=runs_dir_learned)
+
+    if args.compare_all:
+        from utils.my_plots import plot_compared_colour_error
+
+        print('\nGenerating comparison plots among all datasets of type %s…' % (args.net_input))
+        runs_img_dir = os.path.join(d, 'images')
+        dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned]
+        datasets = ['omniscient', 'manual', 'learned']
+
+        plot_compared_colour_error(dataset_folders, runs_img_dir, datasets, 'colours-errors-compressed')

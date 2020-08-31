@@ -206,7 +206,14 @@ class LearnedController:
 
         :return speed, communication: the velocity and the message to communicate
         """
-        if not state.sim:
+        if hasattr(state, 'sim') and state.sim:
+            colour, comm = self.net_controller(state.prox_values, state.messages.tolist(), state.index)
+
+            t_comm = comm[state.index]
+
+            return colour, t_comm
+
+        else:
             sensing = utils.get_input_sensing(self.net_input, state)
 
             communication = utils.get_received_communication(state)
@@ -225,11 +232,3 @@ class LearnedController:
                 return 0, 0
             else:
                 return colour, t_comm
-
-        else:
-            colour, comm = self.net_controller(state.prox_values, state.messages.tolist(), state.index)
-
-            t_comm = comm[state.index]
-
-            return colour, t_comm
-

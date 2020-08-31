@@ -1449,3 +1449,57 @@ def plot_roc_curve(fpr, tpr, auc, accuracy, img_dir, filename, model):
     plt.legend(loc='lower right')
 
     save_visualisation(filename, img_dir)
+
+
+def plot_compared_colour_error(dataset_folders, img_dir, datasets, filename):
+    """
+    :param dataset_folders: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param datasets: names of the datasets to be uses
+    :param filename: name of the image
+    """
+
+    utils.utils.check_dir(img_dir)
+
+    mean_errors = []
+    std_errors = []
+    timestep = np.arange(38)
+
+    for idx, el in enumerate(dataset_folders):
+
+        runs = utils.utils.load_dataset(el, 'simulation.pkl')
+        runs_sub = runs[['timestep', 'goal_colour', 'colour', 'run']]
+
+        if datasets[idx] == 'omniscient':
+            runs_sub['colour'] = runs_sub.goal_colour
+
+        runs_sub['colour_error'] = np.where(runs_sub.goal_colour == runs_sub.colour, 0, 1)
+        runs_sub = runs_sub.drop(columns=['goal_colour', 'colour'])
+
+        runs_error = []
+        for i in runs_sub['run'].unique():
+            run = pd.DataFrame(runs_sub[runs_sub['run'] == i]).drop(columns=['run'])
+
+            error = np.array(run.groupby('timestep').sum()).flatten()
+            error = np.pad(error, ((0, len(timestep) - len(error))), mode='edge')
+            runs_error.append(error)
+
+        mean_errors.append(np.mean(runs_error, axis=0))
+        std_errors.append(np.std(runs_error, axis=0))
+
+    fig = plt.figure()
+    plt.ylabel('number of wrong colours', fontsize=11)
+    plt.xlabel('timestep', fontsize=11)
+
+    for d_idx, d in enumerate(datasets):
+        ln, = plt.plot(timestep, mean_errors[d_idx], label='mean (%s)' % d)
+        plt.fill_between(timestep, mean_errors[d_idx] - std_errors[d_idx], mean_errors[d_idx] + std_errors[d_idx],
+                         alpha=0.2, label='+/- 1 std (%s)' % d, color=ln.get_color())
+
+    plt.ylim(0, 1.5)
+    ax = fig.gca()
+    handles, labels = ax.get_legend_handles_labels()
+
+    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=2)
+
+    save_visualisation(filename, img_dir)
