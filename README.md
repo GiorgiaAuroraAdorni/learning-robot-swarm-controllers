@@ -3,7 +3,7 @@
 >
 > @ USI 19/20.
 >
-> See <https://drive.google.com/drive/folders/1mUF_uHNvKKEePV2O_CP-Pd_aTXNxHpZR> for datasets, models and report.
+> See <https://drive.google.com/drive/folders/1KCUJn06g2zrhAr3wk5BOAC7EoNM_4XOr?usp=sharing> for datasets, models and report.
 
 #### Contributors
 
@@ -29,33 +29,30 @@ $ pip install -r requirements.txt
 
 #### Usage
 
-To receive help on how to run the script, execute:
+To receive help on how to run the scripts (for example for task1), execute:
 
 ```sh
-$ python source/run_distributed_no_communication.py --help
+$ python source/task1.py --help
 
-> usage: run_distributed_no_communication.py [-h] [--gui] [--myt-quantity N]
-                                             [--n-simulations N] [--avg-gap N]
-                                             [--generate-dataset]
-                                             [--generate-split]
-                                             [--plots-dataset] [--check-dataset]
-                                             [--compare-all]
-                                             [--controller CONTROLLER]
-                                             [--dataset-folder DATASET_FOLDER]
-                                             [--dataset DATASET]
-                                             [--models-folder MODELS_FOLDER]
-                                             [--model-type MODEL_TYPE]
-                                             [--model MODEL] [--train-net]
-                                             [--net-input 			{prox_values,prox_comm,all_sensors}]
-                                             [--plots-net]
+> usage: task1.py [-h] [--gui] [--myt-quantity N] [--n-simulations N]
+                  [--task {task1,task2}] [--avg-gap N] [--generate-dataset]
+                  [--generate-split] [--plots-dataset] [--check-dataset]
+                  [--compare-all] [--controller CONTROLLER]
+                  [--dataset-folder DATASET_FOLDER] [--dataset DATASET]
+                  [--models-folder MODELS_FOLDER] [--model-type MODEL_TYPE]
+                  [--model MODEL] [--train-net] [--save-net]
+                  [--net-input {prox_values,prox_comm,all_sensors}]
+                  [--plots-net]
 
-Imitation Learning - Distributed Controller No Communication
+Imitation Learning - Distributed Controller + Communication
 
 optional arguments:
   -h, --help            show this help message and exit
   --gui                 Run simulation using the gui (default: False)
   --myt-quantity N      Number of thymios for the simulation (default: 5)
   --n-simulations N     Number of runs for each simulation (default: 1000)
+  --task {task1,task2}  Choose the task to perform in the current execution
+                        between task1 and task2 (default: task1)
   --avg-gap N           Average gap distance between thymios (default: 8)
   --generate-dataset    Generate the dataset containing the simulations
                         (default: False)
@@ -84,9 +81,10 @@ optional arguments:
                         (default: distributed)
   --model MODEL         Name of the model (default: net1)
   --train-net           Train the model (default: False)
+  --save-net            Save the model in onnx format (default: False)
   --net-input {prox_values,prox_comm,all_sensors}
-                        Choose the input of the net between prox_values and
-                        prox_comm_events (default: prox_values)
+                        Choose the input of the net between prox_values,
+                        prox_comm or all_sensors (default: prox_values)
   --plots-net           Generate the plots of regarding the model (default:
                         False)
 
