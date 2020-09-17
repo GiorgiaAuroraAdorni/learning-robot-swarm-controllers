@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ## Generate plots for omniscient datasets
 
 #python3 source/task2.py --dataset avg_gap-8-N-5 --model net-v1 --myt-quantity 5 --avg-gap 8 --controller omniscient --plots-dataset

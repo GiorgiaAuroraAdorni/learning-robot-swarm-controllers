@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # PLOTS compare all
 
 python3 source/task1_extension.py --dataset avg_gap-8-N-5 --model net-v1 --myt-quantity 5 --avg-gap 8 --controller omniscient --generate-dataset

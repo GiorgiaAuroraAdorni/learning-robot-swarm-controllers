@@ -320,12 +320,22 @@ def from_indices_to_dataset(runs_dir, train_indices, validation_indices, test_in
     """
     runs = load_dataset(runs_dir, 'simulation.pkl')
 
-    N = runs.myt_quantity.unique().max() - 2
+    if 'myt_quantity' in runs.columns:
+        N = runs.myt_quantity.unique().max() - 2
+    else:
+        runs['myt_quantity'] = 5
+        N = 5 - 2
     myt_quantities = np.array(runs[['run', 'myt_quantity']].drop_duplicates().myt_quantity) - 2
 
     # For old datasets
     # N = 3
     # myt_quantities = np.full(shape=(1000,), fill_value=N, dtype='float32')
+
+    if not 'goal_colour' in runs.columns:
+        runs['goal_colour'] = 1
+        runs.loc[runs['index'] > ((N + 2) // 2), 'goal_colour'] = 0
+        if (N + 2) % 2 == 0:
+            runs.loc[runs['index'] == ((N + 2) // 2), 'goal_colour'] = 0
 
     if communication:
         runs_sub = runs[['timestep', 'name', 'run', 'motor_left_target', 'goal_colour', 'prox_values', 'prox_comm', 'all_sensors']]

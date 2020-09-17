@@ -211,7 +211,7 @@ class LearnedController:
     """
     The robots can be moved following a controller learned by a neural network.
 
-    :param name: name of the controller used (in this case omniscient)
+    :param name: name of the controller used (in this case learned)
     :param goal: task to perform (in this case distribute)
     :param N: number of agents in the simulation
     :param net: network to be used by the controller
