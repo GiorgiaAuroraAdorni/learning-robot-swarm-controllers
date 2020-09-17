@@ -145,17 +145,17 @@ if __name__ == '__main__':
 
             if c == 'learned':
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=myt_quantity, args=args, model_dir=model_dir, model=args.model,
-                                        communication=communication)
+                                        args=args, model_dir=model_dir, model=args.model, communication=communication)
             else:
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=myt_quantity, args=args, communication=communication)
+                                        args=args, communication=communication)
 
         if args.plots_dataset:
             from utils.my_plots import visualise_simulation, visualise_simulations_comparison, plot_distance_from_goal, \
                                        visualise_simulation_all_sensors, visualise_communication_simulation,\
                                        visualise_simulations_comparison_all_sensors, visualise_communication_vs_control,\
-                                       visualise_communication_vs_distance
+                                       visualise_communication_vs_distance, visualise_position_over_time, \
+                                       visualise_control_over_time, plot_predicted_message
 
             print('Generating plots for %s %s controller…' % (d, c))
 
@@ -164,7 +164,8 @@ if __name__ == '__main__':
                     visualise_simulation(run_dir, run_img_dir, i,
                                          'Simulation run %d - %s avg_gap-%s %s' % (i, args.net_input, args.avg_gap, c),
                                          net_input=args.net_input)
-
+                visualise_position_over_time(run_dir, run_img_dir, 'position-overtime')
+                visualise_control_over_time(run_dir, run_img_dir, 'control-overtime')
                 visualise_simulations_comparison(run_dir, run_img_dir,
                                                  'All simulation run - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
                                                  net_input=args.net_input)
@@ -183,10 +184,18 @@ if __name__ == '__main__':
                                     'distances-from-goal-%s' % c)
 
             if communication:
-                for i in range(5):
-                    visualise_communication_simulation(run_dir, run_img_dir, i,
-                                                       'Simulation run %d - %s avg_gap-%s %s - communication' %
-                                                       (i, args.net_input, args.avg_gap, c))
+                if c == 'omniscient':
+                    target = 'goal_colour'
+                else:
+                    target = 'colour'
+
+                if not c == 'omniscient':
+                    for i in range(5):
+                        plot_predicted_message(run_dir, run_img_dir, i)
+
+                        visualise_communication_simulation(run_dir, run_img_dir, i,
+                                                           'Simulation run %d - %s avg_gap-%s %s - communication' %
+                                                           (i, args.net_input, args.avg_gap, c))
 
                 visualise_communication_vs_control(run_dir, run_img_dir,
                                                    'Communication vs Control - %s avg_gap-%s %s' %
@@ -201,7 +210,7 @@ if __name__ == '__main__':
             print('\nChecking conformity of %s %s dataset…' % (d, c))
             sim.check_dataset_conformity(run_dir, run_img_dir,
                                          'Dataset - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
-                                         c, net_input=args.net_input)
+                                         c, net_input=args.net_input, communication=communication)
 
         if args.train_net or args.plots_net:
             from utils.utils import prepare_dataset

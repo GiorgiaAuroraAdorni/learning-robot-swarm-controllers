@@ -921,7 +921,8 @@ def visualise_simulation_over_time_all_sensors(runs_dir, img_dir, simulation, ti
     ax = fig.gca()
     handles, labels = ax.get_legend_handles_labels()
 
-    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize='small', bbox_to_anchor=pos, ncol=col, title="robot")
+    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize='small',
+               bbox_to_anchor=pos, ncol=col, title="robot")
 
     filename = 'plot-simulation-%d' % simulation
     save_visualisation(filename, img_dir)
@@ -1501,5 +1502,99 @@ def plot_compared_colour_error(dataset_folders, img_dir, datasets, filename):
     handles, labels = ax.get_legend_handles_labels()
 
     plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=2)
+
+    save_visualisation(filename, img_dir)
+
+
+def visualise_position_over_time(runs_dir, img_dir, filename):
+    """
+
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param filename: name of the image
+    """
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position']]
+    runs['x_position'] = runs.apply(lambda row: list(row.position)[0], axis=1)
+
+    max_time_step = 39
+    time_steps = np.arange(max_time_step)
+
+    run = runs_sub[runs_sub['run'] == 0]
+    target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
+
+    fig = plt.figure(constrained_layout=True)
+
+    # Plot the evolution of the positions of all robots over time
+    plt.xlabel('timestep', fontsize=11)
+    plt.ylabel('x position', fontsize=11)
+
+    plt.title('Thymio positions over time', weight='bold', fontsize=12)
+
+    for name in runs.name.unique():
+        runs_myt = runs[runs['name'] == name].reset_index()
+        mean_x_positions = np.array(runs_myt.groupby('timestep').x_position.mean())
+        std_x_positions = np.array(runs_myt.groupby('timestep').x_position.std())
+
+        mean_x_positions = np.pad(mean_x_positions, ((0, max_time_step - len(mean_x_positions))), mode='edge')
+        std_x_positions = np.pad(std_x_positions, ((0, max_time_step - len(std_x_positions))), mode='edge')
+
+        ln, = plt.plot(time_steps, mean_x_positions, label=name)
+        plt.plot(time_steps, mean_x_positions - (std_x_positions + 2.95), ls='--', color=ln.get_color(), alpha=0.5)
+        plt.plot(time_steps, mean_x_positions + (std_x_positions + 7.95), ls='--', color=ln.get_color(), alpha=0.5)
+
+        plt.fill_between(time_steps, mean_x_positions - std_x_positions, mean_x_positions + std_x_positions, alpha=0.2)
+
+    plt.yticks(target)
+    plt.grid()
+
+    if not len(run.name.unique()) > 5:
+        col = len(run.name.unique())
+        pos = (0.5, -0.35)
+    else:
+        col = int(np.ceil(len(run.name.unique())/2))
+        pos = (0.5, -0.4)
+
+    ax = fig.gca()
+    handles, labels = ax.get_legend_handles_labels()
+
+    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize='small',
+               bbox_to_anchor=pos, ncol=col, title="robot")
+
+    save_visualisation(filename, img_dir)
+
+
+def visualise_control_over_time(runs_dir, img_dir, filename):
+    """
+
+    :param runs_dir: directory containing the simulation runs
+    :param img_dir: directory containing the simulation images
+    :param filename: name of the image
+    """
+    runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
+    runs_sub = runs[['name', 'timestep', 'motor_left_target']]
+
+    max_time_step = 39
+    time_steps = np.arange(max_time_step)
+
+    plt.figure()
+
+    plt.ylabel('control', fontsize=11)
+    plt.xlabel('timestep', fontsize=11)
+    plt.title('Thymio control over time', weight='bold', fontsize=12)
+
+    # Plot, for a given robot, the evolution of control over time
+    mean_control = np.array(runs_sub.groupby('timestep').motor_left_target.mean())
+    std_control = np.array(runs_sub.groupby('timestep').motor_left_target.std())
+
+    mean_control = np.pad(mean_control, ((0, max_time_step - len(mean_control))), mode='edge')
+    std_control = np.pad(std_control, ((0, max_time_step - len(std_control))), mode='edge')
+
+    plt.plot(time_steps, mean_control, color='black')
+    plt.fill_between(time_steps,
+                     mean_control - std_control,
+                     mean_control + std_control,
+                     alpha=0.2)
+    plt.grid()
 
     save_visualisation(filename, img_dir)
