@@ -151,11 +151,10 @@ if __name__ == '__main__':
 
             if c == 'learned':
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=None, args=args, model_dir=model_dir, model=args.model,
-                                        communication=communication)
+                                        args=args, model_dir=model_dir, model=args.model, communication=communication)
             else:
                 sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=None, args=args, communication=communication)
+                                        args=args, communication=communication)
 
         if args.plots_dataset:
             from utils.my_plots import visualise_simulation_over_time_all_sensors, plot_compared_distance_compressed, \

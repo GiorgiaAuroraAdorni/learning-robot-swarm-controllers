@@ -45,7 +45,7 @@ class GenerateSimulationData:
         return world, myts
 
     @classmethod
-    def init_positions(cls, myts, net_input, avg_gap, variate_pose=False, min_distance=10.9, extension=False, x=None, epsilon=None):
+    def init_positions(cls, myts, net_input, avg_gap, variate_pose=False, min_distance=10.9, x=None, epsilon=None):
         """
         Given the agents, position them such as all x-axes are aligned.
         Arrange the robots in a "single file" (all x-axes aligned) and within the proximity sensor range
@@ -73,50 +73,44 @@ class GenerateSimulationData:
         :param variate_pose: False by default, True only during the evaluation of the models when only one agent is used.
         :param min_distance: the minimum distance between two Thymio [wheel - wheel] is 10.9 cm,
                              that corresponds to the length of the agents.
-        :param extension: True if is running task1_extension
         :param x: quantity of which variate the position along the x axis of the robot
                   (only during the model evaluation with variate_pose True)
         """
         myt_quantity = len(myts)
-        std = 8
 
         # maximum_gap: corresponds to the proximity sensors maximal range and is 14cm for the prox_values and
-        # 50cm for prox_comm
-        if net_input == 'prox_values':
-            maximum_gap = 14
-        elif net_input == 'prox_comm':
-            maximum_gap = 50
-        elif net_input == 'all_sensors' or net_input is None:
-            maximum_gap = avg_gap * 2
-        else:
-            raise ValueError("Invalid value for net_input")
+        # 48cm for prox_comm. For simplicity we use the double of the average gap
+        maximum_gap = avg_gap * 2
 
         first_x = 0
         last_x = (min_distance + avg_gap) * (myt_quantity - 1)
 
-        if not extension:
-            if variate_pose:
-                initial_positions = np.array([first_x, min_distance + x, last_x], dtype=np.float64)
-                last_x = initial_positions[-1]
-            else:
-                distances = min_distance + np.clip(np.random.normal(avg_gap, std, myt_quantity - 1), 1, maximum_gap)
-                distances = distances / np.sum(distances) * last_x
-
-                initial_positions = np.zeros(myt_quantity)
-                initial_positions[1:] = np.cumsum(distances)
+        if variate_pose:
+            initial_positions = np.array([first_x, min_distance + x, last_x], dtype=np.float64)
+            last_x = initial_positions[-1]
         else:
             initial_positions = np.zeros(myt_quantity)
 
             gaps = np.random.uniform(first_x, maximum_gap, myt_quantity - 1)
+            gaps = gaps / np.sum(gaps) * (avg_gap * (myt_quantity - 1))
 
             distances = np.round(gaps + min_distance, 2)
             initial_positions[1:] = np.cumsum(distances)
+            initial_positions[-1] = last_x
 
-            last_x = initial_positions[-1]
+            # if not abs(initial_positions[-1] - last_x) < 0.01:
+            #     raise ValueError("Invalid initial position for the last robot.")
+
+            # gaps = np.random.uniform(first_x, maximum_gap, myt_quantity - 1)
+            #
+            # distances = np.round(gaps + min_distance, 2)
+            # initial_positions[1:] = np.cumsum(distances)
+            #
+            # last_x = initial_positions[-1]
 
             if distances[distances < min_distance]:
                 print(distances)
-                raise ValueError("Invalid initial positions")
+                raise ValueError("Invalid initial positions.")
 
         # Decide the goal pose for each robot
         goal_positions = np.linspace(first_x, last_x, num=myt_quantity)
@@ -417,7 +411,7 @@ class GenerateSimulationData:
         return controller_factory
 
     @classmethod
-    def generate_simulation(cls, run_dir, n_simulations, controller, myt_quantity, args, model_dir=None, model=None,
+    def generate_simulation(cls, run_dir, n_simulations, controller, args, model_dir=None, model=None,
                             communication=False):
         """
 
@@ -425,7 +419,6 @@ class GenerateSimulationData:
         :param n_simulations: number of simulations to generate
         :param controller: controller to be used in the simulations
         :param model_dir: directory containing the model
-        :param myt_quantity: number of agents
         :param args: arguments from command line
         :param model: model to be used
         :param communication: states if the communication is used by the network
@@ -446,8 +439,6 @@ class GenerateSimulationData:
             goal = 'colour'
             net_input = None
 
-        extension = True
-
         for n_sim in tqdm(range(n_simulations)):
             # if the number of agents is not defined randomly generate a simulation with N robots with N \in [5, 10]
             if args.myt_quantity == 'variable':
@@ -455,9 +446,9 @@ class GenerateSimulationData:
             else:
                 myt_quantity = int(args.myt_quantity)
 
-            # if average gap is not defined randomly generate a simulation with avg_gap \in [5, 25]
+            # if average gap is not defined randomly generate a simulation with avg_gap \in [5, 24]
             if args.avg_gap == 'variable':
-                avg_gap = np.random.randint(5, 26)
+                avg_gap = np.random.randint(5, 25)
             else:
                 avg_gap = int(args.avg_gap)
 
@@ -465,7 +456,7 @@ class GenerateSimulationData:
                 controller_factory = cls.get_controller(controller, controllers, goal, myt_quantity, args.net_input, communication, model, model_dir)
 
                 world, myts = cls.setup(controller_factory, myt_quantity)
-                cls.init_positions(myts, net_input, avg_gap, extension=extension)
+                cls.init_positions(myts, net_input, avg_gap)
                 cls.run(n_sim, myts, runs, complete_runs, world, comm, args.gui)
             except Exception as e:
                 print('ERROR: ', e)
