@@ -116,12 +116,13 @@ if __name__ == '__main__':
     d = os.path.join(args.dataset_folder, args.task, args.net_input, args.dataset)
 
     if args.controller == 'all':
-        controllers = ['omniscient', 'learned', 'manual']
+        controllers = ['omniscient', 'learned_distributed', 'learned_communication', 'manual']
     else:
         controllers = [args.controller]
 
     runs_dir_omniscient = os.path.join(d, 'omniscient')
     runs_dir_manual = os.path.join(d, 'manual')
+    runs_dir_learned = os.path.join(d, 'learned')
     runs_dir_learned_dist = os.path.join(d, 'learned_distributed')
     runs_dir_learned_comm = os.path.join(d, 'learned_communication')
 
@@ -164,8 +165,6 @@ if __name__ == '__main__':
                     visualise_simulation(run_dir, run_img_dir, i,
                                          'Simulation run %d - %s avg_gap-%s %s' % (i, args.net_input, args.avg_gap, c),
                                          net_input=args.net_input)
-                visualise_position_over_time(run_dir, run_img_dir, 'position-overtime')
-                visualise_control_over_time(run_dir, run_img_dir, 'control-overtime')
                 visualise_simulations_comparison(run_dir, run_img_dir,
                                                  'All simulation run - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
                                                  net_input=args.net_input)
@@ -178,6 +177,9 @@ if __name__ == '__main__':
                 visualise_simulations_comparison_all_sensors(run_dir, run_img_dir,
                                                              'All simulation run - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
                                                              net_input=args.net_input)
+
+            visualise_position_over_time(run_dir, run_img_dir, 'position-overtime')
+            visualise_control_over_time(run_dir, run_img_dir, 'control-overtime')
 
             plot_distance_from_goal(run_dir, run_img_dir,
                                     'Distance from goal - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
@@ -234,16 +236,27 @@ if __name__ == '__main__':
                     plot_sensing_timestep(runs_dir_omniscient, model_img_dir, net_input=args.net_input, model=args.model)
 
     if args.compare_all:
-        from utils.my_plots import plot_compared_distance_from_goal, plot_compared_distance_compressed
+        from utils.my_plots import plot_compared_distance_from_goal, plot_compared_distance_compressed, \
+            test_controller_given_init_positions
         print('\nGenerating comparison plots among all datasets of type %s avg-gap %s…' % (args.net_input, args.avg_gap))
         runs_img_dir = os.path.join(d, 'images')
-        dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist, runs_dir_learned_comm]
-        datasets = ['omniscient', 'manual', 'distributed', 'communication']
 
-        plot_compared_distance_from_goal(dataset_folders, runs_img_dir,
-                                         'Robot distances from goal - %s avg_gap-%s' % (args.net_input, args.avg_gap),
-                                         'distances-from-goal')
+        dataset_folders_comm = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist, runs_dir_learned_comm]
+        datasets_comm = ['omniscient', 'manual', 'distributed', 'communication']
 
-        plot_compared_distance_compressed(dataset_folders, runs_img_dir, datasets,
-                                         'Robot distances from goal - %s avg_gap-%s' % (args.net_input, args.avg_gap),
-                                         'distances-from-goal-compressed')
+        dataset_folders_dist = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist]
+        datasets_dist = ['omniscient', 'manual', 'distributed']
+
+        # plot_compared_distance_from_goal(dataset_folders, runs_img_dir,
+        #                                  'Robot distances from goal - %s avg_gap-%s' % (args.net_input, args.avg_gap),
+        #                                  'distances-from-goal')
+
+        plot_compared_distance_compressed(dataset_folders_dist, runs_img_dir, datasets_dist,
+                                         'Robot distances from goal', 'distances-from-goal-compressed-distributed')
+
+        plot_compared_distance_compressed(dataset_folders_comm, runs_img_dir, datasets_comm,
+                                         'Robot distances from goal', 'distances-from-goal-compressed-communication')
+
+        # Evaluate the learned controllers by passing a specific initial position configuration and compare them with
+        # the omniscient and the manual controllers
+        test_controller_given_init_positions(runs_img_dir, args.model, args.net_input)
