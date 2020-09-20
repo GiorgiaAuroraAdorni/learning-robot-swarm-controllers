@@ -49,7 +49,7 @@ def network_plots(model_img, dataset, model, net_input, prediction, training_los
 
     # Plot target distribution
     title = 'Distribution Target Validation Set %s' % model
-    file_name = 'distribution-target-validation-%s' %model
+    file_name = 'distribution-target-validation-%s' % model
     my_plots.plot_target_distribution(y_g, y_p, model_img, title, file_name)
 
     if not net_input == 'all_sensors':
@@ -177,7 +177,7 @@ def evaluate_net(model_img, model, net, net_input, net_title, sensing, index, x_
     """
 
     :param model_img: directory for the output image of the model
-    :param model: nae of the model
+    :param model: name of the model
     :param net: model used
     :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
     :param net_title: network title
@@ -280,6 +280,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
         acc = binary_acc(y_target_m, y_m)
         title = 'Accuracy %s vs %s' % (ds_eval, ds)
         file_name = 'accuracy-%s-vs-%s' % (ds_eval, ds)
+        # TODO
         my_plots.plot_accuracy(y_target_m, y_m, acc, x_label, y_label, model_img, title, file_name)
 
         # Evaluate prediction of the learned controller to the omniscient groundtruth
@@ -290,6 +291,7 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
         acc = binary_acc(y_target_n, y_n)
         title = 'Accuracy %s vs %s' % (model, ds)
         file_name = 'accuracy-%s-vs-%s' % (model, ds)
+        # TODO
         my_plots.plot_accuracy(y_target_n, y_n, acc, x_label, y_label, model_img, title, file_name)
 
         # Model heatmap
@@ -315,8 +317,9 @@ def network_evaluation(indices, file_losses, runs_dir, model_dir, model, model_i
 
         heat1 = pd.DataFrame(np.hstack((inputs, np.atleast_2d(output1).T)), columns=['rear communication', 'front communication', 'colour'])
         heat2 = pd.DataFrame(np.hstack((inputs, np.atleast_2d(output2).T)), columns=['rear communication', 'front communication', 'transmitted communication'])
-
+        # TODO
         my_plots.plot_heatmap(heat1, heat2, model_img)
+
         # Plot ROC curve and accuracy
         _, _, valid = utils.from_dataset_to_tensors(x_train, y_train, x_valid, y_valid, x_test, y_test, q_train,
                                                            q_valid, q_test)
