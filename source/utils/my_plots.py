@@ -823,14 +823,25 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
     handles, labels = ax.get_legend_handles_labels()
 
     if len(dataset_folders) > 1:
-        handles = [handles[0], handles[1], handles[2], handles[3],
-                   handles[4], handles[6], handles[8], handles[10],
-                   handles[5], handles[7], handles[9], handles[11]]
-        labels = [labels[0], labels[1], labels[2], labels[3],
-                  labels[4], labels[6], labels[8], labels[10],
-                  labels[5], labels[7], labels[9], labels[11]]
+        if len(dataset_folders) == 4:
+            handles = [handles[0], handles[1], handles[2], handles[3],
+                       handles[4], handles[6], handles[8], handles[10],
+                       handles[5], handles[7], handles[9], handles[11]]
+            labels = [labels[0], labels[1], labels[2], labels[3],
+                      labels[4], labels[6], labels[8], labels[10],
+                      labels[5], labels[7], labels[9], labels[11]]
+            plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.45),
+                       ncol=3)
+        else:
+            handles = [handles[0], handles[1], handles[2],
+                       handles[3], handles[5], handles[7],
+                       handles[4], handles[6], handles[8]]
+            labels = [labels[0], labels[1], labels[2],
+                      labels[3], labels[5], labels[7],
+                      labels[4], labels[6], labels[8]]
+            plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.4),
+                       ncol=3)
 
-        plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=3)
     else:
         plt.legend(handles=handles, labels=labels, fontsize=11)
 
@@ -1180,9 +1191,9 @@ def test_controller_given_init_positions(model_img, model, net_input):
     controller_factories = [(omniscient_controller_factory, 'omniscient'),
                             (manual_controller_factory, 'manual'),
                             (distributed_controller_factory, 'distributed'),
-                            (distributed_controller_factory, 'distributed (control * 5)'),
-                            (communication_controller_factory, 'communication'),
-                            (communication_controller_factory, 'communication (control * 5)')]
+                            # (distributed_controller_factory, 'distributed (control * 5)'),
+                            (communication_controller_factory, 'communication')]#,
+                            # (communication_controller_factory, 'communication (control * 5)')]
 
     controllers_predictions = []
     std_controllers_predictions = []
@@ -1222,8 +1233,8 @@ def test_controller_given_init_positions(model_img, model, net_input):
         controllers_predictions.append(control_predictions)
         std_controllers_predictions.append(std_control_predictions)
 
-    title = 'Controllers response by varying init position - %s' % model
-    file_name = 'controllers-response-varying_init_position-%s' % model
+    title = 'Response %s by varying init position' % model
+    file_name = 'response-varying_init_position-%s-distributed' % model
 
     # Plot the output of the network
     utils.utils.check_dir(model_img)
@@ -1232,7 +1243,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
     plt.xlabel('x position', fontsize=11)
     plt.ylabel('control', fontsize=11)
 
-    for idx, el in enumerate(controllers_predictions):
+    for idx, el in enumerate(controllers_predictions[:3]):
         y = np.array(el)
         std = np.array(std_controllers_predictions[idx])
 
@@ -1254,12 +1265,12 @@ def test_controller_given_init_positions(model_img, model, net_input):
     ax = plt.gca()
     handles, labels = ax.get_legend_handles_labels()
 
-    handles = [patches[0], handles[0], handles[1], handles[2], handles[3], handles[4], handles[5],
-               patches[1], handles[6], handles[7], handles[8], handles[9], handles[10], handles[11]]
-    labels = [texts[0], labels[0], labels[1], labels[2], labels[3], labels[4], labels[5],
-              texts[1], labels[6], labels[7], labels[8], labels[9], labels[10], labels[11]]
+    handles = [patches[0], handles[0], handles[1], handles[2],
+               patches[1], handles[3], handles[4], handles[5]]
+    labels = [texts[0], labels[0], labels[1], labels[2],
+              texts[1], labels[3], labels[4], labels[5]]
 
-    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.7), ncol=2)
+    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.5), ncol=2)
 
     major_xticks = [(max_range + min_distance * 2) / 2]
     minor_xticks = np.linspace(0 + min_distance, max_range + min_distance, 9)
@@ -1286,6 +1297,140 @@ def test_controller_given_init_positions(model_img, model, net_input):
     ax.grid(which='major')
 
     save_visualisation(file_name, model_img)
+
+    file_name = 'response-varying_init_position-%s-communication' % model
+    plt.figure()
+    plt.xlabel('x position', fontsize=11)
+    plt.ylabel('control', fontsize=11)
+
+    for idx, el in enumerate(controllers_predictions):
+        y = np.array(el)
+        std = np.array(std_controllers_predictions[idx])
+
+        if controller_factories[idx][1] == 'distributed (control * 5)' or controller_factories[idx][
+            1] == 'communication (control * 5)':
+            plt.plot(x + min_distance, y, label=controller_factories[idx][1], ls='--')
+        else:
+            plt.plot(x + min_distance, y, label=controller_factories[idx][1])
+        plt.fill_between(x + min_distance,
+                         (y - std).clip(-16.6, 16.6),
+                         (y + std).clip(-16.6, 16.6),
+                         alpha=0.15, label=controller_factories[idx][1])
+
+    plt.title(title, weight='bold', fontsize=12)
+
+    colors = ["w", "w"]
+    texts = ["mean", "+/- 1 std"]
+    patches = [mpatches.Patch(color=colors[i], label="{:s}".format(texts[i])) for i in range(len(texts))]
+
+    ax = plt.gca()
+    handles, labels = ax.get_legend_handles_labels()
+
+    handles = [patches[0], handles[0], handles[1], handles[2], handles[3],
+               patches[1], handles[4], handles[5], handles[6], handles[7]]
+    labels = [texts[0], labels[0], labels[1], labels[2], labels[3],
+              texts[1], labels[4], labels[5], labels[6], labels[7]]
+
+    plt.legend(handles=handles, labels=labels, loc='lower center', fontsize=11, bbox_to_anchor=(0.5, -0.55), ncol=2)
+
+    major_xticks = [(max_range + min_distance * 2) / 2]
+    minor_xticks = np.linspace(0 + min_distance, max_range + min_distance, 9)
+    minor_xticks = np.setdiff1d(minor_xticks, major_xticks)
+    major_yticks = [0]
+    minor_yticks = np.round(np.linspace(-16.6, 16.6, 7), 2)
+    minor_yticks = np.setdiff1d(minor_yticks, major_yticks)
+
+    ax.minorticks_on()
+
+    ax.set_xticks(major_xticks)
+    ax.set_yticks(major_yticks)
+
+    ax.set_xticks(minor_xticks, minor=True)
+    ax.set_yticks(minor_yticks, minor=True)
+
+    ax.set_xticklabels(minor_xticks, minor=True)
+    ax.set_yticklabels(minor_yticks, minor=True)
+
+    ax.tick_params(axis='x', which='both', labelrotation=45, labelright=True)
+    ax.tick_params(axis='y', which='both')
+
+    # Specify different settings for major and minor grids
+    ax.grid(which='major')
+
+    save_visualisation(file_name, model_img)
+
+
+def evaluate_net(model_img, model, net_input, net_title, sensing, index, x_label):
+    """
+
+    :param model_img: directory for the output image of the model
+    :param model: name of the model
+    :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
+    :param net_title: network title
+    :param sensing: input sensing
+    :param index: 1D vector
+    :param x_label: label of the x axis
+    """
+    from controllers import controllers_task1 as controllers
+    import torch
+    from utils.utils import ThymioState
+
+    model_dir = os.path.join('models', 'task1', 'distributed', model)
+
+    net = torch.load('%s/%s' % (model_dir, model))
+    goal = 'distribute'
+    omniscient_controller = controllers.OmniscientController(net_input=net_input, name='omniscient', goal=goal, N=3)
+    manual_controller = controllers.ManualController(net_input=net_input, name='manual', goal=goal, N=3)
+    distributed_controller = controllers.LearnedController(net=net, net_input=net_input, name='learned', goal=goal, N=3,
+                                                           communication=False)
+
+    controller_factories = [(omniscient_controller, 'omniscient'),
+                            (manual_controller, 'manual'),
+                            (distributed_controller, 'distributed')]
+
+    title = 'Response %s - %s' % (model, net_title)
+    filename = 'response-%s-%s' % (model, net_title)
+
+    plt.figure()
+    plt.xlabel(x_label, fontsize=11)
+    plt.ylabel('control', fontsize=11)
+    plt.title(title, weight='bold', fontsize=12)
+
+    for controller, name in controller_factories:
+        controller_predictions = []
+
+        for sample in sensing:
+            # Rescale the values of the sensor
+            sample = np.multiply(np.array(sample), 1000).tolist()
+
+            if net_input == 'prox_comm':
+                prox_comm = {'sender': {'intensities': sample}}
+                prox_values = None
+            elif net_input == 'prox_values':
+                prox_values = sample
+                prox_comm = None
+            else:
+                raise AttributeError('Input not found')
+
+            state_dict = {'initial_position': (0, 0), 'goal_position': (10, 0), 'prox_values': prox_values,
+                          'prox_comm': prox_comm}
+
+            state = ThymioState(state_dict)
+
+            control, _ = controller.perform_control(state, dt=0.1)
+
+            controller_predictions.append(control)
+
+        # Plot the output of the network
+        if index is not None:
+            x = np.multiply(sensing[:, index], 1000)
+
+        plt.plot(x.tolist(), controller_predictions, label=name)
+
+    plt.legend()
+    save_visualisation(filename, model_img)
+
+    # plot_response(sensing, controller_predictions, x_label, model_img, title, file_name, index)
 
 
 def plot_predicted_colour(runs_dir, img_dir, simulation, target='colour'):
@@ -1523,7 +1668,7 @@ def visualise_position_over_time(runs_dir, img_dir, filename):
     run = runs_sub[runs_sub['run'] == 0]
     target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
-    fig = plt.figure(constrained_layout=True)
+    fig = plt.figure(constrained_layout=True, figsize=(8, 8))
 
     # Plot the evolution of the positions of all robots over time
     plt.xlabel('timestep', fontsize=11)
@@ -1540,8 +1685,8 @@ def visualise_position_over_time(runs_dir, img_dir, filename):
         std_x_positions = np.pad(std_x_positions, ((0, max_time_step - len(std_x_positions))), mode='edge')
 
         ln, = plt.plot(time_steps, mean_x_positions, label=name)
-        plt.plot(time_steps, mean_x_positions - (std_x_positions + 2.95), ls='--', color=ln.get_color(), alpha=0.5)
-        plt.plot(time_steps, mean_x_positions + (std_x_positions + 7.95), ls='--', color=ln.get_color(), alpha=0.5)
+        # plt.plot(time_steps, mean_x_positions - (std_x_positions + 2.95), ls='--', color=ln.get_color(), alpha=0.5)
+        # plt.plot(time_steps, mean_x_positions + (std_x_positions + 7.95), ls='--', color=ln.get_color(), alpha=0.5)
 
         plt.fill_between(time_steps, mean_x_positions - std_x_positions, mean_x_positions + std_x_positions, alpha=0.2)
 
@@ -1550,7 +1695,7 @@ def visualise_position_over_time(runs_dir, img_dir, filename):
 
     if not len(run.name.unique()) > 5:
         col = len(run.name.unique())
-        pos = (0.5, -0.35)
+        pos = (0.5, -0.2)
     else:
         col = int(np.ceil(len(run.name.unique())/2))
         pos = (0.5, -0.4)
@@ -1577,7 +1722,7 @@ def visualise_control_over_time(runs_dir, img_dir, filename):
     max_time_step = 39
     time_steps = np.arange(max_time_step)
 
-    plt.figure()
+    plt.figure(constrained_layout=True, figsize=(8, 8))
 
     plt.ylabel('control', fontsize=11)
     plt.xlabel('timestep', fontsize=11)
@@ -1596,5 +1741,6 @@ def visualise_control_over_time(runs_dir, img_dir, filename):
                      mean_control + std_control,
                      alpha=0.2)
     plt.grid()
+    plt.ylim(-17, +17)
 
     save_visualisation(filename, img_dir)
