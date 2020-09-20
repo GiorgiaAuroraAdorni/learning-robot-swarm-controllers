@@ -150,12 +150,11 @@ if __name__ == '__main__':
             print('Generating %s simulations for %s %s controller…' % (args.n_simulations, d, c))
 
             if c == 'learned':
-                sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=None, args=args, model_dir=model_dir, model=args.model,
-                                        communication=communication)
+                sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c, args=args,
+                                        model_dir=model_dir, model=args.model, communication=communication)
             else:
-                sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c,
-                                        myt_quantity=None, args=args, communication=communication)
+                sim.generate_simulation(run_dir=run_dir, n_simulations=args.n_simulations, controller=c, args=args,
+                                        communication=communication)
 
         if args.plots_dataset:
             from utils.my_plots import thymio_quantity_distribution, visualise_communication_simulation, \
