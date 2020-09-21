@@ -330,7 +330,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
                      'prox_comm', 'all_sensors']]
-    runs['x_position'] = runs.apply(lambda row: list(row.position)[0], axis=1)
+    runs_sub['x_position'] = runs_sub.apply(lambda row: list(row.position)[0], axis=1)
 
     max_time_step = runs_sub['timestep'].max()
     time_steps = np.arange(max_time_step)
@@ -348,8 +348,8 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     axes[0].set_ylabel('x position', fontsize=11)
     axes[0].set_title('Thymio positions over time', weight='bold', fontsize=12)
 
-    for name in runs.name.unique():
-        runs_myt = runs[runs['name'] == name].reset_index()
+    for name in runs_sub.name.unique():
+        runs_myt = runs_sub[runs_sub['name'] == name].reset_index()
         mean_x_positions = np.array(runs_myt.groupby('timestep').x_position.mean())
         std_x_positions = np.array(runs_myt.groupby('timestep').x_position.std())
 
@@ -1660,9 +1660,9 @@ def visualise_position_over_time(runs_dir, img_dir, filename):
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position']]
-    runs['x_position'] = runs.apply(lambda row: list(row.position)[0], axis=1)
+    runs_sub['x_position'] = runs_sub.apply(lambda row: list(row.position)[0], axis=1)
 
-    max_time_step = 39
+    max_time_step = 38
     time_steps = np.arange(max_time_step)
 
     run = runs_sub[runs_sub['run'] == 0]
@@ -1676,15 +1676,20 @@ def visualise_position_over_time(runs_dir, img_dir, filename):
 
     plt.title('Thymio positions over time', weight='bold', fontsize=12)
 
-    for name in runs.name.unique():
-        runs_myt = runs[runs['name'] == name].reset_index()
+    for idx, name in enumerate(runs_sub.name.unique()):
+        runs_myt = runs_sub[runs_sub['name'] == name]
+        runs_myt = runs_myt[['timestep', 'x_position', 'run']]
+
+        runs_myt = runs_myt.groupby(['run', 'timestep']).x_position.mean().unstack(fill_value=target[idx]).stack().reset_index(name='x_position')
+
         mean_x_positions = np.array(runs_myt.groupby('timestep').x_position.mean())
         std_x_positions = np.array(runs_myt.groupby('timestep').x_position.std())
 
-        mean_x_positions = np.pad(mean_x_positions, ((0, max_time_step - len(mean_x_positions))), mode='edge')
-        std_x_positions = np.pad(std_x_positions, ((0, max_time_step - len(std_x_positions))), mode='edge')
+        mean_x_positions = np.pad(mean_x_positions, ((0, max_time_step - len(mean_x_positions))), mode='constant', constant_values=target[idx])
+        std_x_positions = np.pad(std_x_positions, ((0, max_time_step - len(std_x_positions))), mode='constant', constant_values=0)
 
         ln, = plt.plot(time_steps, mean_x_positions, label=name)
+
         # plt.plot(time_steps, mean_x_positions - (std_x_positions + 2.95), ls='--', color=ln.get_color(), alpha=0.5)
         # plt.plot(time_steps, mean_x_positions + (std_x_positions + 7.95), ls='--', color=ln.get_color(), alpha=0.5)
 
@@ -1717,9 +1722,9 @@ def visualise_control_over_time(runs_dir, img_dir, filename):
     :param filename: name of the image
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
-    runs_sub = runs[['name', 'timestep', 'motor_left_target']]
+    runs_sub = runs[['name', 'run', 'timestep', 'motor_left_target']]
 
-    max_time_step = 39
+    max_time_step = 38
     time_steps = np.arange(max_time_step)
 
     plt.figure(constrained_layout=True, figsize=(8, 8))
@@ -1729,6 +1734,8 @@ def visualise_control_over_time(runs_dir, img_dir, filename):
     plt.title('Thymio control over time', weight='bold', fontsize=12)
 
     # Plot, for a given robot, the evolution of control over time
+    runs_sub = runs_sub.groupby(['run', 'timestep']).motor_left_target.mean().unstack(fill_value=0).stack().reset_index(name='motor_left_target')
+
     mean_control = np.array(runs_sub.groupby('timestep').motor_left_target.mean())
     std_control = np.array(runs_sub.groupby('timestep').motor_left_target.std())
 
