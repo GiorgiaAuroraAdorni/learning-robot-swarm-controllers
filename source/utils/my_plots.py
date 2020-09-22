@@ -795,9 +795,11 @@ def plot_compared_distance_compressed(dataset_folders, img_dir, datasets, title,
 
     for d_idx, d in enumerate(datasets):
         if absolute:
-            position_distances = positions[d_idx].groupby('timestep').goal_position_distance_absolute
+            p = positions[d_idx][['timestep', 'goal_position_distance_absolute', 'run']].groupby(['run', 'timestep']).goal_position_distance_absolute.median().unstack(fill_value=0).stack().reset_index(name='goal_position_distance_absolute')
+            position_distances = p.groupby('timestep').goal_position_distance_absolute
         else:
-            position_distances = positions[d_idx].groupby('timestep').goal_position_distance
+            p = positions[d_idx][['timestep', 'goal_position_distance', 'run']].groupby(['run', 'timestep']).goal_position_distance.median().unstack(fill_value=0).stack().reset_index(name='goal_position_distance')
+            position_distances = p.groupby('timestep').goal_position_distance
 
         q1 = position_distances.quantile(0.25).squeeze()
         q2 = position_distances.quantile(0.75).squeeze()
