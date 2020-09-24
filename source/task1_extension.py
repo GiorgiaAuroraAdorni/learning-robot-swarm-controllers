@@ -130,6 +130,7 @@ if __name__ == '__main__':
 
     runs_dir_omniscient = os.path.join(d, 'omniscient')
     runs_dir_manual = os.path.join(d, 'manual')
+    runs_dir_learned = os.path.join(d, 'learned')
     runs_dir_learned_dist = os.path.join(d, 'learned_distributed')
     runs_dir_learned_comm = os.path.join(d, 'learned_communication')
 
@@ -158,7 +159,8 @@ if __name__ == '__main__':
 
         if args.plots_dataset:
             from utils.my_plots import visualise_simulation_over_time_all_sensors, plot_compared_distance_compressed, \
-                                       thymio_quantity_distribution
+                                       thymio_quantity_distribution, visualise_position_over_time, \
+                                       visualise_control_over_time
 
             print('Generating plots for %s %s controller…' % (d, c))
             runs = [0, 1, 2, 3, 4, 5, 251, 634]
@@ -168,7 +170,7 @@ if __name__ == '__main__':
                                                            % (i, args.net_input, c))
 
             # FIXME substitute controllers with datasets
-            # datasets = ['omniscient']
+            datasets = ['omniscient']
             plot_compared_distance_compressed([run_dir], run_img_dir, controllers,
                                               'Robot distances from goal - %s' % (args.net_input),
                                               'distances-from-goal-compressed')
@@ -176,6 +178,9 @@ if __name__ == '__main__':
             plot_compared_distance_compressed([run_dir], run_img_dir, controllers,
                                               'Robot distances from goal - %s' % (args.net_input),
                                               'distances-from-goal-absolute-compressed', absolute=False)
+            if args.myt_quantity != 'variable':
+                visualise_position_over_time(run_dir, run_img_dir, 'position-overtime-%s' % c, runs_dir_omniscient)
+            visualise_control_over_time(run_dir, run_img_dir, 'control-overtime')
 
             thymio_quantity_distribution(run_dir, run_img_dir, 'Thymio quantity distribution - %s' % (args.net_input),
                                          'thymio-quantity-distribution')
@@ -222,51 +227,59 @@ if __name__ == '__main__':
 
         print('\nGenerating comparison plots among all datasets of type %s…' % (args.net_input))
         runs_img_dir = os.path.join(d, 'images')
-        dataset_folders = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist, runs_dir_learned_comm]
-        datasets = ['omniscient', 'manual', 'distributed', 'communication']
+        
+        dataset_folders_comm = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist, runs_dir_learned_comm]
+        datasets_comm = ['omniscient', 'manual', 'distributed', 'communication']
 
-        plot_compared_distance_compressed(dataset_folders, runs_img_dir, datasets,
-                                         'Robot distances from goal - %s' % (args.net_input),
-                                         'distances-from-goal-compressed')
+        dataset_folders_dist = [runs_dir_omniscient, runs_dir_manual, runs_dir_learned_dist]
+        datasets_dist = ['omniscient', 'manual', 'distributed']
+        
+        plot_compared_distance_compressed(dataset_folders_dist, runs_img_dir, datasets_dist,
+                                         'Robot distances from goal', 'distances-from-goal-compressed-distributed')
+        
+        plot_compared_distance_compressed(dataset_folders_comm, runs_img_dir, datasets_comm,
+                                         'Robot distances from goal', 'distances-from-goal-compressed-communication')
 
         # Evaluate the learned controllers by passing a specific initial position configuration and compare them with
         # the omniscient and the manual controllers
         test_controller_given_init_positions(runs_img_dir, args.model, args.net_input)
 
     if args.generate_animations:
-        from utils.my_plots import animate_simulation, plot_simulations
-        from utils.utils import generate_fake_simulations, check_dir
-
+        from utils.my_plots import animate_simulation, plot_simulations, visualise_position_over_time
+        from utils.utils import generate_fake_simulations, generate_init_positions, check_dir
+        import numpy as np
         animations_dir = os.path.join(d, 'animations')
         check_dir(animations_dir)
 
+        plots_dir = os.path.join(d, 'plots')
+        check_dir(plots_dir)
+
         # Create a simulation for each of the controller using the same initial position
-        myt_quantity = 8
-        initial_positions = [0, 14, 59, 104, 135, 173, 203, 214]
+        if args.myt_quantity == 'variable':
+            myt_quantities = np.arange(5, 11)
+        else:
+            myt_quantities = [int(args.myt_quantity)]
 
-        dir1 = os.path.join(animations_dir, '1')
-        check_dir(dir1)
+        for N in myt_quantities:
+            dir = os.path.join(plots_dir, 'N%d' % N)
+            check_dir(dir)
+            out_dirs = generate_fake_simulations(dir, args.model, N, simulations=100)
 
-        out_dirs = generate_fake_simulations(dir1, args.model, initial_positions, myt_quantity)
-        animate_simulation(out_dirs, myt_quantity)
-        plot_simulations(out_dirs, myt_quantity)
+            for c in out_dirs:
+                controller = os.path.basename(os.path.normpath(c))
+                img_dir = os.path.join(c, 'images')
+                check_dir(img_dir)
+                visualise_position_over_time(c, img_dir, 'position-overtime-%s' % controller)
 
-        myt_quantity = 5
-        initial_positions = [0, 25, 67, 110, 150]
-
-        dir2 = os.path.join(animations_dir, '2')
-        check_dir(dir2)
-
-        out_dirs = generate_fake_simulations(dir2, args.model, initial_positions, myt_quantity)
-        animate_simulation(out_dirs, myt_quantity)
-        plot_simulations(out_dirs, myt_quantity)
-
-        myt_quantity = 6
-        initial_positions = [0, 12, 24, 64, 104, 119]
-
-        dir3 = os.path.join(animations_dir, '3')
-        check_dir(dir3)
-
-        out_dirs = generate_fake_simulations(dir3, args.model, initial_positions, myt_quantity)
-        animate_simulation(out_dirs, myt_quantity)
-        plot_simulations(out_dirs, myt_quantity)
+            # FIXME
+            # dir = os.path.join(animations_dir, 'N%d' % N)
+            # check_dir(dir)
+            # out_dirs = generate_fake_simulations(dir, args.model, N, simulations=1)
+            #
+            # for c in out_dirs:
+            #     controller = os.path.basename(os.path.normpath(c))
+            #     img_dir = os.path.join(c, 'images')
+            #     check_dir(img_dir)
+            #
+            #     animate_simulation(out_dirs, N)
+            #     plot_simulations(out_dirs, N)
