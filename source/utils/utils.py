@@ -613,20 +613,17 @@ def export_network(model_dir, model, in_put, input_shape):
                       )
 
 
-def generate_fake_simulations(run_dir, model, initial_positions, myt_quantity):
+def generate_fake_simulations(run_dir, model, myt_quantity, simulations):
     """
 
     :param run_dir: directory containing the simulation runs
     :param model: name of the model
-    :param initial_positions: initial position for the agents
     :param myt_quantity: number of agents
+    :param simulations: quantity of simulation runs
     :return out_dirs: directory containing the simulation run
     """
-
     from controllers import controllers_task1 as controllers
     from generate_simulation_data import GenerateSimulationData as g
-
-    goal_positions = np.linspace(0, initial_positions[-1], num=myt_quantity, dtype=np.float64)
 
     goal = 'distribute'
     net_input = 'all_sensors'
@@ -652,32 +649,35 @@ def generate_fake_simulations(run_dir, model, initial_positions, myt_quantity):
 
     out_dirs = []
     for factory, name in controller_factories:
-        world, myts = g.setup(factory, myt_quantity)
-
-        comm = False
-        if myts[0].controller.name == 'learned':
-            if myts[0].controller.communication:
-                comm = True
-
-        for i, myt in enumerate(myts):
-            # Position the first and last robot at a fixed distance
-            myt.position = (initial_positions[i], 0)
-            myt.initial_position = myt.position
-
-            # Reset the parameters
-            myt.dictionary = None
-            myt.angle = 0
-            myt.goal_position = (goal_positions[i], 0)
-
-            if myt.colour is not None:
-                myt.colour = None
-            myt.prox_comm_tx = 0
-            myt.prox_comm_enable = False
-
         runs = []
         complete_runs = []
+        for n_sim in range(simulations):
+            world, myts = g.setup(factory, myt_quantity)
 
-        g.run(0, myts, runs, complete_runs, world, comm, T=15, gui=False)
+            comm = False
+            if myts[0].controller.name == 'learned':
+                if myts[0].controller.communication:
+                    comm = True
+
+            avg_gap = np.random.randint(5, 25)
+            initial_positions, goal_positions = generate_init_positions(myt_quantity, avg_gap)
+
+            for i, myt in enumerate(myts):
+                # Position the first and last robot at a fixed distance
+                myt.position = (initial_positions[i], 0)
+                myt.initial_position = myt.position
+
+                # Reset the parameters
+                myt.dictionary = None
+                myt.angle = 0
+                myt.goal_position = (goal_positions[i], 0)
+
+                if myt.colour is not None:
+                    myt.colour = None
+                myt.prox_comm_tx = 0
+                myt.prox_comm_enable = False
+
+            g.run(n_sim, myts, runs, complete_runs, world, comm, T=4, gui=False)
 
         out_dir = os.path.join(run_dir, name)
         check_dir(out_dir)
@@ -686,3 +686,34 @@ def generate_fake_simulations(run_dir, model, initial_positions, myt_quantity):
         out_dirs.append(out_dir)
 
     return out_dirs
+
+
+def generate_init_positions(N, avg_gap, min_distance=10.9):
+    """
+
+    :param N: number of agents in the simulation
+    :param avg_gap: define the final average gap among the agents
+    :param min_distance: length of the robot
+    :return initial_positions: array containing the initial positions, in centimeters, for each robot
+    """
+    maximum_gap = avg_gap * 2
+
+    first_x = 0
+    last_x = (min_distance + avg_gap) * (N - 1)
+
+    initial_positions = np.zeros(N)
+
+    gaps = np.random.uniform(first_x, maximum_gap, N - 1)
+    gaps = gaps / np.sum(gaps) * (avg_gap * (N - 1))
+
+    distances = np.round(gaps + min_distance, 2)
+    initial_positions[1:] = np.cumsum(distances)
+    initial_positions[-1] = last_x
+
+    if distances[distances < min_distance]:
+        print(distances)
+        raise ValueError("Invalid initial positions.")
+
+    goal_positions = np.linspace(first_x, last_x, num=N)
+
+    return initial_positions, goal_positions
