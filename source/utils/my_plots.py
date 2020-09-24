@@ -1653,12 +1653,13 @@ def plot_compared_colour_error(dataset_folders, img_dir, datasets, filename):
     save_visualisation(filename, img_dir)
 
 
-def visualise_position_over_time(runs_dir, img_dir, filename):
+def visualise_position_over_time(runs_dir, img_dir, filename, runs_dir_omniscient=None):
     """
 
     :param runs_dir: directory containing the simulation runs
     :param img_dir: directory containing the simulation images
     :param filename: name of the image
+    :param runs_dir_omniscient: directory containiong the simulation runs of the expert
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position']]
@@ -1667,8 +1668,17 @@ def visualise_position_over_time(runs_dir, img_dir, filename):
     max_time_step = 38
     time_steps = np.arange(max_time_step)
 
-    run = runs_sub[runs_sub['run'] == 0]
-    target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
+    if runs_dir_omniscient is not None:
+        runs = utils.utils.load_dataset(runs_dir_omniscient, 'complete-simulation.pkl')
+        runs = runs[['name', 'timestep', 'run', 'position', 'goal_position']]
+    #     run = runs[runs['run'] == 0]
+    # else:
+    #     run = runs_sub[runs_sub['run'] == 0]
+
+    runs_sub['goal_x'], runs_sub['goal_y'] = zip(*runs_sub.goal_position)
+    target = np.round(np.array(runs_sub[['goal_x', 'name', 'run']].drop_duplicates().groupby('name').goal_x.mean()), 2)
+
+    # target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
     fig = plt.figure(constrained_layout=True, figsize=(8, 8))
 
@@ -1705,7 +1715,7 @@ def visualise_position_over_time(runs_dir, img_dir, filename):
         pos = (0.5, -0.2)
     else:
         col = int(np.ceil(len(run.name.unique())/2))
-        pos = (0.5, -0.4)
+        pos = (0.5, -0.2)
 
     ax = fig.gca()
     handles, labels = ax.get_legend_handles_labels()
