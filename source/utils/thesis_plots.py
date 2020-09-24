@@ -1,7 +1,7 @@
 import os
 
-from utils.my_plots import save_visualisation
-from utils.utils import check_dir
+from my_plots import save_visualisation
+from utils import check_dir
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -52,7 +52,7 @@ task = 'task1'
 type = 'distributed'
 model_img_dir = os.path.join('models', task, type, 'images')
 check_dir(model_img_dir)
-models = ['net1', 'net2', 'net3', 'net4', 'net5', 'net6', 'net7', 'net8', 'net9']
+models = ['net-01', 'net-02', 'net-03', 'net-04', 'net-05', 'net-06', 'net-07', 'net-08', 'net-09']
 
 plot_losses_compressed(model_img_dir, models, task, type)
 
@@ -61,67 +61,67 @@ task = 'task1'
 type = 'communication'
 model_img_dir = os.path.join('models', task, type, 'images')
 check_dir(model_img_dir)
-models = ['net1', 'net2', 'net3', 'net4', 'net5', 'net6', 'net7', 'net8', 'net9']
+models = ['net-01', 'net-02', 'net-03', 'net-04', 'net-05', 'net-06', 'net-07', 'net-08', 'net-09']
 
 plot_losses_compressed(model_img_dir, models, task, type)
 
 
-task = 'task2'
-type = 'communication'
-model_img_dir = os.path.join('models', task, type, 'images')
+# task = 'task2'
+# type = 'communication'
+# model_img_dir = os.path.join('models', task, type, 'images')
+# check_dir(model_img_dir)
+# models = ['net-v1', 'net-v2', 'net-v3', 'net-v4', 'net-v5', 'net-v6', 'net-v7', 'net-v8', 'net-v9']
+# 
+# plot_losses_compressed(model_img_dir, models, task, type)
+
+
+task = 'task1'
+type = 'distributed'
+model_img_dir = os.path.join('models', task, type, 'images-avg_gap_8')
 check_dir(model_img_dir)
-models = ['net-v1', 'net-v2', 'net-v3', 'net-v4', 'net-v5', 'net-v6', 'net-v7', 'net-v8', 'net-v9']
+models = ['net-01', 'net-04', 'net-07']
+
+plot_losses_compressed(model_img_dir, models, task, type)
+
+task = 'task1'
+type = 'distributed'
+model_img_dir = os.path.join('models', task, type, 'images-avg_gap_20')
+check_dir(model_img_dir)
+models = ['net-02', 'net-05', 'net-08']
 
 plot_losses_compressed(model_img_dir, models, task, type)
 
 
 task = 'task1'
 type = 'distributed'
-model_img_dir = os.path.join('models', task, type, 'images-avg_gap8')
+model_img_dir = os.path.join('models', task, type, 'images-avg_gap_variable')
 check_dir(model_img_dir)
-models = ['net1', 'net4', 'net7']
-
-plot_losses_compressed(model_img_dir, models, task, type)
-
-task = 'task1'
-type = 'distributed'
-model_img_dir = os.path.join('models', task, type, 'images-avg_gap13')
-check_dir(model_img_dir)
-models = ['net2', 'net5', 'net8']
+models = ['net-03', 'net-06', 'net-09']
 
 plot_losses_compressed(model_img_dir, models, task, type)
 
 
 task = 'task1'
 type = 'distributed'
-model_img_dir = os.path.join('models', task, type, 'images-avg_gap24')
+model_img_dir = os.path.join('models', task, type, 'images-N5')
 check_dir(model_img_dir)
-models = ['net3', 'net6', 'net9']
+models = ['net-01', 'net-02', 'net-03']
+
+plot_losses_compressed(model_img_dir, models, task, type)
+
+task = 'task1'
+type = 'distributed'
+model_img_dir = os.path.join('models', task, type, 'images-N8')
+check_dir(model_img_dir)
+models = ['net-04', 'net-05', 'net-06']
 
 plot_losses_compressed(model_img_dir, models, task, type)
 
 
 task = 'task1'
 type = 'distributed'
-model_img_dir = os.path.join('models', task, type, 'images-prox_values')
+model_img_dir = os.path.join('models', task, type, 'images-Nvariable')
 check_dir(model_img_dir)
-models = ['net1', 'net2', 'net3']
-
-plot_losses_compressed(model_img_dir, models, task, type)
-
-task = 'task1'
-type = 'distributed'
-model_img_dir = os.path.join('models', task, type, 'images-prox_comm')
-check_dir(model_img_dir)
-models = ['net4', 'net5', 'net6']
-
-plot_losses_compressed(model_img_dir, models, task, type)
-
-
-task = 'task1'
-type = 'distributed'
-model_img_dir = os.path.join('models', task, type, 'images-all_sensors')
-check_dir(model_img_dir)
-models = ['net7', 'net8', 'net9']
+models = ['net-07', 'net-08', 'net-09']
 
 plot_losses_compressed(model_img_dir, models, task, type)
