@@ -131,7 +131,7 @@ plot_losses_compressed(model_img_dir, models, task, type, name)
 # # # #
 
 type = 'communication'
-subtype = 'communication-extension'
+subtype = 'communication'
 model_img_dir = os.path.join('models', task, type, subtype)
 check_dir(model_img_dir)
 
