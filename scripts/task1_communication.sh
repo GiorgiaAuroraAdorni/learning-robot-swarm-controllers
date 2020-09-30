@@ -28,41 +28,41 @@ python3 source/task1.py --model-type communication --controller omniscient --plo
 python3 source/task1.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --net-input prox_values --avg-gap 8 --dataset avg_gap-8 --model net-c1
 
 
-# Experiment A2
+# Experiment B
 python3 source/task1.py --model-type communication --controller omniscient --plots-net --train-net --save-net --net-input prox_values --avg-gap 13 --dataset avg_gap-13 --model net-c2
 python3 source/task1.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --net-input prox_values --avg-gap 13 --dataset avg_gap-13 --model net-c2
 
 
-# Experiment A3
+# Experiment C
 python3 source/task1.py --model-type communication --controller omniscient --plots-net --train-net --save-net --net-input prox_values --avg-gap 24 --dataset avg_gap-24 --model net-c3
 python3 source/task1.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --net-input prox_values --avg-gap 24 --dataset avg_gap-24 --model net-c3
 
 
-# Experiment B
+# Experiment D
 python3 source/task1.py --model-type communication --controller omniscient --plots-net --train-net --save-net --net-input prox_comm --avg-gap 8 --dataset avg_gap-8 --model net-c4
 python3 source/task1.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --net-input prox_comm --avg-gap 8 --dataset avg_gap-8 --model net-c4
 
 
-# Experiment C
+# Experiment E
 python3 source/task1.py --model-type communication --controller omniscient --plots-net --train-net --save-net --net-input prox_comm --avg-gap 13 --dataset avg_gap-13 --model net-c5
 python3 source/task1.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --net-input prox_comm --avg-gap 13 --dataset avg_gap-13 --model net-c5
 
 
-# Experiment D
+# Experiment F
 python3 source/task1.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --net-input prox_comm --avg-gap 24 --dataset avg_gap-24 --model net-c6
 python3 source/task1.py --model-type communication --controller omniscient --plots-net --train-net --save-net --net-input prox_comm --avg-gap 24 --dataset avg_gap-24 --model net-c6
 
 
-# Experiment E
+# Experiment G
 python3 source/task1.py --model-type communication --controller omniscient --plots-net --train-net --save-net --net-input all_sensors --avg-gap 8 --dataset avg_gap-8 --model net-c7
 python3 source/task1.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --net-input all_sensors --avg-gap 8 --dataset avg_gap-8 --model net-c7
 
 
-# Experiment F
+# Experiment H
 python3 source/task1.py --model-type communication --controller omniscient --plots-net --train-net --save-net --net-input all_sensors --avg-gap 13 --dataset avg_gap-13 --model net-c8
 python3 source/task1.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --net-input all_sensors --avg-gap 13 --dataset avg_gap-13 --model net-c8
 
 
-# Experiment G
+# Experiment I
 python3 source/task1.py --model-type communication --controller omniscient --plots-net --train-net --save-net --net-input all_sensors --avg-gap 24 --dataset avg_gap-24 --model net-c9
 python3 source/task1.py --model-type communication --controller learned --generate-dataset --plots-dataset --check-dataset --net-input all_sensors --avg-gap 24 --dataset avg_gap-24 --model net-c9

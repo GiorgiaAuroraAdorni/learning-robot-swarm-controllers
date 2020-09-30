@@ -617,7 +617,7 @@ def generate_fake_simulations(run_dir, model, myt_quantity, simulations):
     """
 
     :param run_dir: directory containing the simulation runs
-    :param model: name of the model
+    :param model: index of the model
     :param myt_quantity: number of agents
     :param simulations: quantity of simulation runs
     :return out_dirs: directory containing the simulation run
@@ -628,18 +628,21 @@ def generate_fake_simulations(run_dir, model, myt_quantity, simulations):
     goal = 'distribute'
     net_input = 'all_sensors'
 
+    distr_model = 'net-d%d' % model
+    comm_model = 'net-c%d' % model
+
     omniscient_controller_factory = g.get_controller('omniscient', controllers, goal, myt_quantity, net_input)
 
     manual_controller_factory = g.get_controller('manual', controllers, goal, myt_quantity, net_input)
 
-    distributed_net_dir = os.path.join('models', 'task1', 'distributed', model)
+    distributed_net_dir = os.path.join('models', 'task1', 'distributed', distr_model)
     distributed_controller_factory = g.get_controller('learned', controllers, goal, myt_quantity, net_input,
-                                                      model=model, model_dir=distributed_net_dir,
+                                                      model=distr_model, model_dir=distributed_net_dir,
                                                       communication=False)
 
-    communication_net_dir = os.path.join('models', 'task1', 'communication', model)
+    communication_net_dir = os.path.join('models', 'task1', 'communication', comm_model)
     communication_controller_factory = g.get_controller('learned', controllers, goal, myt_quantity, net_input,
-                                                        model=model, model_dir=communication_net_dir,
+                                                        model=comm_model, model_dir=communication_net_dir,
                                                         communication=True)
 
     controller_factories = [(omniscient_controller_factory, 'omniscient'),
