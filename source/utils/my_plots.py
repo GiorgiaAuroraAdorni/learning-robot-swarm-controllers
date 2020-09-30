@@ -12,6 +12,7 @@ from matplotlib import colors
 import utils
 
 sns.set(style="white")
+pd.set_option('mode.chained_assignment', None)
 
 
 def make_space_above(axes, topmargin=1):
