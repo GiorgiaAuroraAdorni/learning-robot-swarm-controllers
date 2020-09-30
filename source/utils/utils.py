@@ -628,8 +628,8 @@ def generate_fake_simulations(run_dir, model, myt_quantity, simulations):
     goal = 'distribute'
     net_input = 'all_sensors'
 
-    distr_model = 'net-d%d' % model
-    comm_model = 'net-c%d' % model
+    distr_model = 'net-d%d' % int(model)
+    comm_model = 'net-c%d' % int(model)
 
     omniscient_controller_factory = g.get_controller('omniscient', controllers, goal, myt_quantity, net_input)
 

@@ -1,15 +1,14 @@
 #!/bin/bash
 
 # Compare all
-python3 source/task1.py --model-type communication --compare-all --net-input prox_values --avg-gap 8 --dataset avg_gap-8 --model 1
-python3 source/task1.py --model-type communication --compare-all --net-input prox_values --avg-gap 13 --dataset avg_gap-13 --model 2
-python3 source/task1.py --model-type communication --compare-all --net-input prox_values --avg-gap 24 --dataset avg_gap-24 --model 3
-python3 source/task1.py --model-type communication --compare-all --net-input prox_comm --avg-gap 8 --dataset avg_gap-8 --model 4
-python3 source/task1.py --model-type communication --compare-all --net-input prox_comm --avg-gap 13 --dataset avg_gap-13 --model 5
-python3 source/task1.py --model-type communication --compare-all --net-input prox_comm --avg-gap 24 --dataset avg_gap-24 --model 6
-python3 source/task1.py --model-type communication --compare-all --net-input all_sensors --avg-gap 8 --dataset avg_gap-8 --model 7
-python3 source/task1.py --model-type communication --compare-all --net-input all_sensors --avg-gap 13 --dataset avg_gap-13 --model 8
-python3 source/task1.py --model-type communication --compare-all --net-input all_sensors --avg-gap 24 --dataset avg_gap-24 --model 9
+python3 source/task1.py --compare-all --net-input prox_values --avg-gap 8 --dataset avg_gap-8 --model 1
+python3 source/task1.py --compare-all --net-input prox_values --avg-gap 13 --dataset avg_gap-13 --model 2
+python3 source/task1.py --compare-all --net-input prox_values --avg-gap 24 --dataset avg_gap-24 --model 3
+python3 source/task1.py --compare-all --net-input prox_comm --avg-gap 8 --dataset avg_gap-8 --model 4
+python3 source/task1.py --compare-all --net-input prox_comm --avg-gap 13 --dataset avg_gap-13 --model 5
+python3 source/task1.py --compare-all --net-input prox_comm --avg-gap 24 --dataset avg_gap-24 --model 6
+python3 source/task1.py --compare-all --net-input all_sensors --avg-gap 8 --dataset avg_gap-8 --model 7
+python3 source/task1.py --compare-all --net-input all_sensors --avg-gap 13 --dataset avg_gap-13 --model 8
 
 # Only plots for the datasets
 python3 source/task1.py --model-type communication --controller learned_communication --plots-dataset --net-input prox_values --avg-gap 8 --dataset avg_gap-8 --model net-c1

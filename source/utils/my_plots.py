@@ -1181,8 +1181,8 @@ def test_controller_given_init_positions(model_img, model, net_input):
 
     manual_controller_factory = g.get_controller('manual', controllers, 'distribute', 3, net_input)
 
-    distr_model = 'net-d%d' % model
-    comm_model = 'net-c%d' % model
+    distr_model = 'net-d%d' % int(model)
+    comm_model = 'net-c%d' % int(model)
 
     distributed_net_dir = os.path.join('models', 'task1', 'distributed', distr_model)
     distributed_controller_factory = g.get_controller('learned', controllers, 'distribute', 3, net_input,

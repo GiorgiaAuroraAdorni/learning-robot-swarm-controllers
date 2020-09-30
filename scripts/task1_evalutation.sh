@@ -46,15 +46,15 @@ python3 source/task1_extension.py --model-type communication --dataset avg_gap-2
 python3 source/task1_extension.py --model-type communication --dataset avg_gap-variable-N-variable --model net-c18 --controller omniscient --plots-net
 
 # PLOT COMPARISON
-python3 source/task1_extension.py --model-type communication --dataset avg_gap-8-N-5 --model 10 --myt-quantity 5 --avg-gap 8 --compare-all
-python3 source/task1_extension.py --model-type communication --dataset avg_gap-20-N-5 --model 11 --avg-gap 20 --myt-quantity 5 --compare-all
-python3 source/task1_extension.py --model-type communication --dataset avg_gap-variable-N-5 --model 12 --myt-quantity 5 --compare-all
-python3 source/task1_extension.py --model-type communication --dataset avg_gap-8-N-8 --model 13 --myt-quantity 8 --avg-gap 8 --compare-all
-python3 source/task1_extension.py --model-type communication --dataset avg_gap-20-N-8 --model 14 --avg-gap 20 --myt-quantity 8 --compare-all
-python3 source/task1_extension.py --model-type communication --dataset avg_gap-variable-N-8 --model 15 --myt-quantity 8 --compare-all
-python3 source/task1_extension.py --model-type communication --dataset avg_gap-8-N-variable --model 16 --avg-gap 8 --compare-all
-python3 source/task1_extension.py --model-type communication --dataset avg_gap-20-N-variable --model 17 --avg-gap 20 --compare-all
-python3 source/task1_extension.py --model-type communication --dataset avg_gap-variable-N-variable --model 18 --compare-all
+python3 source/task1_extension.py --dataset avg_gap-8-N-5 --model 10 --myt-quantity 5 --avg-gap 8 --compare-all
+python3 source/task1_extension.py --dataset avg_gap-20-N-5 --model 11 --avg-gap 20 --myt-quantity 5 --compare-all
+python3 source/task1_extension.py --dataset avg_gap-variable-N-5 --model 12 --myt-quantity 5 --compare-all
+python3 source/task1_extension.py --dataset avg_gap-8-N-8 --model 13 --myt-quantity 8 --avg-gap 8 --compare-all
+python3 source/task1_extension.py --dataset avg_gap-20-N-8 --model 14 --avg-gap 20 --myt-quantity 8 --compare-all
+python3 source/task1_extension.py --dataset avg_gap-variable-N-8 --model 15 --myt-quantity 8 --compare-all
+python3 source/task1_extension.py --dataset avg_gap-8-N-variable --model 16 --avg-gap 8 --compare-all
+python3 source/task1_extension.py --dataset avg_gap-20-N-variable --model 17 --avg-gap 20 --compare-all
+python3 source/task1_extension.py --dataset avg_gap-variable-N-variable --model 18 --compare-all
 
 
 # Fixed avg_gap, fixed N
