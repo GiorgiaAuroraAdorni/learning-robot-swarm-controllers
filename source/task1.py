@@ -161,18 +161,18 @@ if __name__ == '__main__':
             print('Generating plots for %s %s controller…' % (d, c))
 
             if not args.net_input == 'all_sensors':
-                for i in range(5):
-                    visualise_simulation(run_dir, run_img_dir, i,
-                                         'Simulation run %d - %s avg_gap-%s %s' % (i, args.net_input, args.avg_gap, c),
-                                         net_input=args.net_input)
+                # for i in range(5):
+                #     visualise_simulation(run_dir, run_img_dir, i,
+                #                          'Simulation run %d - %s avg_gap-%s %s' % (i, args.net_input, args.avg_gap, c),
+                #                          net_input=args.net_input)
                 visualise_simulations_comparison(run_dir, run_img_dir,
                                                  'All simulation run - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
                                                  net_input=args.net_input)
             else:
-                for i in range(5):
-                    visualise_simulation_all_sensors(run_dir, run_img_dir, i,
-                                                     'Simulation run %d - %s avg_gap-%s %s' % (i, args.net_input, args.avg_gap, c),
-                                                     net_input=args.net_input)
+                # for i in range(5):
+                #     visualise_simulation_all_sensors(run_dir, run_img_dir, i,
+                #                                      'Simulation run %d - %s avg_gap-%s %s' % (i, args.net_input, args.avg_gap, c),
+                #                                      net_input=args.net_input)
 
                 visualise_simulations_comparison_all_sensors(run_dir, run_img_dir,
                                                              'All simulation run - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
@@ -181,9 +181,9 @@ if __name__ == '__main__':
             visualise_position_over_time(run_dir, run_img_dir, 'position-overtime')
             visualise_control_over_time(run_dir, run_img_dir, 'control-overtime')
 
-            plot_distance_from_goal(run_dir, run_img_dir,
-                                    'Distance from goal - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
-                                    'distances-from-goal-%s' % c)
+            # plot_distance_from_goal(run_dir, run_img_dir,
+            #                         'Distance from goal - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
+            #                         'distances-from-goal-%s' % c)
 
             if communication:
                 if c == 'omniscient':
@@ -204,8 +204,8 @@ if __name__ == '__main__':
                                                    (args.net_input, args.avg_gap, c))
 
                 visualise_communication_vs_distance(run_dir, run_img_dir,
-                                                   'Communication vs Distance from goal - %s avg_gap-%s %s' %
-                                                   (args.net_input, args.avg_gap, c))
+                                                    'Communication vs Distance from goal - %s avg_gap-%s %s' %
+                                                    (args.net_input, args.avg_gap, c))
 
         if args.check_dataset:
             from generate_simulation_data import GenerateSimulationData as sim

@@ -124,7 +124,7 @@ if __name__ == '__main__':
     d = os.path.join(args.dataset_folder, args.task, args.net_input, args.dataset)
 
     if args.controller == 'all':
-        controllers = ['omniscient', 'learned', 'manual']
+        controllers = ['omniscient', 'learned_distributed', 'learned_communication', 'manual']
     else:
         controllers = [args.controller]
 
@@ -164,20 +164,20 @@ if __name__ == '__main__':
 
             print('Generating plots for %s %s controller…' % (d, c))
             runs = [0, 1, 2, 3, 4, 5, 251, 634]
-            for i in runs:
-                visualise_simulation_over_time_all_sensors(run_dir, run_img_dir, i,
-                                                           'Thymio positions over time - Simulation run %d - %s %s'
-                                                           % (i, args.net_input, c))
-
-            # FIXME substitute controllers with datasets
-            datasets = ['omniscient']
-            plot_compared_distance_compressed([run_dir], run_img_dir, controllers,
-                                              'Robot distances from goal - %s' % (args.net_input),
-                                              'distances-from-goal-compressed')
-
-            plot_compared_distance_compressed([run_dir], run_img_dir, controllers,
-                                              'Robot distances from goal - %s' % (args.net_input),
-                                              'distances-from-goal-absolute-compressed', absolute=False)
+            # for i in runs:
+            #     visualise_simulation_over_time_all_sensors(run_dir, run_img_dir, i,
+            #                                                'Thymio positions over time - Simulation run %d - %s %s'
+            #                                                % (i, args.net_input, c))
+            #
+            # # FIXME substitute controllers with datasets
+            # datasets = ['omniscient']
+            # plot_compared_distance_compressed([run_dir], run_img_dir, controllers,
+            #                                   'Robot distances from goal - %s' % (args.net_input),
+            #                                   'distances-from-goal-compressed')
+            #
+            # plot_compared_distance_compressed([run_dir], run_img_dir, controllers,
+            #                                   'Robot distances from goal - %s' % (args.net_input),
+            #                                   'distances-from-goal-absolute-compressed', absolute=False)
             if args.myt_quantity != 'variable':
                 visualise_position_over_time(run_dir, run_img_dir, 'position-overtime-%s' % c, runs_dir_omniscient)
             visualise_control_over_time(run_dir, run_img_dir, 'control-overtime')
@@ -263,7 +263,8 @@ if __name__ == '__main__':
         for N in myt_quantities:
             dir = os.path.join(plots_dir, 'N%d' % N)
             check_dir(dir)
-            out_dirs = generate_fake_simulations(dir, args.model, N, simulations=100)
+            _ = generate_fake_simulations(dir, args.model, N, simulations=100)
+            out_dirs = [os.path.join(dir, 'omniscient'), os.path.join(dir, 'manual'), os.path.join(dir, 'distributed'), os.path.join(dir, 'communication')]
 
             for c in out_dirs:
                 controller = os.path.basename(os.path.normpath(c))
