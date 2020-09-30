@@ -62,6 +62,8 @@ subtype = 'distributed'
 model_img_dir = os.path.join('models', task, type, subtype)
 check_dir(model_img_dir)
 
+print('Generating loss comparison plots for %s %s…' % (task, subtype))
+
 name = 'all'
 models = ['net-d1', 'net-d2', 'net-d3', 'net-d4', 'net-d5', 'net-d6', 'net-d7', 'net-d8', 'net-d9']
 plot_losses_compressed(model_img_dir, models, task, type, name)
@@ -95,6 +97,8 @@ plot_losses_compressed(model_img_dir, models, task, type, name)
 subtype = 'distributed-extension'
 model_img_dir = os.path.join('models', task, type, subtype)
 check_dir(model_img_dir)
+
+print('Generating loss comparison plots for %s %s…' % (task, subtype))
 
 name = 'all'
 models = ['net-d10', 'net-d11', 'net-d12', 'net-d13', 'net-d14', 'net-d15', 'net-d16', 'net-d17', 'net-d18']
@@ -131,6 +135,8 @@ subtype = 'communication-extension'
 model_img_dir = os.path.join('models', task, type, subtype)
 check_dir(model_img_dir)
 
+print('Generating loss comparison plots for %s %s…' % (task, subtype))
+
 name = 'all'
 models = ['net-c1', 'net-c2', 'net-c3', 'net-c4', 'net-c5', 'net-c6', 'net-c7', 'net-c8', 'net-c9']
 plot_losses_compressed(model_img_dir, models, task, type, name)
@@ -164,6 +170,8 @@ plot_losses_compressed(model_img_dir, models, task, type, name)
 subtype = 'communication-extension'
 model_img_dir = os.path.join('models', task, type, subtype)
 check_dir(model_img_dir)
+
+print('Generating loss comparison plots for %s %s…' % (task, subtype))
 
 name = 'all'
 models = ['net-c10', 'net-c11', 'net-c12', 'net-c13', 'net-c14', 'net-c15', 'net-c16', 'net-c17', 'net-c18']
