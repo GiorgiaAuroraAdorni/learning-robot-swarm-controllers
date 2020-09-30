@@ -252,11 +252,27 @@ if __name__ == '__main__':
         #                                  'distances-from-goal')
 
         plot_compared_distance_compressed(dataset_folders_dist, runs_img_dir, datasets_dist,
-                                         'Robot distances from goal', 'distances-from-goal-compressed-distributed')
-
+                                          'Robot distances from goal', 'distances-from-goal-compressed-distributed')
+        
         plot_compared_distance_compressed(dataset_folders_comm, runs_img_dir, datasets_comm,
-                                         'Robot distances from goal', 'distances-from-goal-compressed-communication')
+                                          'Robot distances from goal', 'distances-from-goal-compressed-communication')
 
         # Evaluate the learned controllers by passing a specific initial position configuration and compare them with
         # the omniscient and the manual controllers
         test_controller_given_init_positions(runs_img_dir, args.model, args.net_input)
+
+        # if not args.net_input == 'all_sensors':
+        #     from utils.my_plots import evaluate_net
+        #     from network_evaluation import generate_sensing
+        #     import numpy as np
+        #     x, s = generate_sensing()
+        #     sensing = np.stack([s, s, np.divide(x, 1000), s, s, s, s], axis=1)
+        #     index = 2
+        #
+        #     evaluate_net(runs_img_dir, args.model, args.net_input, 'net([0, 0, x, 0, 0, 0, 0])', sensing, index,
+        #                  'center proximity sensor')
+        #
+        #     index = -1
+        #     sensing = np.stack([s, s, s, s, s, np.divide(x, 1000), np.divide(x, 1000)], axis=1)
+        #     evaluate_net(runs_img_dir, args.model, args.net_input, 'net([0, 0, 0, 0, 0, x, x])', sensing, index,
+        #                  'rear proximity sensors')

@@ -330,7 +330,7 @@ def visualise_simulations_comparison(runs_dir, img_dir, title, net_input):
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position', 'motor_left_target', 'prox_values',
                      'prox_comm', 'all_sensors']]
-    runs_sub['x_position'] = runs_sub.apply(lambda row: list(row.position)[0], axis=1)
+    runs_sub.loc[:, 'x_position'] = runs_sub.apply(lambda row: list(row.position)[0], axis=1)
 
     max_time_step = runs_sub['timestep'].max()
     time_steps = np.arange(max_time_step)
@@ -1166,7 +1166,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
     """
 
     :param model_img: directory for the output image of the model
-    :param model: name of the model
+    :param model: index of the model
     :param net_input: input of the network (between: prox_values, prox_comm and all_sensors)
     """
     from generate_simulation_data import GenerateSimulationData as g
@@ -1180,14 +1180,17 @@ def test_controller_given_init_positions(model_img, model, net_input):
 
     manual_controller_factory = g.get_controller('manual', controllers, 'distribute', 3, net_input)
 
-    distributed_net_dir = os.path.join('models', 'task1', 'distributed', model)
+    distr_model = 'net-d%d' % model
+    comm_model = 'net-c%d' % model
+
+    distributed_net_dir = os.path.join('models', 'task1', 'distributed', distr_model)
     distributed_controller_factory = g.get_controller('learned', controllers, 'distribute', 3, net_input,
-                                                      model=model, model_dir=distributed_net_dir,
+                                                      model=distr_model, model_dir=distributed_net_dir,
                                                       communication=False)
 
-    communication_net_dir = os.path.join('models', 'task1', 'communication', model)
+    communication_net_dir = os.path.join('models', 'task1', 'communication', comm_model)
     communication_controller_factory = g.get_controller('learned', controllers, 'distribute', 3, net_input,
-                                                        model=model, model_dir=communication_net_dir,
+                                                        model=comm_model, model_dir=communication_net_dir,
                                                         communication=True)
 
     controller_factories = [(omniscient_controller_factory, 'omniscient'),
@@ -1235,8 +1238,8 @@ def test_controller_given_init_positions(model_img, model, net_input):
         controllers_predictions.append(control_predictions)
         std_controllers_predictions.append(std_control_predictions)
 
-    title = 'Response %s by varying init position' % model
-    file_name = 'response-varying_init_position-%s-distributed' % model
+    # title = 'Response %s by varying init position' % model
+    file_name = 'response-varying_init_position-distributed'
 
     # Plot the output of the network
     utils.utils.check_dir(model_img)
@@ -1258,7 +1261,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
                          (y + std).clip(-16.6, 16.6),
                          alpha=0.15, label=controller_factories[idx][1])
 
-    plt.title(title, weight='bold', fontsize=12)
+    # plt.title(title, weight='bold', fontsize=12)
 
     colors = ["w", "w"]
     texts = ["mean", "+/- 1 std"]
@@ -1300,7 +1303,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
 
     save_visualisation(file_name, model_img)
 
-    file_name = 'response-varying_init_position-%s-communication' % model
+    file_name = 'response-varying_init_position-communication'
     plt.figure()
     plt.xlabel('x position', fontsize=11)
     plt.ylabel('control', fontsize=11)
@@ -1319,7 +1322,7 @@ def test_controller_given_init_positions(model_img, model, net_input):
                          (y + std).clip(-16.6, 16.6),
                          alpha=0.15, label=controller_factories[idx][1])
 
-    plt.title(title, weight='bold', fontsize=12)
+    # plt.title(title, weight='bold', fontsize=12)
 
     colors = ["w", "w"]
     texts = ["mean", "+/- 1 std"]
@@ -1619,9 +1622,9 @@ def plot_compared_colour_error(dataset_folders, img_dir, datasets, filename):
         runs_sub = runs[['timestep', 'goal_colour', 'colour', 'run']]
 
         if datasets[idx] == 'omniscient':
-            runs_sub['colour'] = runs_sub.goal_colour
+            runs_sub.loc[:, 'colour'] = runs_sub.goal_colour
 
-        runs_sub['colour_error'] = np.where(runs_sub.goal_colour == runs_sub.colour, 0, 1)
+        runs_sub.loc[:, 'colour_error'] = np.where(runs_sub.goal_colour == runs_sub.colour, 0, 1)
         runs_sub = runs_sub.drop(columns=['goal_colour', 'colour'])
 
         runs_error = []
@@ -1663,20 +1666,20 @@ def visualise_position_over_time(runs_dir, img_dir, filename, runs_dir_omniscien
     """
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'position', 'goal_position']]
-    runs_sub['x_position'] = runs_sub.apply(lambda row: list(row.position)[0], axis=1)
+    runs_sub.loc[:, 'x_position'] = runs_sub.apply(lambda row: list(row.position)[0], axis=1)
 
     max_time_step = 38
     time_steps = np.arange(max_time_step)
 
-    if runs_dir_omniscient is not None:
-        runs = utils.utils.load_dataset(runs_dir_omniscient, 'complete-simulation.pkl')
-        runs = runs[['name', 'timestep', 'run', 'position', 'goal_position']]
+    # if runs_dir_omniscient is not None:
+    #     runs = utils.utils.load_dataset(runs_dir_omniscient, 'complete-simulation.pkl')
+    #     runs = runs[['name', 'timestep', 'run', 'position', 'goal_position']]
     #     run = runs[runs['run'] == 0]
     # else:
     #     run = runs_sub[runs_sub['run'] == 0]
 
-    runs_sub['goal_x'], runs_sub['goal_y'] = zip(*runs_sub.goal_position)
-    target = np.round(np.array(runs_sub[['goal_x', 'name', 'run']].drop_duplicates().groupby('name').goal_x.mean()), 2)
+    runs_sub.loc[:, 'goal_x'], runs_sub.loc[:, 'goal_y'] = zip(*runs_sub.goal_position)
+    target = np.sort(np.round(np.array(runs_sub[['goal_x', 'name', 'run']].drop_duplicates().groupby('name').goal_x.mean()), 2))
 
     # target = np.array(run[run['timestep'] == 1].apply(lambda row: list(row.goal_position)[0], axis=1))
 
@@ -1710,11 +1713,11 @@ def visualise_position_over_time(runs_dir, img_dir, filename, runs_dir_omniscien
     plt.yticks(target)
     plt.grid()
 
-    if not len(run.name.unique()) > 5:
-        col = len(run.name.unique())
+    if not len(runs_sub.name.unique()) > 5:
+        col = len(runs_sub.name.unique())
         pos = (0.5, -0.2)
     else:
-        col = int(np.ceil(len(run.name.unique())/2))
+        col = int(np.ceil(len(runs_sub.name.unique())/2))
         pos = (0.5, -0.2)
 
     ax = fig.gca()
