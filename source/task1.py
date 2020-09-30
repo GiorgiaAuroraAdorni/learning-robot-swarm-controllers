@@ -178,8 +178,8 @@ if __name__ == '__main__':
                                                              'All simulation run - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),
                                                              net_input=args.net_input)
 
-            visualise_position_over_time(run_dir, run_img_dir, 'position-overtime')
-            visualise_control_over_time(run_dir, run_img_dir, 'control-overtime')
+            visualise_position_over_time(run_dir, run_img_dir, 'position-overtime-%s' % c)
+            visualise_control_over_time(run_dir, run_img_dir, 'control-overtime-%s' % c)
 
             # plot_distance_from_goal(run_dir, run_img_dir,
             #                         'Distance from goal - %s avg_gap-%s %s' % (args.net_input, args.avg_gap, c),

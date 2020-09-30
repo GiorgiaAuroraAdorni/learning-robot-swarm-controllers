@@ -179,8 +179,8 @@ if __name__ == '__main__':
             #                                   'Robot distances from goal - %s' % (args.net_input),
             #                                   'distances-from-goal-absolute-compressed', absolute=False)
             if args.myt_quantity != 'variable':
-                visualise_position_over_time(run_dir, run_img_dir, 'position-overtime-%s' % c, runs_dir_omniscient)
-            visualise_control_over_time(run_dir, run_img_dir, 'control-overtime')
+                visualise_position_over_time(run_dir, run_img_dir, 'position-overtime-%s' % c)
+            # visualise_control_over_time(run_dir, run_img_dir, 'control-overtime-%s' % c)
 
             thymio_quantity_distribution(run_dir, run_img_dir, 'Thymio quantity distribution - %s' % (args.net_input),
                                          'thymio-quantity-distribution')
