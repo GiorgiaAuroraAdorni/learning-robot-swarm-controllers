@@ -703,7 +703,7 @@ def visualise_communication_simulation(runs_dir, img_dir, simulation, title):
     max_time_step = run['timestep'].max()
     time_steps = np.arange(max_time_step)
 
-    fig = plt.figure(figsize=(8.8, 4.8))
+    fig = plt.figure()
     norm = plt.Normalize(0, 1)
 
     # Plot the evolution of the positions of all robots over time
@@ -1479,11 +1479,12 @@ def plot_predicted_message(runs_dir, img_dir, simulation):
     runs = utils.utils.load_dataset(runs_dir, 'complete-simulation.pkl')
     runs_sub = runs[['name', 'timestep', 'run', 'transmitted_comm']]
 
+    max_time_step = 38
+
     if runs_sub.transmitted_comm.max() > 100:
         dividend = (2 ** 10)
     else:
         dividend = runs_sub.transmitted_comm.max()
-
 
     run = runs_sub[runs_sub['run'] == simulation]
     run = run[['name', 'timestep', 'transmitted_comm']]
@@ -1493,13 +1494,28 @@ def plot_predicted_message(runs_dir, img_dir, simulation):
     for idx, el in enumerate(myts):
         run = run.replace([el], idx + 1)
 
+    missing_ts = max_time_step - run.timestep.max()
+
     run = run.pivot('name', 'timestep', 'transmitted_comm')
-    plt.figure()
+    out = run / dividend
 
-    g = sns.heatmap(run / dividend, cmap='viridis', linewidths=1, square=True, yticklabels=myts, vmin=0, vmax=1)
+    if out.shape[1] < max_time_step:
+        out = pd.concat([out, pd.concat([out.iloc[:, -1:]] * missing_ts, axis=1, ignore_index=True)],
+                        axis=1, ignore_index=True)
+
+    out.columns = np.arange(1, max_time_step + 1)
+    if out.shape[1] != max_time_step:
+        print(len(out))
+        raise ValueError('Dataset not extended correctly.')
+
+    plt.figure(figsize=(25, 5))
+
+    g = sns.heatmap(out, cmap='viridis', linewidths=1, square=True, yticklabels=myts, vmin=0, vmax=1,
+                    cbar_kws={'label': 'communication'})
+
     plt.setp(g.get_yticklabels(), rotation=0)
-
-    plt.ylabel('agent', fontsize=11)
+    plt.xlabel('timestep')
+    plt.ylabel('agent')
 
     filename = 'plot-simulation-message-%d' % simulation
     save_visualisation(filename, img_dir)
@@ -1680,7 +1696,7 @@ def visualise_position_over_time(runs_dir, img_dir, filename):
     plt.xlabel('timestep', fontsize=11)
     plt.ylabel('x position', fontsize=11)
 
-    plt.title('Thymio positions over time', weight='bold', fontsize=12)
+    # plt.title('Thymio positions over time', weight='bold', fontsize=12)
 
     for idx, name in enumerate(runs_sub.name.unique()):
         runs_myt = runs_sub[runs_sub['name'] == name]
@@ -1737,7 +1753,7 @@ def visualise_control_over_time(runs_dir, img_dir, filename):
 
     plt.ylabel('control', fontsize=11)
     plt.xlabel('timestep', fontsize=11)
-    plt.title('Thymio control over time', weight='bold', fontsize=12)
+    # plt.title('Thymio control over time', weight='bold', fontsize=12)
 
     # Plot, for a given robot, the evolution of control over time
     runs_sub = runs_sub.groupby(['run', 'timestep']).motor_left_target.mean().unstack(fill_value=0).stack().reset_index(name='motor_left_target')

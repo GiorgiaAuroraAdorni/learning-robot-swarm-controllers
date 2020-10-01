@@ -160,7 +160,7 @@ if __name__ == '__main__':
         if args.plots_dataset:
             from utils.my_plots import visualise_simulation_over_time_all_sensors, plot_compared_distance_compressed, \
                                        thymio_quantity_distribution, visualise_position_over_time, \
-                                       visualise_control_over_time
+                                       visualise_control_over_time, plot_predicted_message
 
             print('Generating plots for %s %s controller…' % (d, c))
             runs = [0, 1, 2, 3, 4, 5, 251, 634]
@@ -198,6 +198,8 @@ if __name__ == '__main__':
 
                 visualise_communication_vs_distance(run_dir, run_img_dir,
                                                     'Communication vs Distance from goal - %s %s' % (args.net_input, c))
+                    plot_predicted_message(run_dir, run_img_dir, i)
+
 
         if args.check_dataset:
             from generate_simulation_data import GenerateSimulationData as sim
